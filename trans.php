@@ -1,9 +1,17 @@
-
-Editing:  
-/home/joshwaxman1/public_html/heb/trans.php
- Encoding:    Re-open Use Code Editor     Close  Save Changes
-
 <?php
+/**
+*
+* @package Tranliterator
+* @version $Id: trans.php,v 1.0.1 2023/10/11 10:04:08 orynider Exp $
+*
+*/
+
+//Acces check
+if (!defined('IN_PORTAL') ) { die("Direct acces not allowed!"); }
+
+//Constants
+include($root_path . 'contants.' . $phpEx);
+
 // new trup code
 class tree_node
 {
