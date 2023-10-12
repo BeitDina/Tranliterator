@@ -184,12 +184,11 @@ function mesagehandler($msg_title, $msg_text, $l_notify, $l_return_index = "inde
 
 			print '<!DOCTYPE html>';
 			print '<html dir="ltr">';
-			print '<head>';
-			print '<meta charset="UTF-8">';
-			print '<meta http-equiv="X-UA-Compatible" content="IE=edge">';
+			print '<head><meta charset="UTF-8" />';
+			print '<meta http-equiv="X-UA-Compatible" content="IE=edge" />';
 			print '<title>' . $msg_title . '</title>';
 			print '<style type="text/css">{ margin: 0; padding: 0; } html { font-size: 100%; height: 100%; margin-bottom: 1px; background-color: #E4EDF0; } body { font-family: "Lucida Grande", "Segoe UI", Helvetica, Arial, sans-serif; color: #536482; background: #E4EDF0; font-size: 62.5%; margin: 0; } ';
-			print 'a:link, a:active, a:visited { color: #006699; text-decoration: none; } a:hover { color: #DD6900; text-decoration: underline; } ';
+			print 'a:link, a:active, a:visited { color: #006688; text-decoration: none; } a:hover { color: #DD6900; text-decoration: underline; } ';
 			print '#wrap { padding: 0 20px 15px 20px; min-width: 615px; } #page-header { text-align: right; height: 40px; } #page-footer { clear: both; font-size: 1em; text-align: center; } ';
 			print '.panel { margin: 4px 0; background-color: #FFFFFF; border: solid 1px  #A9B8C2; } ';
 			print '#errorpage #page-header a { font-weight: bold; line-height: 6em; } #errorpage #content { padding: 10px; } #errorpage #content h1 { line-height: 1.2em; margin-bottom: 0; color: #DF075C; } ';
