@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: trans.php,v 1.0.1 2023/10/11 10:04:08 orynider Exp $
+* @version $Id: trans.php,v 1.0.2 2023/10/12 7:04:08 orynider Exp $
 *
 */
 
@@ -42,7 +42,7 @@ class tree_node
 		{
 			if ($i != $this->begin_offset) // skip the first time
 			{	
-				echo '.';
+				print '.';
 				echo $t_without_trup[$i];
 			}
 		}
@@ -182,37 +182,37 @@ function mesagehandler($msg_title, $msg_text, $l_notify, $l_return_index = "inde
 
 			// Try to not call the adm page data...
 
-			echo '<!DOCTYPE html>';
-			echo '<html dir="ltr">';
-			echo '<head>';
-			echo '<meta charset="UTF-8">';
-			echo '<meta http-equiv="X-UA-Compatible" content="IE=edge">';
-			echo '<title>' . $msg_title . '</title>';
-			echo '<style type="text/css">'; '* { margin: 0; padding: 0; } html { font-size: 100%; height: 100%; margin-bottom: 1px; background-color: #E4EDF0; } body { font-family: "Lucida Grande", "Segoe UI", Helvetica, Arial, sans-serif; color: #536482; background: #E4EDF0; font-size: 62.5%; margin: 0; } ';
-			echo 'a:link, a:active, a:visited { color: #006699; text-decoration: none; } a:hover { color: #DD6900; text-decoration: underline; } ';
-			echo '#wrap { padding: 0 20px 15px 20px; min-width: 615px; } #page-header { text-align: right; height: 40px; } #page-footer { clear: both; font-size: 1em; text-align: center; } ';
-			echo '.panel { margin: 4px 0; background-color: #FFFFFF; border: solid 1px  #A9B8C2; } ';
-			echo '#errorpage #page-header a { font-weight: bold; line-height: 6em; } #errorpage #content { padding: 10px; } #errorpage #content h1 { line-height: 1.2em; margin-bottom: 0; color: #DF075C; } ';
-			echo '#errorpage #content div { margin-top: 20px; margin-bottom: 5px; border-bottom: 1px solid #CCCCCC; padding-bottom: 5px; color: #333333; font: bold 1.2em "Lucida Grande", "Segoe UI", Arial, Helvetica, sans-serif; text-decoration: none; line-height: 120%; text-align: left; } */' . "\n";
-			echo '</style>';
-			echo '</head>';
-			echo '<body id="page">';
-			echo '<div id="wrap">';
-			echo '	<div id="page-header">'.$l_return_index.'</div>';	
-			echo '	<div id="page-body">';
-			echo '	<div class="panel">';
-			echo '		<div id="content">';
-			echo '			<h1>' . $msg_title . '</h1>';
-			echo '			<div>' . $msg_text . '</div>';
-			echo $l_notify;
-			echo '		</div>';
-			echo '	</div>';
-			echo '	</div>';
-			echo '	<div id="page-footer">Powered by <a href="https://github.com/beitdina/">Beit Dina Institute</a>';
-			echo '	</div>';
-			echo '</div>';
-			echo '</body>';
-			echo '</html>';
+			print '<!DOCTYPE html>';
+			print '<html dir="ltr">';
+			print '<head>';
+			print '<meta charset="UTF-8">';
+			print '<meta http-equiv="X-UA-Compatible" content="IE=edge">';
+			print '<title>' . $msg_title . '</title>';
+			print '<style type="text/css">'; '* { margin: 0; padding: 0; } html { font-size: 100%; height: 100%; margin-bottom: 1px; background-color: #E4EDF0; } body { font-family: "Lucida Grande", "Segoe UI", Helvetica, Arial, sans-serif; color: #536482; background: #E4EDF0; font-size: 62.5%; margin: 0; } ';
+			print 'a:link, a:active, a:visited { color: #006699; text-decoration: none; } a:hover { color: #DD6900; text-decoration: underline; } ';
+			print '#wrap { padding: 0 20px 15px 20px; min-width: 615px; } #page-header { text-align: right; height: 40px; } #page-footer { clear: both; font-size: 1em; text-align: center; } ';
+			print '.panel { margin: 4px 0; background-color: #FFFFFF; border: solid 1px  #A9B8C2; } ';
+			print '#errorpage #page-header a { font-weight: bold; line-height: 6em; } #errorpage #content { padding: 10px; } #errorpage #content h1 { line-height: 1.2em; margin-bottom: 0; color: #DF075C; } ';
+			print '#errorpage #content div { margin-top: 20px; margin-bottom: 5px; border-bottom: 1px solid #CCCCCC; padding-bottom: 5px; color: #333333; font: bold 1.2em "Lucida Grande", "Segoe UI", Arial, Helvetica, sans-serif; text-decoration: none; line-height: 120%; text-align: left; } */' . "\n";
+			print '</style>';
+			print '</head>';
+			print '<body id="page">';
+			print '<div id="wrap">';
+			print '	<div id="page-header">'.$l_return_index.'</div>';	
+			print '	<div id="page-body">';
+			print '	<div class="panel">';
+			print '		<div id="content">';
+			print '			<h1>' . $msg_title . '</h1>';
+			print '			<div>' . $msg_text . '</div>';
+			print $l_notify;
+			print '		</div>';
+			print '	</div>';
+			print '	</div>';
+			print '	<div id="page-footer">Powered by <a href="https://github.com/beitdina/">Beit Dina Institute</a>';
+			print '	</div>';
+			print '</div>';
+			print '</body>';
+			print '</html>';
 
 			//exit_handler();
 
@@ -453,7 +453,7 @@ function handleSpecials($t)
 	// stress is a non-trivial matter, and so we handle this here
 	// by listing the common words and fixing the mapping a bit
 	// 1. mitzrAyma
-	$t = ereg_repl("(". MEM . CHIRIK_MALEI . TZADI . SHEVA_NACH . RESH . KAMETZ . YUD . ")" . "(" . SHEVA_NA . ")" . "(" . MEM . KAMETZ . HEH .")",
+	$t = ereg_repl("(". MEM ." ". CHIRIK_MALEI ." ". TZADI ." ". SHEVA_NACH ." ". RESH ." ". KAMETZ . YUD . ")" . "(" . SHEVA_NA . ")" . "(" . MEM ." ". KAMETZ ." ". HEH .")",
 			"\\1 ". SHEVA_NACH ." \\3", $t);
 	return $t;
 }
@@ -741,125 +741,142 @@ function CleanUpPunctuation($t)
 	return $t;
 }
 
-function MichiganClaremontTransliteration($t)
-{
-	$t = ereg_repl("ALEPH", ")", $t);
-	$t = ereg_repl("BET", "b.", $t);
-	$t = ereg_repl("BHET", "b", $t);
-	$t = ereg_repl("GIMEL", "g.", $t);
-	$t = ereg_repl("GHIMEL", "g", $t);
-	$t = ereg_repl("DALED", "d.", $t);
-	$t = ereg_repl("DHALED", "d", $t);
-	$t = ereg_repl("HEH_MAPIK", "h", $t);
-	$t = ereg_repl("HEH", "h", $t);
-	$t = ereg_repl("VAV", "w", $t);
-	$t = ereg_repl("ZED", "z", $t);
-	$t = ereg_repl("CHET", "x", $t);
-	$t = ereg_repl("TET", "+", $t);
-	$t = ereg_repl("YUD_PLURAL", "Y", $t);
-	$t = ereg_repl("YUD", "Y", $t);
-	$t = ereg_repl("KAF", "K.", $t);
-	$t = ereg_repl("KHAF(_SOFIT)?", "K", $t);
-	$t = ereg_repl("LAMED", "L", $t);
-	$t = ereg_repl("MEM(_SOFIT)?", "M", $t);
-	$t = ereg_repl("NUN(_SOFIT)?", "N", $t);
-	$t = ereg_repl("SAMECH", "S", $t);
-	$t = ereg_repl("AYIN", "(", $t);
-	$t = ereg_repl("PEI", "P.", $t);
-	$t = ereg_repl("PHEI(_SOFIT)?", "P", $t);
-	$t = ereg_repl("TZADI(_SOFIT)?", "C", $t);
-	$t = ereg_repl("KUF", "Q", $t);
-	$t = ereg_repl("RESH", "R", $t);
-	$t = ereg_repl("SHIN", "$", $t);
-	$t = ereg_repl("SIN", "&amp;", $t);
-	$t = ereg_repl("TAV", "T.", $t);
-	$t = ereg_repl("THAV", "T.", $t);
-	$t = ereg_repl("CHATAF_KAMETZ", ":F", $t);
-	$t = ereg_repl("KAMETZ_KATAN", "F", $t);
-	$t = ereg_repl("KAMETZ", "F", $t);
-	$t = ereg_repl("CHATAF_PATACH", ":A", $t);
-	$t = ereg_repl("PATACH_GANUV", "A", $t);
-	$t = ereg_repl("PATACH", "A", $t);
-	$t = ereg_repl("SHEVA_NACH", ":", $t);
-	$t = ereg_repl("SHEVA_NA", ":", $t);
-	$t = ereg_repl("CHATAF_SEGOL", ":E", $t);
-	$t = ereg_repl("SEGOL", "E", $t);
-	$t = ereg_repl("TZEIREI_MALEI", "\"", $t);
-	$t = ereg_repl("TZEIREI_CHASER", "\"", $t);
-	$t = ereg_repl("CHIRIK_MALEI", "I", $t);
-	$t = ereg_repl("CHIRIK_CHASER", "I", $t);
-	$t = ereg_repl("CHOLAM_MALEI", "O", $t);
-	$t = ereg_repl("CHOLAM_CHASER", "O", $t);
-	$t = ereg_repl("SHURUK", "W.", $t);
-	$t = ereg_repl("KUBUTZ", "U", $t);
-
-	// chazak becomes dagesh, unless already have this for bgdkft
-	$t = ereg_repl("\._CHAZAK", ".", $t);
-	$t = ereg_repl("_CHAZAK", ".", $t);
-
-	$t = CleanUpPunctuation($t);
-
-	return $t;
-}
-
-
 function AcademicTransliteration($t)
 {
-	$GEMINATE_CANDIDATES = "(".ALEPH."|".BET."|".GIMEL."|".DALED."|".VAV."|".ZED."|".TET."|".YUD."|".KAF."|".KAF_SOFIT."|".LAMED."|".MEM."|".NUN."|".SAMECH."|".PEI."|".TZADI."|".KUF."|".SHIN."|".SIN."|".TAV.")";
-	$t = preg_replace("<". $GEMINATE_CANDIDATES . "_CHAZAK>", "\\1 \\1", $t);
+	//Definitions https://github.com/symbl-cc/symbl-data 
+	//Backup: https://github.com/anio/unicode-table-data/blob/95d28cae674791b18798e5cdb846bbffde017097/loc/de/symbols/0500.txt#L200C3-L200C3
+	$ALEPH = 'א';
+	$BHET = $BET = 'ב';
+	$GHIMEL = $GIMEL = 'ג';
+	$DHALED = $DALED = 'ד';
+	$HEH_MAPIK = $HEH = 'ה';
+	$VAV = 'ו';
+	$ZED = 'ז';
+	$CHET = 'ח';
+	$TET = 'ט';
+	$YUD_PLURAL = $YUD = 'י';
+	$KAF_SOFIT = $KHAF_SOFIT = 'ך';
+	$KAF = 'כ';
+	$LAMED = 'ל';
+	$MEM_SOFIT = 'ם';
+	$MEM = 'מ';
+	$NUN_SOFIT = 'ן';
+	$NUN = 'נ';
+	$SAMECH = 'ס';
+	$AYIN = 'ע';
+	$PHEI_SOFIT = 'ף';
+	$PEI = 'פ';
+	$TZADI_SOFIT = 'ץ';
+	$TZADI = 'צ';
+	$KUF = 'ק';
+	$RESH = 'ר';
+	$SIN = $SHIN = 'ש';
+	$THAV = $TAV = 'ת';
+	/*
+	DAGESH_LETTER: return 'דגש\שורוק'
+	Niqqud.KAMATZ: return 'קמץ'
+	Niqqud.PATAKH: return 'פתח'
+	Niqqud.TZEIRE: return 'צירה'
+	Niqqud.SEGOL: return 'סגול'
+	Niqqud.SHVA: return 'שוא'
+	Niqqud.HOLAM: return 'חולם'
+	Niqqud.KUBUTZ: return 'קובוץ'
+	Niqqud.HIRIK: return 'חיריק'
+	Niqqud.REDUCED_KAMATZ: return 'חטף-קמץ'
+	Niqqud.REDUCED_PATAKH: return 'חטף-פתח'
+	Niqqud.REDUCED_SEGOL: return 'חטף-סגול'
+	SHIN_SMALIT: return 'שין-שמאלית'
+	SHIN_YEMANIT: return 'שין-ימנית'
+	*/
+	
+	$SHEVA_NACH = $SHEVA = 'ְ'; //SHVA = '\u05B0'
+	$CHATAF_SEGOL = 'ֱ'; //REDUCED_SEGOL = '\u05B1'
+	$CHATAF_PATACH = 'ֲ'; //REDUCED_PATAKH = '\u05B2'
+	$CHATAF_KAMETZ = 'ֳ'; //REDUCED_KAMATZ = '\u05B3'
+	$CHIRIK_MALEI = $CHIRIK_CHASER = $CHIRIK_U = 'ִ'; //HIRIK = '\u05B4'
+	$TZEIREI_MALEI = $TZEIREI_CHASER = $TZEIREI = 'ֵ'; //TZEIRE = '\u05B5'
+	$SEGOL = 'ֶ'; //SEGOL = '\u05B6'  
+	$PATACH_GANUV = '׆'; //\u05C6: Hebräisches Satzzeichen Nun Hafucha || 05C6: Hebräisches Interpunktions-Nonne Hafukha
+	$PATACH = 'ַ'; //PATAKH = '\u05B7'; 
+	$KAMETZ_KATAN = 'ׇ'; //\u05C7: Hebräisches Zeichen Kametz Katan || 05C7: Hebräischer Punkt Qamats Qatan
+	$KAMETZ = 'ָ'; //KAMATZ = '\u05B8'; 
+	$CHOLAM_CHASER = 'ֺ';//For Wav
+	$HOLAM_HASHER = 'ֹֹ'; //HOLAM HASHER for Wav 
+	$CHOLAM_MALEI = $CHOLAM = 'ֹֹ';//HOLAM = '\u05B9'
+	$HOLAM_MEM = 'מֹ'; //  מֹ מֹ
+	$HOLAM_VAV = 'וֺ'; //
+	$METEG = 'ֽ'; //METEG = '\u05BD'
+	$MAPIQ = 'ּ'; //u05BC
+	$MAQAF = '־'; //u05BE
+	$RAFE = 'ֿ'; //u05BF
+	$KUBUTZ = 'ֻ'; //KUBUTZ = '\u05BB' 
+	$SHURUK = $DAGESH = 'ּ'; //SHURUK = '\u05BC' //or: DAGESH_LETTER = '\u05bc'
+	$SHIN_DOT = 'ׁ';  //SHIN_YEMANIT = '\u05c1' &#x05C1 in BabelMap
+	$SIN_DOT = 'ׂ'; //SHIN_SMALIT = '\u05c2' &#x05C2 in BabelMap	
+	$TIPEHA = '֖'; //U+0596 HEBREW ACCENT TIPEHA : tarha, me'ayla ~ mayla
+	$MERKHA = '֥'; //U+05A5 HEBREW ACCENT MERKHA : yored
+	$MERKHA_KEFULA = '֦'; //U+05A6 HEBREW ACCENT MERKHA KEFULA	
+	$MUNAH = '֣'; //U+05A3 HEBREW ACCENT MUNAH		
+	$ETNAHTA = '֑'; //U+0591 HEBREW ACCENT ETNAHTA : atnah
+	$ATNAH_HAFUKH = '֢'; //U+05A2 HEBREW ACCENT ATNAH HAFUKH
+	$YERAH_BEN_YOMO = '֪'; //U+05AA HEBREW ACCENT YERAH BEN YOMO : galgal
+	
+	$GEMINATE_CANDIDATES = "($ALEPH|$BET|$BHET|$GIMEL|$DALED|$VAV|$HOLAM_VAV|$ZED|$TET|$YUD|$KAF|$KHAF_SOFIT|$LAMED|$MEM|$HOLAM_MEM|$NUN|$SAMECH|$PEI|$TZADI|$KUF|$SHIN$SHIN_DOT|$SHIN$SIN_DOT|$TAV)";
+	$t = preg_replace("<" . $GEMINATE_CANDIDATES . "_CHAZAK>", "\\1", $t);
 
-	$t = preg_replace("<".ALEPH.">", "&#702;", $t);
-	$t = preg_replace("<".BET.">", "b", $t);
-	$t = preg_replace("<".BHET.">", "&#7687;", $t);
-	$t = preg_replace("<".GIMEL.">", "g", $t);
-	$t = preg_replace("<".GHIMEL.">", "&#7713;", $t);
-	$t = preg_replace("<".DALED.">", "d", $t);
-	$t = preg_replace("<".DHALED.">", "&#7695;", $t);
-	$t = preg_replace("<".HEH_MAPIK.">", "h", $t);
-	$t = preg_replace("<".HEH.">", "h", $t);
-	$t = preg_replace("<".VAV.">", "w", $t);
-	$t = preg_replace("<".ZED.">", "z", $t);
-	$t = preg_replace("<".CHET.">", "&#7717;", $t);
-	$t = preg_replace("<".TET.">", "&#7789;", $t);
-	$t = preg_replace("<".YUD_PLURAL.">", "(y)", $t);
-	$t = preg_replace("<".YUD.">", "y", $t);
-	$t = preg_replace("<".KAF.">", "k", $t);
-	$t = preg_replace("<".KHAF_SOFIT."?>", "&#7733;", $t);
-	$t = preg_replace("<".LAMED.">", "l", $t);
-	$t = preg_replace("<".MEM_SOFIT ."?>", "m", $t);
-	$t = preg_replace("<".NUN_SOFIT."?>", "n", $t);
-	$t = preg_replace("<".SAMECH.">", "s", $t);
-	$t = preg_replace("<".AYIN.">", "&#703;", $t);
-	$t = preg_replace("<".PEI.">", "p", $t);
-	$t = preg_replace("<".PHEI_SOFIT."?>", "p&#772;", $t);
-	$t = preg_replace("<".TZADI_SOFIT."?>", "&#7779;", $t);
-	$t = preg_replace("<".KUF.">", "q", $t);
-	$t = preg_replace("<".RESH.">", "r", $t);
-	$t = preg_replace("<".SHIN.">", "&#353;", $t);
-	$t = preg_replace("<".SIN.">", "&#347;", $t);
-	$t = preg_replace("<".TAV.">", "t", $t);
-	$t = preg_replace("<".THAV.">", "&#7791;", $t);
-	$t = preg_replace("<".CHATAF_KAMETZ.">", "&#335;", $t);
-	$t = preg_replace("<".KAMETZ_KATAN.">", "o", $t);
-	$t = preg_replace("<".KAMETZ.">", "&#257;", $t);
-	$t = preg_replace("<".CHATAF_PATACH.">", "&#259;", $t);
-	$t = preg_replace("<".PATACH_GANUV.">", "<sup>a</sup>", $t);
-	$t = preg_replace("<".PATACH.">", "a", $t);
-	$t = preg_replace("<".SHEVA_NACH.">", "", $t);
-	$t = preg_replace("<".SHEVA.">", "&#601;", $t);
-	$t = preg_replace("<".CHATAF_SEGOL.">", "&#277;", $t);
-	$t = preg_replace("<".SEGOL.">", "e", $t);
-	$t = preg_replace("<".TZEIREI_MALEI.">", "&#234;", $t);
-	$t = preg_replace("<".TZEIREI_CHASER.">", "&#275;", $t);
-	$t = preg_replace("<".CHIRIK_MALEI.">", "&#238;", $t);
-	$t = preg_replace("<".CHIRIK_CHASER.">", "i", $t);
-	$t = preg_replace("<".CHOLAM_MALEI.">", "&#244;", $t);
-	$t = preg_replace("<".CHOLAM_CHASER.">", "&#333;", $t);
-	$t = preg_replace("<".SHURUK.">", "&#251;", $t);
-	$t = preg_replace("<".KUBUTZ.">", "u", $t);
-
+	$t = preg_replace("<".$ALEPH.">", "ʾ", $t);
+	$t = preg_replace("<".$BET.">", "b", $t);
+	$t = preg_replace("<".$BHET.">", "ḇ", $t);
+	$t = preg_replace("<".$GIMEL.">", "g", $t);
+	$t = preg_replace("<".$GHIMEL.">", "ḡ", $t);
+	$t = preg_replace("<".$DALED.">", "d", $t);
+	$t = preg_replace("<".$DHALED.">", "ḏ", $t);
+	$t = preg_replace("<".$HEH_MAPIK.">", "h", $t);
+	$t = preg_replace("<".$HEH.">", "h", $t);
+	$t = preg_replace("<".$VAV.">", "w", $t);
+	$t = preg_replace("<".$ZED.">", "z", $t);
+	$t = preg_replace("<".$CHET.">", "ḥ", $t);
+	$t = preg_replace("<".$TET.">", "ṭ", $t);
+	$t = preg_replace("<".$YUD_PLURAL.">", "(y)", $t);
+	$t = preg_replace("<".$YUD.">", "y", $t);
+	$t = preg_replace("<".$KAF.">", "k", $t);
+	$t = preg_replace("<".$KHAF_SOFIT."?>", "ḵ", $t);
+	$t = preg_replace("<".$LAMED.">", "l", $t);
+	$t = preg_replace("<".$MEM_SOFIT ."?>", "m", $t);
+	$t = preg_replace("<".$NUN_SOFIT."?>", "n", $t);
+	$t = preg_replace("<".$SAMECH.">", "s", $t);
+	$t = preg_replace("<".$AYIN.">", "ʿ", $t);
+	$t = preg_replace("<".$PEI.">", "p", $t);
+	$t = preg_replace("<".$PHEI_SOFIT."?>", "p̄", $t);
+	$t = preg_replace("<".$TZADI_SOFIT."?>", "ţ̄", $t);
+	$t = preg_replace("<".$KUF.">", "q", $t);
+	$t = preg_replace("<".$RESH.">", "r", $t);
+	$t = preg_replace("<".$SHIN.">", "s", $t);
+	$t = preg_replace("<".$SHIN.$SHIN_DOT.">", "š", $t);
+	$t = preg_replace("<".$SHIN.$SIN_DOT.">", "ś", $t);	
+	$t = preg_replace("<".$TAV.">", "t", $t);
+	$t = preg_replace("<".$THAV.">", "ṯ", $t);
+	$t = preg_replace("<".$CHATAF_KAMETZ.">", "ŏ", $t);
+	$t = preg_replace("<".$KAMETZ_KATAN.">", "o", $t);
+	$t = preg_replace("<".$KAMETZ.">", "ā", $t);
+	$t = preg_replace("<".$CHATAF_PATACH.">", "ă", $t);
+	$t = preg_replace("<".$PATACH_GANUV.">", "<sup>a</sup>", $t);
+	$t = preg_replace("<".$PATACH.">", "a", $t);
+	$t = preg_replace("<".$SHEVA_NACH.">", "", $t);
+	$t = preg_replace("<".$SHEVA.">", "ə", $t);
+	$t = preg_replace("<".$CHATAF_SEGOL.">", "ĕ", $t);
+	$t = preg_replace("<".$SEGOL.">", "e", $t);
+	$t = preg_replace("<".$TZEIREI_MALEI.">", "ê", $t);
+	$t = preg_replace("<".$TZEIREI_CHASER.">", "ē", $t);
+	$t = preg_replace("<".$CHIRIK_MALEI.">", "î", $t);
+	$t = preg_replace("<".$CHIRIK_CHASER.">", "i", $t);
+	$t = preg_replace("<".$CHOLAM_MALEI.">", "ô", $t);
+	$t = preg_replace("<".$CHOLAM_CHASER.">", "ō", $t);
+	$t = preg_replace("<".$SHURUK.">", "û", $t);
+	$t = preg_replace("<".$KUBUTZ.">", "u", $t);
+	
+	ExtractTrup();
 	$t = CleanUpPunctuation($t);
-
 	return $t;
 }
 
@@ -1242,7 +1259,179 @@ function SefardicTransliteration($t)
 	$t = CleanUpPunctuation($t);
 	return $t;
 }
+function MichiganClaremontTranslit($t)
+{
+	//Definitions https://github.com/symbl-cc/symbl-data 
+	//Backup: https://github.com/anio/unicode-table-data/blob/95d28cae674791b18798e5cdb846bbffde017097/loc/de/symbols/0500.txt#L200C3-L200C3
+	$ALEPH = 'א';
+	$BHET = $BET = 'ב';
+	$GHIMEL = $GIMEL = 'ג';
+	$DHALED = $DALED = 'ד';
+	$HEH_MAPIK = $HEH = 'ה';
+	$VAV = 'ו';
+	$ZED = 'ז';
+	$CHET = 'ח';
+	$TET = 'ט';
+	$YUD_PLURAL = $YUD = 'י';
+	$KHAF_SOFIT = 'ך';
+	$KAF = 'כ';
+	$LAMED = 'ל';
+	$MEM_SOFIT = 'ם';
+	$MEM = 'מ';
+	$NUN_SOFIT = 'ן';
+	$NUN = 'נ';
+	$SAMECH = 'ס';
+	$AYIN = 'ע';
+	$PHEI_SOFIT = 'ף';
+	$PEI = 'פ';
+	$TZADI_SOFIT = 'ץ';
+	$TZADI = 'צ';
+	$KUF = 'ק';
+	$RESH = 'ר';
+	$SHIN = 'ש';
+	$THAV = $TAV = 'ת';
+	/*
+	DAGESH_LETTER: return 'דגש\שורוק'
+	Niqqud.KAMATZ: return 'קמץ'
+	Niqqud.PATAKH: return 'פתח'
+	Niqqud.TZEIRE: return 'צירה'
+	Niqqud.SEGOL: return 'סגול'
+	Niqqud.SHVA: return 'שוא'
+	Niqqud.HOLAM: return 'חולם'
+	Niqqud.KUBUTZ: return 'קובוץ'
+	Niqqud.HIRIK: return 'חיריק'
+	Niqqud.REDUCED_KAMATZ: return 'חטף-קמץ'
+	Niqqud.REDUCED_PATAKH: return 'חטף-פתח'
+	Niqqud.REDUCED_SEGOL: return 'חטף-סגול'
+	SHIN_SMALIT: return 'שין-שמאלית'
+	SHIN_YEMANIT: return 'שין-ימנית'
+	*/
+	
+	$SHEVA_NACH = $SHEVA = 'ְ'; //SHVA = '\u05B0'
+	$CHATAF_SEGOL = 'ֱ'; //REDUCED_SEGOL = '\u05B1'
+	$CHATAF_PATACH = 'ֲ'; //REDUCED_PATAKH = '\u05B2'
+	$CHATAF_KAMETZ = 'ֳ'; //REDUCED_KAMATZ = '\u05B3'
+	$CHIRIK_MALEI = $CHIRIK_CHASER = $CHIRIK_U = 'ִ'; //HIRIK = '\u05B4'
+	$TZEIREI_MALEI = $TZEIREI_CHASER = $TZEIREI = 'ֵ'; //TZEIRE = '\u05B5'
+	$SEGOL = 'ֶ'; //SEGOL = '\u05B6'  
+	$PATACH_GANUV = '׆'; //\u05C6: Hebräisches Satzzeichen Nun Hafucha || 05C6: Hebräisches Interpunktions-Nonne Hafukha
+	$PATACH = 'ַ'; //PATAKH = '\u05B7'; 
+	$KAMETZ_KATAN = 'ׇ'; //\u05C7: Hebräisches Zeichen Kametz Katan || 05C7: Hebräischer Punkt Qamats Qatan
+	$KAMETZ = 'ָ'; //KAMATZ = '\u05B8'; 
+	$CHOLAM_CHASER = 'ֺ';//For Wav
+	$HOLAM_HASHER = 'ֹֹ'; //HOLAM HASHER for Wav 
+	$CHOLAM_MALEI = $CHOLAM = 'ֹֹ';//HOLAM = '\u05B9'
+	$HOLAM_MEM = 'מֹ'; //  מֹ מֹ
+	$HOLAM_VAV = 'וֺ'; //
+	$METEG = 'ֽ'; //METEG = '\u05BD'
+	$MAPIQ = 'ּ'; //u05BC
+	$MAQAF = '־'; //u05BE
+	$RAFE = 'ֿ'; //u05BF
+	$KUBUTZ = 'ֻ'; //KUBUTZ = '\u05BB' 
+	$SHURUK = $DAGESH = 'ּ'; //SHURUK = '\u05BC' //or: DAGESH_LETTER = '\u05bc'
+	$SHIN_DOT = 'ׁ';  //SHIN_YEMANIT = '\u05c1' &#x05C1 in BabelMap
+	$SIN_DOT = 'ׂ'; //SHIN_SMALIT = '\u05c2' &#x05C2 in BabelMap	
+	$TIPEHA = '֖'; //U+0596 HEBREW ACCENT TIPEHA : tarha, me'ayla ~ mayla
+	$MERKHA = '֥'; //U+05A5 HEBREW ACCENT MERKHA : yored
+	$MERKHA_KEFULA = '֦'; //U+05A6 HEBREW ACCENT MERKHA KEFULA	
+	$MUNAH = '֣'; //U+05A3 HEBREW ACCENT MUNAH		
+	$ETNAHTA = '֑'; //U+0591 HEBREW ACCENT ETNAHTA : atnah
+	$ATNAH_HAFUKH = '֢'; //U+05A2 HEBREW ACCENT ATNAH HAFUKH
+	$YERAH_BEN_YOMO = '֪'; //U+05AA HEBREW ACCENT YERAH BEN YOMO : galgal
+	
+	// do not double letters in general
+	$GEMINATE_CANDIDATES = "($ALEPH|$BET|$BHET|$GIMEL|$DALED|$VAV|$HOLAM_VAV|$ZED|$TET|$YUD|$KAF|$KHAF_SOFIT|$LAMED|$MEM|$HOLAM_MEM|$NUN|$SAMECH|$PEI|$TZADI|$KUF|$SHIN$SHIN_DOT|$SHIN$SIN_DOT|$TAV)";
 
+	$t = preg_replace("<" . $GEMINATE_CANDIDATES . "_CHAZAK>", "\\1", $t);
+
+	//Consonants
+	$t = preg_replace("<".$ALEPH.">", ")", $t);
+	$t = preg_replace("<".$BET.">", "B.", $t);
+	$t = preg_replace("<".$BHET.">", "V", $t);
+	$t = preg_replace("<".$GIMEL.">", "G", $t);
+	$t = preg_replace("<".$GHIMEL.">", "G", $t);
+	$t = preg_replace("<".$DALED.">", "D", $t);
+	$t = preg_replace("<".$DHALED.">", "D", $t);
+	$t = preg_replace("<".$HEH_MAPIK.">", "H", $t);
+	$t = preg_replace("<".$HEH."BOUNDARY>", "H.", $t);
+	$t = preg_replace("<".$HEH.">", "H", $t);
+	$t = preg_replace("<".$VAV.">", "W", $t);
+	$t = preg_replace("<".$HOLAM_VAV.">", "WO", $t);
+	$t = preg_replace("<".$ZED.">", "Z", $t);
+	$t = preg_replace("<".$CHET.">", "X", $t);
+	$t = preg_replace("<".$TET.">", "+", $t);
+	$t = preg_replace("<".$YUD_PLURAL.">", "Y", $t);
+	$t = preg_replace("< ".$YUD.">", "Y.", $t);
+	$t = preg_replace("<".$YUD.">", "y", $t);
+	$t = preg_replace("<".$KAF.">", "K.", $t);
+	$t = preg_replace("<".$KHAF_SOFIT.">", "K", $t);
+	$t = preg_replace("<".$LAMED.">", "L", $t);
+	$t = preg_replace("<".$MEM.">", "M.", $t);
+	$t = preg_replace("<".$MEM_SOFIT.">", "M", $t);
+	$t = preg_replace("<".$HOLAM_MEM.">", "MO", $t);
+	$t = preg_replace("<".$NUN.">", "N.", $t);
+	$t = preg_replace("<".$NUN_SOFIT.">", "N", $t);
+	$t = preg_replace("<".$SAMECH.">", "S", $t);
+	$t = preg_replace("<".$AYIN.">", "(", $t);
+	$t = preg_replace("<".$PEI.">", "P.", $t);
+	$t = preg_replace("<".$PHEI_SOFIT.">", "P", $t);
+	$t = preg_replace("<".$TZADI.">", "TZ", $t);
+	$t = preg_replace("<".$TZADI_SOFIT.">", "C", $t);
+	$t = preg_replace("<".$KUF.">", "Q", $t);
+	$t = preg_replace("<".$RESH.">", "R", $t);
+	$t = preg_replace("<".$SHIN.$SHIN_DOT.">", "$", $t);
+	$t = preg_replace("<".$SHIN.$SIN_DOT.">", "&", $t);
+	$t = preg_replace("<".$TAV.">", "T.", $t);
+	$t = preg_replace("<".$THAV.">", "T.", $t);
+	$t = preg_replace("<".$CHATAF_KAMETZ.">", ":F", $t);
+	$t = preg_replace("<".$KAMETZ_KATAN.">", "F", $t);
+	$t = preg_replace("<".$KAMETZ.">", "F", $t);
+	$t = preg_replace("<".$CHATAF_PATACH.">", ":A", $t);
+	$t = preg_replace("<".$PATACH_GANUV.">", "A", $t);
+	$t = preg_replace("<".$PATACH.">", "A", $t);
+	$t = preg_replace("<".$SHEVA_NACH.">", "â", $t);
+	$t = preg_replace("<".$SHEVA.">", ":", $t);
+	$t = preg_replace("<".$CHATAF_SEGOL.">", ":E", $t);
+	$t = preg_replace("<".$SEGOL.">", "E", $t);
+	$t = preg_replace("<".$TZEIREI_MALEI.">", "\"", $t);
+	$t = preg_replace("<".$TZEIREI_CHASER.">", "\"", $t);
+	$t = preg_replace("<".$CHIRIK_MALEI.">", "I", $t);
+	$t = preg_replace("<".$CHIRIK_CHASER.">", "I", $t);
+	$t = preg_replace("<".$CHOLAM_MALEI.">", "O", $t);
+	$t = preg_replace("<".$CHOLAM_CHASER.">", "O", $t);
+	$t = preg_replace("<".$METEG.">", "a", $t);
+	$t = preg_replace("<".$SHURUK.">", "W.", $t);
+	$t = preg_replace("<".$KUBUTZ.">", "U", $t);
+	$t = preg_replace("<".$TIPEHA.">", "'", $t); 
+	$t = preg_replace("<".$MERKHA.">", "'", $t); 
+	$t = preg_replace("<".$MERKHA_KEFULA.">", "''", $t);	
+	$t = preg_replace("<".$MUNAH.">", "'", $t);		
+	$t = preg_replace("<".$ETNAHTA.">", "´", $t); 
+	$t = preg_replace("<".$ATNAH_HAFUKH.">", "^", $t); 
+	$t = preg_replace("<".$YERAH_BEN_YOMO.">", "°", $t); 
+	
+	//Vowels	
+	$t = preg_replace("<ֹş>", "ōş", $t);
+	$t = preg_replace("<ֹr>", "ōr", $t);
+	$t = preg_replace("<ֹt>", "ōt", $t);
+	$t = preg_replace("<mōşęh>", "Mōşęh", $t);
+	$t = preg_replace("<ââ>", "â", $t);	
+	$t = preg_replace("<iīsârāeél>", "IīsârāeEél", $t);	
+	$t = preg_replace("<iīsîrāeeīl>", "IīsârāeEīl", $t);
+	$t = preg_replace("<iâērâdâéɳ>", "Iâērâdâéɳ", $t);
+	$t = preg_replace("< iī>", " iī·", $t);
+	$t = preg_replace("< uē>", " uē·", $t);
+	$t = preg_replace("< uâ>", " uî·", $t);
+	$t = preg_replace("< hē>", " hē·", $t);
+	$t = preg_replace("< bâ>", " bî·", $t);
+	$t = preg_replace("<bî·ā>", "bâā", $t);
+	$t = preg_replace("< hā>", " hā·", $t);
+	$t = preg_replace("< bî·éiɳ>", " bâéiɳ", $t);
+	$t = preg_replace("<bâāaā>", "bîā·aā", $t);
+	ExtractTrup();
+	$t = CleanUpPunctuation($t);
+	return $t;
+}
 function RomanianTransliteration($t)
 {
 	//Definitions https://github.com/symbl-cc/symbl-data 
@@ -1618,7 +1807,7 @@ function generateTransliteration($sourcetext, $targetlang, $isFirefox = false, $
 	}
 	else if ($target == "mc")
 	{
-		$t2 = MichiganClaremontTransliteration($t);
+		$t2 = MichiganClaremontTranslit($t);
 		echo $t2;
 	}
 }
