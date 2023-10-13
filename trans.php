@@ -2,57 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: trans.php,v 1.0.5 2023/10/14 13:33:34 orynider Exp $
-*
-*/
-
-//Acces check
-if (!defined('IN_PORTAL') && (strpos($_SERVER['PHP_SELF'], "unit_test.php") <= 0)) { die("Direct acces not allowed! This file was accesed: ".$_SERVER['PHP_SELF']."."); }
-
-//Constants
-include($root_path . 'contants.' . $phpEx);
-
-// new trup code
-class tree_node
-{
-	var $left = NULL;
-	var $right = NULL;
-
-	var $begin_offset;
-	var $end_offset;
-	function __construct($begin, $end)
-	{
-		$this->begin_offset = $begin;
-		$this->end_offset = $end;
-	}
-	function print_offset()
-	{
-		echo $this->begin_offset;
-		if (is_null($this->begin_offset))
-		{	
-			echo "hello";
-		}
-	}
-
-	function print_trup_tree()
-	{
-		global $t_without_trup;
-		
-		for ($i = $this->begin_offset; $i <= $this->end_offset; $i++)
-		{
-			if ($i != $this->begin_offset) // skip the first time
-			{	
-				print '.';
-				echo $t_without_trup[$i];
-			}
-		}
-		
-		if (!is_null($this->left) )
-	<?php
-/**
-*
-* @package Tranliterator
-* @version $Id: trans.php,v 1.0.5 2023/10/14 13:33:34 orynider Exp $
+* @version $Id: trans.php,v 1.0.6 2023/10/14 18:48:14 orynider Exp $
 *
 */
 
@@ -1437,7 +1387,7 @@ function MichiganClaremontTranslit($t)
 	$KAMETZ_KATAN = 'ׇ'; //\u05C7: Hebräisches Zeichen Kametz Katan || 05C7: Hebräischer Punkt Qamats Qatan
 	$KAMETZ = 'ָ'; //KAMATZ = '\u05B8'; 
 	$CHOLAM_CHASER = 'ֺ';//For Wav
-	$HOLAM_HASHER = 'ֹֹ'; //HOLAM HASHER for Wav 
+	$HOLAM_HASHER = 'ֹׄ'; //HOLAM HASHER for Wav 
 	$CHOLAM_MALEI = $CHOLAM = 'ֹֹ';//HOLAM = '\u05B9'
 	$HOLAM_MEM = 'מֹ';   
 	$HOLAM_VAV = 'וֺ';
@@ -1610,7 +1560,6 @@ function RomanianTransliteration($t)
 	SHIN_SMALIT: return 'שין-שמאלית'
 	SHIN_YEMANIT: return 'שין-ימנית'
 	*/
-	
 	$SHEVA_NACH = $SHEVA = 'ְ'; //SHVA = '\u05B0'
 	$CHATAF_SEGOL = 'ֱ'; //REDUCED_SEGOL = '\u05B1'
 	$CHATAF_PATACH = 'ֲ'; //REDUCED_PATAKH = '\u05B2'
@@ -1623,11 +1572,12 @@ function RomanianTransliteration($t)
 	$KAMETZ_KATAN = 'ׇ'; //\u05C7: Hebräisches Zeichen Kametz Katan || 05C7: Hebräischer Punkt Qamats Qatan
 	$KAMETZ = 'ָ'; //KAMATZ = '\u05B8'; 
 	$CHOLAM_CHASER = 'ֺ';//For Wav
-	$HOLAM_HASHER = 'ֹֹ'; //HOLAM HASHER for Wav	
+	$HOLAM_HASHER = 'ֹׄ'; //HOLAM HASHER for Wav 	
 	$CHOLAM_MALEI = $CHOLAM = 'ֹֹ';//HOLAM = '\u05B9'
 	$HOLAM_MEM = 'מֹ';   
 	$HOLAM_VAV = 'וֺ';
 	$HOLAM_LAMED = 'לֹ';
+	$HOLAM_BHET = 'בֹ';
 	$HOLAM = preg_replace("<".$LAMED.">", "", $HOLAM_LAMED); //$HOLAM = ' ֹ ';	
 	$METEG = 'ֽ'; //METEG = '\u05BD'
 	$MAPIQ = 'ּ'; //u05BC
@@ -1649,11 +1599,11 @@ function RomanianTransliteration($t)
 	// do not double letters in general
 	$GEMINATE_CANDIDATES = "($ALEPH|$BET|$BHET|$GIMEL|$DALED|$VAV|$HOLAM_VAV|$ZED|$TET|$YUD|$KAF|$KHAF_SOFIT|$LAMED|$MEM|$HOLAM_MEM|$NUN|$SAMECH|$PEI|$TZADI|$KUF|$SHIN$SHIN_DOT|$SHIN$SIN_DOT|$TAV)";
 	$t = preg_replace("<" . $GEMINATE_CANDIDATES . "_CHAZAK>", "\\1", $t);
-	
 	$t = preg_replace("<".$HOLAM_VAV.">", "uō", $t);
 	$t = preg_replace("<".$HOLAM_MEM.">", "mō", $t);
 	$t = preg_replace("<".$HOLAM_LAMED.">", "lō", $t);
-	
+	$t = preg_replace("<".$HOLAM_BHET.">", "vō", $t);
+
 	//Consonants
 	$t = preg_replace("<".$ALEPH.">", "e", $t);
 	$t = preg_replace("<".$BET.">", "b", $t);
@@ -1690,6 +1640,8 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<".$SHIN.$SIN_DOT.">", "s", $t);
 	$t = preg_replace("<".$TAV.">", "t", $t);
 	$t = preg_replace("<".$THAV.">", "t", $t);
+	
+	/* Vowels */
 	$t = preg_replace("<".$CHATAF_KAMETZ.">", "ā", $t);
 	$t = preg_replace("<".$KAMETZ_KATAN.">", "ā", $t);
 	$t = preg_replace("<".$KAMETZ.">", "ā", $t);
@@ -1704,6 +1656,7 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<".$TZEIREI_CHASER.">", "é", $t);
 	$t = preg_replace("<".$CHIRIK_MALEI.">", "ī", $t);
 	$t = preg_replace("<".$CHIRIK_CHASER.">", "ī", $t);
+	$t = preg_replace("<".$HOLAM_HASHER.">", "é", $t);
 	$t = preg_replace("<".$CHOLAM_MALEI.">", "ō", $t);
 	$t = preg_replace("<".$CHOLAM_CHASER.">", "ō", $t);
 	$t = preg_replace("<".$MAPIQ.">", "ō", $t);
@@ -1717,18 +1670,25 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<".$ATNAH_HAFUKH.">", "^", $t); 
 	$t = preg_replace("<".$YERAH_BEN_YOMO.">", "°", $t); 
 	
-	//Vowels	
+	//Custom	
 	$t = preg_replace("<ֹş>", "ōş", $t);
 	$t = preg_replace("<ֹr>", "ōr", $t);
 	$t = preg_replace("<ֹt>", "ōt", $t);
-	$t = preg_replace("<'ֹ'ֹ>", "ōp", $t);
 	$t = preg_replace("<ֹp>", "p", $t);
+	$t = preg_replace("<ֹe>", "eé", $t);
+	$t = preg_replace("<ֹ >", "é", $t);
+	$t = preg_replace("<ֹ>", "ō", $t);
+	$t = preg_replace("<uîruōĥē eălōhiɱ>", "uî·Ruōĥē Eălōhiɱ", $t);
 	$t = preg_replace("<mōşęh>", "Mōşęh", $t);
 	$t = preg_replace("<ââ>", "â", $t);	
 	$t = preg_replace("<iīsârāeél>", "IīsârāeEél", $t);	
 	$t = preg_replace("<iīsîrāeél>", "IīsârāeEīl", $t);
 	$t = preg_replace("<iōērîdéɳ>", "Iōērâdéɳ", $t);
 	$t = preg_replace("< iī>", " iī·", $t);
+	$t = preg_replace("<·iī>", "·iī·", $t);
+	$t = preg_replace("< iî>", " iî·", $t);
+	$t = preg_replace("<·iî>", "·iî·", $t);
+	$t = preg_replace("< iō>", " iō·", $t);
 	$t = preg_replace("< uē>", " uē·", $t);
 	$t = preg_replace("< uî>", " uî·", $t);
 	$t = preg_replace("< bî>", " bî·", $t);
@@ -1737,17 +1697,24 @@ function RomanianTransliteration($t)
 	$t = preg_replace("< bâ>", " bî·", $t);
 	$t = preg_replace("< bā>", " bā·", $t);
 	$t = preg_replace("< uō>", " uō·", $t);
+	$t = preg_replace("< uā>", " uā·", $t);
 	$t = preg_replace("<bî·ā>", "bâā", $t);
 	$t = preg_replace("< hē>", " hē·", $t);
+	$t = preg_replace("<hāiîtāh>", "hāiî·tāh", $t);
 	$t = preg_replace("< hā>", " hā·", $t);
+	$t = preg_replace("<hāeāręţ>", "hā·eāręţ", $t);
 	$t = preg_replace("< bî·éiɳ>", " bâéiɳ", $t);
 	$t = preg_replace("<bâāaā>", "bîā·aā", $t);
 	$t = preg_replace("<pōāerāɳ>", "Pōāerāɳ", $t);		
 	$t = preg_replace("<aévęr hē·Iōērâdéɳ>", "Aévęr hē·Iōērâdéɳ", $t);
+	$t = preg_replace("<iōeémęr>", "iō·eémęr", $t);
+	$t = preg_replace("<uē·iîhi>", "uē·iî·hi", $t);
 	$t = preg_replace("<bā·aārāvāh muֹl suōf>", "bā·Aārāvāh Muֹl Suōf", $t);
 	$t = preg_replace("<tpęl>", "Tōpęl", $t);
+	$t = preg_replace("<tîh>", "tâh", $t);
 	$t = preg_replace("<lāvāɳ>", "Lāvāɳ", $t);
 	$t = preg_replace("<ĥāţérōt>", "Ĥāţérōt", $t);
+	$t = preg_replace("<eălōhiɱ>", "Eălōhiɱ", $t);
 	
 	ExtractTrup();
 	$t = CleanUpPunctuation($t);
