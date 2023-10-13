@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: index.php,v 1.5 2023/10/11 10:04:08 orynider Exp $
+* @version $Id: index.php,v 1.71 2023/10/13 12:04:08 orynider Exp $
 *
 */
 define('IN_PORTAL', 1);
@@ -3739,19 +3739,18 @@ generateTransliteration($sourcetext, $targetlang, false, false);
 <form action=index.php method=post>
 <font size=-1>&nbsp;&nbsp;Transliterate text</font>
 <br>&nbsp;&nbsp;
-<textarea name=sourcetext rows=5 cols=45 wrap=PHYSICAL>
-<?php	echo $origHebrew; ?>
-</textarea>
-<br>&nbsp;&nbsp;
+<textarea name="sourcetext" rows="5" cols="45" wrap=PHYSICAL>
+<?php print $origHebrew; ?>
+</textarea><br>&nbsp;&nbsp;
 <font size=-1>from Hebrew to</font>
-<select name=targetlang selected="$_POST['targetlang']">
-<option value="academic" <?php if($_POST['targetlang'] == 'academic') {echo("selected"); } ?> >Academic</option>
-<option value="academic_u" <?php if($_POST['targetlang'] == 'academic_u'){ echo("selected"); } ?> >Academic Unicode</option>
-<option value="academic_ff" <?php if($_POST['targetlang'] == 'academic_ff'){ echo("selected"); } ?> >Academic Font Friendly</option>
-<option value="ashkenazic" <?php if($_POST['targetlang'] == 'ashkenazic'){ echo("selected"); } ?> >Ashkenazic</option>
-<option value="sefardic" <?php if($_POST['targetlang'] == 'sefardic'){ echo("selected"); } ?> >Sefardic</option>
-<option value="romanian" <?php if($_POST['targetlang'] == 'romanian'){ echo("selected"); } ?> >Romanian</option>
-<option value="mc" <?php if($_POST['targetlang'] == 'mc'){ echo("selected");} ?> >Michigan - Claremont</option>
+<select name="targetlang" selected="<?php $targetlang ?>">
+<option value="academic" <?php if($targetlang == 'academic') { print("selected"); } ?> >Academic</option>
+<option value="academic_u" <?php if($targetlang == 'academic_u'){ print("selected"); } ?> >Academic Unicode</option>
+<option value="academic_ff" <?php if($targetlang == 'academic_ff'){ print("selected"); } ?> >Academic Font Friendly</option>
+<option value="ashkenazic" <?php if($targetlang == 'ashkenazic'){ print("selected"); } ?> >Ashkenazic</option>
+<option value="sefardic" <?php if($targetlang == 'sefardic'){ print("selected"); } ?> >Sefardic</option>
+<option value="romanian" <?php if($targetlang == 'romanian'){ print("selected"); } ?> >Romanian</option>
+<option value="mc" <?php if($targetlang == 'mc'){ print("selected");} ?> >Michigan - Claremont</option>
 </select>
 <input type=hidden name=hl value="en" />
 <input type=hidden name=ie value="UTF8" />
