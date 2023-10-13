@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: trans.php,v 1.0.3 2023/10/13 11:24:08 orynider Exp $
+* @version $Id: trans.php,v 1.0.2 2023/10/12 7:04:08 orynider Exp $
 *
 */
 
@@ -20,7 +20,7 @@ class tree_node
 
 	var $begin_offset;
 	var $end_offset;
-	function tree_node($begin, $end)
+	function __construct($begin, $end)
 	{
 		$this->begin_offset = $begin;
 		$this->end_offset = $end;
@@ -150,7 +150,7 @@ function explode_split($delimiters = null, $input="")
 		}
 		
 		$query = "";
-		//die(print_R($delimiters));
+		
 		foreach($delimiters as $delimiter) 
 		{
 			$query .= preg_quote($delimiter) . "SPACE";
@@ -794,6 +794,7 @@ function AcademicFontFriendlyTransliteration($t)
 	$t = preg_replace("<".CHIRIK_CHASER.">", "i", $t);
 	$t = preg_replace("<".CHOLAM_MALEI.">", "&#244;", $t);
 	$t = preg_replace("<".CHOLAM_CHASER.">", "&#333;", $t);
+	$t = preg_replace("<".MAPIQ.">", "&#333;", $t);
 	$t = preg_replace("<".SHURUK.">", "&#251;", $t); //
 	$t = preg_replace("<".KUBUTZ.">", "u", $t);
 	 	
@@ -962,6 +963,7 @@ function AshkenazicTransliteration($t)
 	$t = preg_replace("<".$CHOLAM.">", "o", $t);
 	$t = preg_replace("<".$CHOLAM_MALEI.">", "o", $t);
 	$t = preg_replace("<".$CHOLAM_CHASER.">", "o", $t);
+	$t = preg_replace("<".$MAPIQ.">", "o", $t);
 	$t = preg_replace("<".$KUBUTZ.">", "u", $t);
 	$t = preg_replace("<".$TIPEHA.">", "'", $t); 
 	$t = preg_replace("<".$MERKHA.">", "'", $t); 
@@ -1111,7 +1113,7 @@ function SefardicTransliteration($t)
 	$t = preg_replace("<".$CHOLAM.">", "o", $t);
 	$t = preg_replace("<".$CHOLAM_MALEI.">", "o", $t);
 	$t = preg_replace("<".$CHOLAM_CHASER.">", "o", $t);
-	$t = preg_replace("<".$HOLAM_MEM.">", "mō", $t);
+	$t = preg_replace("<".$MAPIQ.">", "o", $t);
 	$t = preg_replace("<".$METEG.">", "a", $t);
 	$t = preg_replace("<".$KUBUTZ.">", "u", $t);
 	$t = preg_replace("<".$TIPEHA.">", "'", $t); 
@@ -1297,6 +1299,7 @@ function AcademicTransliteration($t)
 	$t = preg_replace("<".$CHIRIK_CHASER.">", "ī", $t);
 	$t = preg_replace("<".$CHOLAM_MALEI.">", "ō", $t);
 	$t = preg_replace("<".$CHOLAM_CHASER.">", "ō", $t);
+	$t = preg_replace("<".$MAPIQ.">", "ō", $t);
 	$t = preg_replace("<".$METEG.">", "a", $t);
 	$t = preg_replace("<".$KUBUTZ.">", "ū", $t);
 	$t = preg_replace("<".$TIPEHA.">", "'", $t); 
@@ -1465,6 +1468,7 @@ function MichiganClaremontTranslit($t)
 	$t = preg_replace("<".$CHIRIK_CHASER.">", "I", $t);
 	$t = preg_replace("<".$CHOLAM_MALEI.">", "O", $t);
 	$t = preg_replace("<".$CHOLAM_CHASER.">", "O", $t);
+	$t = preg_replace("<".$MAPIQ.">", "O", $t);
 	$t = preg_replace("<".$METEG.">", "a", $t);
 	$t = preg_replace("<".$KUBUTZ.">", "U", $t);
 	$t = preg_replace("<".$TIPEHA.">", "'", $t); 
@@ -1651,12 +1655,13 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<".$CHIRIK_CHASER.">", "ī", $t);
 	$t = preg_replace("<".$CHOLAM_MALEI.">", "ō", $t);
 	$t = preg_replace("<".$CHOLAM_CHASER.">", "ō", $t);
+	$t = preg_replace("<".$MAPIQ.">", "ō", $t);
 	$t = preg_replace("<".$METEG.">", "a", $t);
 	$t = preg_replace("<".$KUBUTZ.">", "ū", $t);
 	$t = preg_replace("<".$TIPEHA.">", "'", $t); 
 	$t = preg_replace("<".$MERKHA.">", "'", $t); 
 	$t = preg_replace("<".$MERKHA_KEFULA.">", "''", $t);	
-	$t = preg_replace("<".$MUNAH.">", "'", $t);		
+	$t = preg_replace("<".$MUNAH.">", "'", $t);	
 	$t = preg_replace("<".$ETNAHTA.">", "´", $t); 
 	$t = preg_replace("<".$ATNAH_HAFUKH.">", "^", $t); 
 	$t = preg_replace("<".$YERAH_BEN_YOMO.">", "°", $t); 
@@ -1668,12 +1673,13 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<mōşęh>", "Mōşęh", $t);
 	$t = preg_replace("<ââ>", "â", $t);	
 	$t = preg_replace("<iīsârāeél>", "IīsârāeEél", $t);	
-	$t = preg_replace("<iīsîrāeeīl>", "IīsârāeEīl", $t);
+	$t = preg_replace("<iī·sîrāeél>", "IīsârāeEīl", $t);
 	$t = preg_replace("<iâērâdâéɳ>", "Iâērâdâéɳ", $t);
 	$t = preg_replace("< iī>", " iī·", $t);
 	$t = preg_replace("< uē>", " uē·", $t);
 	$t = preg_replace("< uî>", " uî·", $t);
 	$t = preg_replace("< bî>", " bî·", $t);
+	$t = preg_replace("< bē>", " bē·", $t);
 	$t = preg_replace("< uâ>", " uî·", $t);
 	$t = preg_replace("< bâ>", " bî·", $t);
 	$t = preg_replace("<bî·ā>", "bâā", $t);
