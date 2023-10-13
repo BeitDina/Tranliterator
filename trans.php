@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: trans.php,v 1.0.3 2023/10/13 12:57:08 orynider Exp $
+* @version $Id: trans.php,v 1.0.4 2023/10/14 12:59:38 orynider Exp $
 *
 */
 
