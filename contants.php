@@ -81,7 +81,6 @@ define('CHIRIK_UNKNOWN', 'ֳ');
 define('TZEIREI', 'ֵ');
 define('TZEIREI_MALEI', 'ֵ'); //TZEIRE', '\u05B5'
 define('TZEIREI_CHASER', 'ֵ'); //TZEIRE', '\u05B5'
-define('TZEIREI_MALEI', 'ֵ');
 define('TEZEIREI_CHASER', 'ֵ');
 define('TEZEIREI_UNKNOWN', 'ֵ');
 define('TZEIREI_UNKNOWN', 'ֵ');
