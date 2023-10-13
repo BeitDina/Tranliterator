@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: trans.php,v 1.0.4 2023/10/14 12:59:38 orynider Exp $
+* @version $Id: trans.php,v 1.0.5 2023/10/14 13:33:34 orynider Exp $
 *
 */
 
@@ -1611,7 +1611,6 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<".$DALED.">", "d", $t);
 	$t = preg_replace("<".$DHALED.">", "d", $t);
 	$t = preg_replace("<".$HEH_MAPIK.">", "h", $t);
-	$t = preg_replace("<".$HEH."BOUNDARY>", "h", $t);
 	$t = preg_replace("<".$HEH.">", "h", $t);
 	$t = preg_replace("<".$VAV.">", "u", $t);
 	$t = preg_replace("<".$ZED.">", "z", $t);
@@ -1673,8 +1672,8 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<mōşęh>", "Mōşęh", $t);
 	$t = preg_replace("<ââ>", "â", $t);	
 	$t = preg_replace("<iīsârāeél>", "IīsârāeEél", $t);	
-	$t = preg_replace("<iī·sîrāeél>", "IīsârāeEīl", $t);
-	$t = preg_replace("<iâērâdâéɳ>", "Iâērâdâéɳ", $t);
+	$t = preg_replace("<iīsîrāeél>", "IīsârāeEīl", $t);
+	$t = preg_replace("<iōērîdéɳ>", "Iōērâdéɳ", $t);
 	$t = preg_replace("< iī>", " iī·", $t);
 	$t = preg_replace("< uē>", " uē·", $t);
 	$t = preg_replace("< uî>", " uî·", $t);
@@ -1682,11 +1681,19 @@ function RomanianTransliteration($t)
 	$t = preg_replace("< bē>", " bē·", $t);
 	$t = preg_replace("< uâ>", " uî·", $t);
 	$t = preg_replace("< bâ>", " bî·", $t);
+	$t = preg_replace("< bā>", " bā·", $t);
+	$t = preg_replace("< uō>", " uō·", $t);
 	$t = preg_replace("<bî·ā>", "bâā", $t);
 	$t = preg_replace("< hē>", " hē·", $t);
 	$t = preg_replace("< hā>", " hā·", $t);
 	$t = preg_replace("< bî·éiɳ>", " bâéiɳ", $t);
 	$t = preg_replace("<bâāaā>", "bîā·aā", $t);
+	$t = preg_replace("<pōāerāɳ>", "Pōāerāɳ", $t);		
+	$t = preg_replace("<aévęr hē·iōērîdéɳ>", "Aévęr hē·Iōērâdéɳ", $t);
+	$t = preg_replace("<muֹl suōf>", "Muֹl Suōf", $t);
+	$t = preg_replace("<tōpęl>", "Tōpęl", $t);
+	$t = preg_replace("<lāvāɳ>", "Lāvāɳ", $t);
+	$t = preg_replace("<ĥāţérōt>", "Ĥāţérōt", $t);
 	
 	ExtractTrup();
 	$t = CleanUpPunctuation($t);
