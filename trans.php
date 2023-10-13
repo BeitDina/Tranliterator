@@ -1034,6 +1034,7 @@ function SefardicTransliteration($t)
 	$HOLAM_MEM = 'מֹ';   
 	$HOLAM_VAV = 'וֺ';
 	$HOLAM_LAMED = 'לֹ';
+	$HOLAM_TAV = 'תֹּ';
 	$HOLAM = preg_replace("<".$LAMED.">", "", $HOLAM_LAMED); //$HOLAM = ' ֹ ';
 	$METEG = 'ֽ'; //METEG = '\u05BD'
 	$MAQAF = '־'; //u05BE
@@ -1058,6 +1059,7 @@ function SefardicTransliteration($t)
 	$t = preg_replace("<".$HOLAM_VAV.">", "uō", $t);
 	$t = preg_replace("<".$HOLAM_MEM.">", "mō", $t);
 	$t = preg_replace("<".$HOLAM_LAMED.">", "lō", $t);
+	$t = preg_replace("<".$HOLAM_TAV.">", "tō", $t);
 	
 	$t = preg_replace("<".$ALEPH.">", "e", $t);
 	$t = preg_replace("<".$BET.">", "b", $t);
@@ -1571,7 +1573,7 @@ function RomanianTransliteration($t)
 	$KAMETZ_KATAN = 'ׇ'; //\u05C7: Hebräisches Zeichen Kametz Katan || 05C7: Hebräischer Punkt Qamats Qatan
 	$KAMETZ = 'ָ'; //KAMATZ = '\u05B8'; 
 	$CHOLAM_CHASER = 'ֺ';//For Wav
-	$HOLAM_HASHER = 'ֹֹ'; //HOLAM HASHER for Wav 
+	$HOLAM_HASHER = 'ֹֹ'; //HOLAM HASHER for Wav	
 	$CHOLAM_MALEI = $CHOLAM = 'ֹֹ';//HOLAM = '\u05B9'
 	$HOLAM_MEM = 'מֹ';   
 	$HOLAM_VAV = 'וֺ';
@@ -1669,6 +1671,8 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<ֹş>", "ōş", $t);
 	$t = preg_replace("<ֹr>", "ōr", $t);
 	$t = preg_replace("<ֹt>", "ōt", $t);
+	$t = preg_replace("<'ֹ'ֹ>", "ōp", $t);
+	$t = preg_replace("<ֹp>", "p", $t);
 	$t = preg_replace("<mōşęh>", "Mōşęh", $t);
 	$t = preg_replace("<ââ>", "â", $t);	
 	$t = preg_replace("<iīsârāeél>", "IīsârāeEél", $t);	
@@ -1689,7 +1693,7 @@ function RomanianTransliteration($t)
 	$t = preg_replace("< bî·éiɳ>", " bâéiɳ", $t);
 	$t = preg_replace("<bâāaā>", "bîā·aā", $t);
 	$t = preg_replace("<pōāerāɳ>", "Pōāerāɳ", $t);		
-	$t = preg_replace("<aévęr hē·iōērîdéɳ>", "Aévęr hē·Iōērâdéɳ", $t);
+	$t = preg_replace("<aévęr hē·Iōērâdéɳ>", "Aévęr hē·Iōērâdéɳ", $t);
 	$t = preg_replace("<muֹl suōf>", "Muֹl Suōf", $t);
 	$t = preg_replace("<tōpęl>", "Tōpęl", $t);
 	$t = preg_replace("<lāvāɳ>", "Lāvāɳ", $t);
