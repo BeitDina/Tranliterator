@@ -48,6 +48,56 @@ class tree_node
 		}
 		
 		if (!is_null($this->left) )
+	<?php
+/**
+*
+* @package Tranliterator
+* @version $Id: trans.php,v 1.0.5 2023/10/14 13:33:34 orynider Exp $
+*
+*/
+
+//Acces check
+if (!defined('IN_PORTAL') && (strpos($_SERVER['PHP_SELF'], "unit_test.php") <= 0)) { die("Direct acces not allowed! This file was accesed: ".$_SERVER['PHP_SELF']."."); }
+
+//Constants
+include($root_path . 'contants.' . $phpEx);
+
+// new trup code
+class tree_node
+{
+	var $left = NULL;
+	var $right = NULL;
+
+	var $begin_offset;
+	var $end_offset;
+	function __construct($begin, $end)
+	{
+		$this->begin_offset = $begin;
+		$this->end_offset = $end;
+	}
+	function print_offset()
+	{
+		echo $this->begin_offset;
+		if (is_null($this->begin_offset))
+		{	
+			echo "hello";
+		}
+	}
+
+	function print_trup_tree()
+	{
+		global $t_without_trup;
+		
+		for ($i = $this->begin_offset; $i <= $this->end_offset; $i++)
+		{
+			if ($i != $this->begin_offset) // skip the first time
+			{	
+				print '.';
+				echo $t_without_trup[$i];
+			}
+		}
+		
+		if (!is_null($this->left) )
 		{
 			echo "[";
 			$this->left->print_trup_tree();
@@ -1694,8 +1744,8 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<bâāaā>", "bîā·aā", $t);
 	$t = preg_replace("<pōāerāɳ>", "Pōāerāɳ", $t);		
 	$t = preg_replace("<aévęr hē·Iōērâdéɳ>", "Aévęr hē·Iōērâdéɳ", $t);
-	$t = preg_replace("<muֹl suōf>", "Muֹl Suōf", $t);
-	$t = preg_replace("<tōpęl>", "Tōpęl", $t);
+	$t = preg_replace("<bā·aārāvāh muֹl suōf>", "bā·Aārāvāh Muֹl Suōf", $t);
+	$t = preg_replace("<tpęl>", "Tōpęl", $t);
 	$t = preg_replace("<lāvāɳ>", "Lāvāɳ", $t);
 	$t = preg_replace("<ĥāţérōt>", "Ĥāţérōt", $t);
 	
