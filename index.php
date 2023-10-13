@@ -1,3835 +1,1987 @@
-<?php 
+<?php
 /**
 *
 * @package Tranliterator
-* @version $Id: index.php,v 1.71 2023/10/13 14:14:08 orynider Exp $
+* @version $Id: trans.php,v 1.0.5 2023/10/14 13:33:34 orynider Exp $
 *
 */
-define('IN_PORTAL', 1);
-$phpEx = substr(strrchr(__FILE__, '.'), true);
-$root_path = "./";
 
-include($root_path . 'trans.' . $phpEx);
+//Acces check
+if (!defined('IN_PORTAL') && (strpos($_SERVER['PHP_SELF'], "unit_test.php") <= 0)) { die("Direct acces not allowed! This file was accesed: ".$_SERVER['PHP_SELF']."."); }
 
-?>
-<html>
-<head>
-	<meta http-equiv="Content-Type" content="text/html" charset="UTF-8" />
-	<meta http-equiv="Content-Style-Type" content="text/css" />
+//Constants
+include($root_path . 'contants.' . $phpEx);
+
+// new trup code
+class tree_node
+{
+	var $left = NULL;
+	var $right = NULL;
+
+	var $begin_offset;
+	var $end_offset;
+	function __construct($begin, $end)
+	{
+		$this->begin_offset = $begin;
+		$this->end_offset = $end;
+	}
+	function print_offset()
+	{
+		echo $this->begin_offset;
+		if (is_null($this->begin_offset))
+		{	
+			echo "hello";
+		}
+	}
+
+	function print_trup_tree()
+	{
+		global $t_without_trup;
+		
+		for ($i = $this->begin_offset; $i <= $this->end_offset; $i++)
+		{
+			if ($i != $this->begin_offset) // skip the first time
+			{	
+				print '.';
+				echo $t_without_trup[$i];
+			}
+		}
+		
+		if (!is_null($this->left) )
+		{
+			echo "[";
+			$this->left->print_trup_tree();
+			echo "]";
+		}
+		
+		if (!is_null($this->right) )
+		{
+			echo "[";
+			$this->right->print_trup_tree();
+			echo "]";
+		}
+	}
+
+	function generate_trup_tree()
+	{
+		global $trup;
+		
+		if ($this->begin_offset == 0 && $trup[$this->end_offset] == "SILLUK") // whole pasuk
+		{
+			// search for etnachta, if there is one
+			$i = $this->end_offset - 1;
+			while ($i >= 0)
+			{
+				if ($trup[$i] == "ETNACHTA")
+				{
+					$pos = $i;
+					break;
+				}
+				else if ($trup[$i] == "ZAKEF_KATON" || $trup[$i] == "ZAKEF_GADOL" || $trup[$i] == "TIPCHA")
+				{
+					$pos = $i;
+				}
+				$i--;
+			} // end while
+
+			// now, $pos contains position of major dichotomy
+			$this->left = new tree_node(0, $pos);
+			$this->right= new tree_node($pos + 1, $this->end_offset);
+
+			$this->left->generate_trup_tree();
+			$this->right->generate_trup_tree();
+		}
+		else if ($trup[$this->end_offset] == "SILLUK" || $trup[$this->end_offset] == "ETNACHTA") // further division of silluk, or of etnachta
+		{
+			$i = $this->end_offset - 1;
+			$pos = -1;
+			while ($i >= $this->begin_offset)
+			{
+				// this will get us the earliest subdividing trup within this segment
+				if ($trup[$i] == "ZAKEF_KATON" || $trup[$i] == "ZAKEF_GADOL" || $trup[$i] == "TIPCHA" || $trup[$i] == "SEGOLTA")
+				{
+					$pos = $i;
+				}
+				$i--;
+			} // end while
+			if ($pos != -1) // we found some disjunctive accent
+			{
+				$this->left = new tree_node($this->begin_offset, $pos);
+				$this->right= new tree_node($pos + 1, $this->end_offset);
+
+				$this->left->generate_trup_tree();
+				$this->right->generate_trup_tree();
+			}
+		}
+		else if ($trup[$this->end_offset] == "ZAKEF_KATON")
+		{
+			$i = $this->end_offset - 1;
+			$pos = -1;
+			
+			while ($i >= $this->begin_offset)
+			{
+				// this will get us the earliest subdividing trup within this segment
+				if ($trup[$i] == "PASHTA" || $trup[$i] == "YETIV" || $trup[$i] == "REVII")
+				{
+					$pos = $i;
+				}
+				$i--;
+			} // end while
+			if ($pos != -1) // we found some disjunctive accent
+			{
+				$this->left = new tree_node($this->begin_offset, $pos);
+				$this->right= new tree_node($pos + 1, $this->end_offset);
+
+				$this->left->generate_trup_tree();
+				$this->right->generate_trup_tree();
+			}
+		}
+	}
+} // end class
+
+/*
+* Funtions 
+*/        
+function explode_split($delimiters = null, $input="") 
+{
+		if($delimiters === null || !is_array($delimiters)) 
+		{
+			$delimiters = array("SPACE", $delimiters);
+		}
+		
+		$query = "";
+		
+		foreach($delimiters as $delimiter) 
+		{
+			$query .= preg_quote($delimiter) . "SPACE";
+		}
+		$query = rtrim($query, "SPACE");
+		if($query != "") 
+		{
+			$query="(".$query.")";
+			print $query . "\n";
+			return preg_split("/(".$query.")/", $input);
+			// $output = preg_split("/(@|vs)/", $input);
+			// return $output;
+		}
+		return $input;
+}
+
+function ereg_repl($pattern, $replacement, $string) 
+{ 
+	return preg_replace('/'.$pattern.'/', $replacement, $string); 
+}
+
+//Funtion redefinition ends
+function mesagehandler($msg_title, $msg_text, $l_notify, $l_return_index = "index.php") 
+{ 
+			// Do not send 200 OK, but service unavailable on errors
+			//send_status_line(503, 'Service Unavailable');
+
+			//garbage_collection();
+
+			// Try to not call the adm page data...
+
+			print '<!DOCTYPE html>';
+			print '<html dir="ltr">';
+			print '<head><meta charset="UTF-8" />';
+			print '<meta http-equiv="X-UA-Compatible" content="IE=edge" />';
+			print '<title>' . $msg_title . '</title>';
+			print '<style type="text/css">{ margin: 0; padding: 0; } html { font-size: 100%; height: 100%; margin-bottom: 1px; background-color: #E4EDF0; } body { font-family: "Lucida Grande", "Segoe UI", Helvetica, Arial, sans-serif; color: #536482; background: #E4EDF0; font-size: 62.5%; margin: 0; } ';
+			print 'a:link, a:active, a:visited { color: #006688; text-decoration: none; } a:hover { color: #DD6900; text-decoration: underline; } ';
+			print '#wrap { padding: 0 20px 15px 20px; min-width: 615px; } #page-header { text-align: right; height: 40px; } #page-footer { clear: both; font-size: 1em; text-align: center; } ';
+			print '.panel { margin: 4px 0; background-color: #FFFFFF; border: solid 1px  #A9B8C2; } ';
+			print '#errorpage #page-header a { font-weight: bold; line-height: 6em; } #errorpage #content { padding: 10px; } #errorpage #content h1 { line-height: 1.2em; margin-bottom: 0; color: #DF075C; } ';
+			print '#errorpage #content div { margin-top: 20px; margin-bottom: 5px; border-bottom: 1px solid #CCCCCC; padding-bottom: 5px; color: #333333; font: bold 1.2em "Lucida Grande", "Segoe UI", Arial, Helvetica, sans-serif; text-decoration: none; line-height: 120%; text-align: left; } \n';
+			print '</style>';
+			print '</head>';
+			print '<body id="page">';
+			print '<div id="wrap">';
+			print '	<div id="page-header">'.$l_return_index.'</div>';	
+			print '	<div id="page-body">';
+			print '	<div class="panel">';
+			print '		<div id="content">';
+			print '			<h1>' . $msg_title . '</h1>';
+			print '			<div>' . $msg_text . '</div>';
+			print $l_notify;
+			print '		</div>';
+			print '	</div>';
+			print '	</div>';
+			print '	<div id="page-footer">Powered by <a href="https://github.com/beitdina/">Beit Dina Institute</a>';
+			print '	</div>';
+			print '</div>';
+			print '</body>';
+			print '</html>';
+
+			//exit_handler();
+
+			// On a fatal error (and E_USER_ERROR *is* fatal) we never want other scripts to continue and force an exit here.
+			exit;
+}
+
+/*
+* Funtions Redefinitions for PHP 7+ and 8+
+*/
+if(!function_exists('ereg'))            { function ereg($pattern, $subject, &$matches = []) { return preg_match('/'.$pattern.'/', $subject, $matches); } }
+if(!function_exists('eregi'))           { function eregi($pattern, $subject, &$matches = []) { return preg_match('/'.$pattern.'/i', $subject, $matches); } }
+if(!function_exists('ereg_replace'))    { function ereg_replace($pattern, $replacement, $string) { return preg_replace('/'.$pattern.'/', $replacement, $string); } }
+if(!function_exists('eregi_replace'))   { function eregi_replace($pattern, $replacement, $string) { return preg_replace('/'.$pattern.'/i', $replacement, $string); } }
+if(!function_exists('split'))           { function split($pattern, $subject, $limit = -1) { return preg_split('/'.$pattern.'/', $subject, $limit); } }
+if(!function_exists('spliti'))          { function spliti($pattern, $subject, $limit = -1) { return preg_split('/'.$pattern.'/i', $subject, $limit); } }
+if(!function_exists('explode')) 		{ function explode($delimiters = null, $input = "") { return explode_split($delimiters, $input); } }
+
+/*
+* DEBUG AND ERROR HANDLING
+*/
+define('DEBUG', true); // [Admin Option] Show Footer debug stats - Actually set in phpBB/includes/constants.php
+define('DEBUG_EXTRA', true); // [Admin Option] Show memory usage. Show link to full SQL debug report in footer. Beware, this makes the page slow to load. For debugging only.
+define('INCLUDES', 'includes/'); //Main Includes folder
+@ini_set('display_errors', '1');
+//@error_reporting(E_ERROR | E_WARNING | E_PARSE); // This will NOT report uninitialized variables
+//@error_reporting(E_ALL & ~E_NOTICE); //Default error reporting in PHP 5.2+
+error_reporting(E_ALL | E_NOTICE | E_STRICT);
+@session_cache_expire (1440);
+@set_time_limit (1500);
+// end new trup code
+
+$isOpera = 0;
+$isFirefox = 0;
+$origHebrew = "";
+
+$l_about_title = 'About Transliterator';
+$l_about_desc = 'Transliterator is a mechanism offered as-is to support customers for the purpose of transliterating from Hebrew Alphabet into other alphabets. Was started by <a href="https://github.com/joshwaxman/transliterate">Joshua Waxman</a> in 2006.';
+$l_notify = 'You can read at <a href="https://github.com/BeitDina/Tranliterator/">github.com/beitdina/Trasliterator</a> more about it.<br/> Working on PHP '. PHP_VERSION .' on '. PHP_OS .'.';
+
+//
+// Show copyrights
+//
+if (isset($_REQUEST['copy']))
+{
+	mesagehandler($l_about_title, $l_about_desc, $l_notify, $root_path . 'index.' . $phpEx);
+}
+
+function PostHebrewExtendedASCIIToIntermediate($t)
+{
+	$t = preg_replace("< >", "BOUNDARY SPACE BOUNDARY ", $t);
+	$t = preg_replace("<,>", "BOUNDARY COMMA BOUNDARY ", $t);
+	$t = preg_replace("<->", "BOUNDARY DASH BOUNDARY ", $t);
+	$t = preg_replace("<\.>", "BOUNDARY PERIOD BOUNDARY ", $t);
+
+
+	$t = preg_replace("<ALEPH>", "ALEPH ", $t);
+	$t = preg_replace("<BET_U>", "BET_UNKNOWN ", $t);
+	$t = preg_replace("<GIMEL_U>", "GIMEL_UNKNOWN ", $t);
+	$t = preg_replace("<DALED_U>", "DALED_UNKNOWN ", $t);
+	$t = preg_replace("<HEH_U>", "HEH_UNKNOWN ", $t);
+	$t = preg_replace("<VAV_U>", "VAV_UNKNOWN ", $t);
+	$t = preg_replace("<ZED>", "ZED ", $t);
+	$t = preg_replace("<CHET>", "CHET ", $t);
+	$t = preg_replace("<TET>", "TET ", $t);
+	$t = preg_replace("<YUD_U>", "YUD_UNKNOWN ", $t);
+	$t = preg_replace("<KAF_U>", "KAF_UNKNOWN ", $t);
+	$t = preg_replace("<KAF_S_U>", "KAF_SOFIT_UNKNOWN ", $t);
+	$t = preg_replace("<LAMED>", "LAMED ", $t);
+	$t = preg_replace("<MEM>", "MEM ", $t);
+	$t = preg_replace("<MEM_S>", "MEM_SOFIT ", $t);
+	$t = preg_replace("<NUN>", "NUN ", $t);
+	$t = preg_replace("<NUN_S>", "NUN_SOFIT ", $t);
+	$t = preg_replace("<SAMECH>", "SAMECH ", $t);
+	$t = preg_replace("<AYIN>", "AYIN ", $t);
+	$t = preg_replace("<PEI_U>", "PEI_UNKNOWN ", $t);
+	$t = preg_replace("<PEI_S_U>", "PHEI_SOFIT", $t);
+	$t = preg_replace("<TZADI>", "TZADI ", $t);
+	$t = preg_replace("<TZADI_S>", "TZADI_SOFIT ", $t);
+	$t = preg_replace("<KUF>", "KUF ", $t);
+	$t = preg_replace("<RESH>", "RESH ", $t);
+	$t = preg_replace("<SHIN_U>", "SHIN_UNKNOWN ", $t);
+	$t = preg_replace("<TAV_U>", "TAV_UNKNOWN ", $t);
+
+
+	$t = preg_replace("<SHEVA_U>", "SHEVA_UNKNOWN ", $t);
+	$t = preg_replace("<CHATAF_SEGOL>", "CHATAF_SEGOL ", $t);
+	$t = preg_replace("<CHATAF_PATACH>", "CHATAF_PATACH ", $t);
+	$t = preg_replace("<CHATAF_KAMETZ>", "CHATAF_KAMETZ ", $t);
+	$t = preg_replace("<CHIRIK_U>", "CHIRIK_UNKNOWN ", $t);
+	$t = preg_replace("<TZEIREI_U>", "TZEIREI_UNKNOWN ", $t);
+	$t = preg_replace("<SEGOL>", "SEGOL ", $t);
+	$t = preg_replace("<PATACH_U>", "PATACH_UNKNOWN ", $t);
+	$t = preg_replace("<KAMETZ>", "KAMETZ ", $t);
+	$t = preg_replace("<CHOLAM_U>", "CHOLAM_UNKNOWN ", $t);
+	$t = preg_replace("<KUBUTZ>", "KUBUTZ ", $t);
+	$t = preg_replace("<DAGESH_U>", "DAGESH_UNKNOWN ", $t);
+	$t = preg_replace("<SHIN_DOT>", "SHIN_DOT ", $t);
+	$t = preg_replace("<SIN_DOT>", "SIN_DOT ", $t);
+
+	return $t;
+}
+
+function PostHebrewExtendedASCIIToEncodedUnicode($t)
+{
+
+	$t = preg_replace("<ALEPH>", "&#1488;", $t);
+	$t = preg_replace("<BET_U>", "&#1489;", $t);
+	$t = preg_replace("<GIMEL_U>", "&#1490;", $t);
+	$t = preg_replace("<DALED_U>", "&#1491;", $t);
+	$t = preg_replace("<HEH_U>", "&#1492;", $t);
+	$t = preg_replace("<VAV_U>", "&#1493;", $t);
+	$t = preg_replace("<ZED>", "&#1494;", $t);
+	$t = preg_replace("<CHET>", "&#1495;", $t);
+	$t = preg_replace("<TET>", "&#1496;", $t);
+	$t = preg_replace("<YUD_U>", "&#1497;", $t);
+	$t = preg_replace("<KAF_U>", "&#1499;", $t);
+	$t = preg_replace("<KAF_S_U>", "&#1498;", $t);
+	$t = preg_replace("<LAMED>", "&#1500;", $t);
+	$t = preg_replace("<MEM>", "&#1502;", $t);
+	$t = preg_replace("<MEM_S>", "&#1501;", $t);
+	$t = preg_replace("<NUN>", "&#1504;", $t);
+	$t = preg_replace("<NUN_S>", "&#1503;", $t);
+	$t = preg_replace("<SAMECH>", "&#1505;", $t);
+	$t = preg_replace("<AYIN>", "&#1506;", $t);
+	$t = preg_replace("<PEI_U>", "&#1508;", $t);
+	$t = preg_replace("<PEI_S_U>", "&#1507;", $t);
+	$t = preg_replace("<TZADI>", "&#1510;", $t);
+	$t = preg_replace("<TZADI_S>", "&#1509;", $t);
+	$t = preg_replace("<KUF>", "&#1511;", $t);
+	$t = preg_replace("<RESH>", "&#1512;", $t);
+	$t = preg_replace("<SHIN_U>", "&#1513;", $t);
+	$t = preg_replace("<TAV_U>", "&#1514;", $t);
+
+	$t = preg_replace("<SHEVA_U>", "&#1456;", $t);
+	$t = preg_replace("<CHATAF_SEGOL>", "&#1457;", $t);
+	$t = preg_replace("<CHATAF_PATACH>", "&#1458;", $t);
+	$t = preg_replace("<CHATAF_KAMETZ>", "&#1459;", $t);
+	$t = preg_replace("<CHIRIK_U>", "&#1460;", $t);
+	$t = preg_replace("<TZEIREI_U>", "&#1461;", $t);
+	$t = preg_replace("<SEGOL>", "&#1462;", $t);
+	$t = preg_replace("<PATACH_U>", "&#1463;", $t);
+	$t = preg_replace("<KAMETZ>", "&#1464;", $t);
+	$t = preg_replace("<CHOLAM_U>", "&#1465;", $t);
+	$t = preg_replace("<KUBUTZ>", "&#1467;", $t);
+	$t = preg_replace("<DAGESH_U>", "&#1468;", $t);
+	$t = preg_replace("<SHIN_DOT>", "&#1473;", $t);
+	$t = preg_replace("<SIN_DOT>", "&#1474;", $t);
+
+	return $t;
+}
+
+
+function PostHebrewToIntermediate($t)
+{
+	$t = preg_replace("< >", "BOUNDARY SPACE BOUNDARY ", $t);
+	$t = preg_replace("<,>", "BOUNDARY COMMA BOUNDARY ", $t);
+	$t = preg_replace("<->", "BOUNDARY DASH BOUNDARY ", $t);
+	$t = preg_replace("<\.>", "BOUNDARY PERIOD BOUNDARY ", $t);
 	
-	<meta name="title"       content="Transliterator Index" />
-	<meta name="author"      content="Beit Dina Bible Arheology and Translation Institute @ beitdina.net" />
-	<meta name="copyright"   content="default template © Beit Dina 2019 based on subSilver style © 2005 phpBB Group." />
-	<meta name="keywords"    content="Beit, Dina, Bible, Arheology" />
-	<meta name="description" lang="en" content="Directory Index. This is the description search engines show when listing your site." />
-	<meta name="category"    content="general" />
-	<meta name="robots"      content="index,follow" />
-	<meta name="revisit-after" content="7 days" >
+	$t = preg_replace("<&#1488;>", "ALEPH ", $t);
+	$t = preg_replace("<&#1489;>", "BET_UNKNOWN ", $t);
+	$t = preg_replace("<&#1490;>", "GIMEL_UNKNOWN ", $t);
+	$t = preg_replace("<&#1491;>", "DALED_UNKNOWN ", $t);
+	$t = preg_replace("<&#1492;>", "HEH_UNKNOWN ", $t);
+	$t = preg_replace("<&#1493;>", "VAV_UNKNOWN ", $t);
+	$t = preg_replace("<&#1494;>", "ZED ", $t);
+	$t = preg_replace("<&#1495;>", "CHET ", $t);
+	$t = preg_replace("<&#1496;>", "TET ", $t);
+	$t = preg_replace("<&#1497;>", "YUD_UNKNOWN ", $t);
+	$t = preg_replace("<&#1498;>", "KAF_SOFIT_UNKNOWN ", $t);
+	$t = preg_replace("<&#1499;>", "KAF_UNKNOWN ", $t);
+	$t = preg_replace("<&#1500;>", "LAMED ", $t);
+	$t = preg_replace("<&#1501;>", "MEM_SOFIT ", $t);
+	$t = preg_replace("<&#1502;>", "MEM ", $t);
+	$t = preg_replace("<&#1503;>", "NUN_SOFIT ", $t);
+	$t = preg_replace("<&#1504;>", "NUN ", $t);
+	$t = preg_replace("<&#1505;>", "SAMECH ", $t);
+	$t = preg_replace("<&#1506;>", "AYIN ", $t);
+	$t = preg_replace("<&#1507;>", "PHEI_SOFIT ", $t);
+	$t = preg_replace("<&#1508;>", "PEI_UNKNOWN ", $t);
+	$t = preg_replace("<&#1509;>", "TZADI_SOFIT ", $t);
+	$t = preg_replace("<&#1510;>", "TZADI ", $t);
+	$t = preg_replace("<&#1511;>", "KUF ", $t);
+	$t = preg_replace("<&#1512;>", "RESH ", $t);
+	$t = preg_replace("<&#1513;>", "SHIN_UNKNOWN ", $t);
+	$t = preg_replace("<&#1514;>", "TAV_UNKNOWN ", $t);
+
+	// now for the nikud
+	$t = preg_replace("<&#1456;>", "SHEVA_UNKNOWN ", $t);
+	$t = preg_replace("<&#1457;>", "CHATAF_SEGOL ", $t);
+	$t = preg_replace("<&#1458;>", "CHATAF_PATACH ", $t);
+	$t = preg_replace("<&#1459;>", "CHATAF_KAMETZ ", $t);
+	$t = preg_replace("<&#1460;>", "CHIRIK_UNKNOWN ", $t);
+	$t = preg_replace("<&#1461;>", "TZEIREI_UNKNOWN ", $t);
+	$t = preg_replace("<&#1462;>", "SEGOL ", $t);
+	$t = preg_replace("<&#1464;>", "KAMETZ ", $t);
+	$t = preg_replace("<&#1463;>", "PATACH_UNKNOWN ", $t);
+	$t = preg_replace("<&#1465;>", "CHOLAM_UNKNOWN ", $t);
+	$t = preg_replace("<&#1467;>", "KUBUTZ ", $t);
+
+	$t = preg_replace("<&#1473;>", "SHIN_DOT ", $t);
+	$t = preg_replace("<&#1474;>", "SIN_DOT ", $t);
+
+	$t = preg_replace("<&#1468;>", "DAGESH_UNKNOWN ", $t);
+
+	// trup code now
+	$t = preg_replace("<&#1431;>", "REVII ", $t);
+	$t = preg_replace("<&#1444;>", "MAHPACH ", $t);
+	$t = preg_replace("<&#1433;>", "KADMA ", $t);
+	$t = preg_replace("<&#1443;>", "MUNACH ", $t);
+	$t = preg_replace("<&#1428;>", "ZAKEF_KATON ", $t);
+	$t = preg_replace("<&#1429;>", "ZAKEF_GADOL ", $t);
+	$t = preg_replace("<&#1445;>", "MERCHA ", $t);
+	$t = preg_replace("<&#1430;>", "TIPCHA ", $t);
+	$t = preg_replace("<&#1425;>", "ETNACHTA ", $t);
+	$t = preg_replace("<&#1469;>", "METEG ", $t);
+	$t = preg_replace("<&#1475;>", "SOF_PASUK ", $t);
+	$t = preg_replace("<&#1435;>", "TEVIR ", $t);
+	$t = preg_replace("<&#1447;>", "DARGA ", $t);
+	$t = preg_replace("<&#1436;>", "GERESH ", $t);
+	$t = preg_replace("<&#1438;>", "GERSHAYIM ", $t);
+	$t = preg_replace("<&#1454;>", "ZARKA ", $t);
+	$t = preg_replace("<&#1426;>", "SEGOLTA ", $t);
+	$t = preg_replace("<&#1440;>", "TELISHA_KETANA ", $t);
+	$t = preg_replace("<&#1449;>", "TELISHA_GEDOLA ", $t);
+
+	// since until now expressions were escaped as in &#number; we only handle now
+	$t = preg_replace("<;>", "BOUNDARY SEMICOLON BOUNDARY ", $t);
+
+	return $t;
+}
+
+function handleSpecials($t)
+{
+	// certain penultimately stressed words s/t mess up the
+	// transliteration, which assumes ultimate stress. detecting
+	// stress is a non-trivial matter, and so we handle this here
+	// by listing the common words and fixing the mapping a bit
+	// 1. mitzrAyma
+	$t = ereg_repl("(". MEM ." ". CHIRIK_MALEI ." ". TZADI ." ". SHEVA_NACH ." ". RESH ." ". KAMETZ . YUD . ")" . "(" . SHEVA_NA . ")" . "(" . MEM ." ". KAMETZ ." ". HEH .")",
+			"\\1 ". SHEVA_NACH ." \\3", $t);
+	return $t;
+}
+
+// waxmanjo edit 20160828
+// In the past, we made the assumption that the dagesh immediately followed the consonant
+// However, I've now encountered dagesh after the nikkud instead of preceding it. Rather than deal with both cases,
+// we will change one case into the other.
+function flipDageshNikkud($t)
+{
+	$NIKUD = "(".PATACH."|".PATACH_GANUV."|".PATACH_UNKNOWN."|".CHATAF_PATACH."|".KAMETZ."|".CHATAF_KAMETZ."|".SHEVA."|".SHEVA_NACH."|".SHEVA_UNKNOWN."|".SEGOL."|".CHATAF_SEGOL."|".TZEIREI."|".TZEIREI_MALEI."|".TEZEIREI_CHASER."|".CHIRIK_MALEI."|".CHIRIK_CHASER."|".CHIRIK."|".CHOLAM_CHASER."|".CHOLAM_MALEI."|".CHOLAM."|".KUBUTZ.")";
+	$t = preg_replace("<" . $NIKUD . DAGESH_UNKNOWN.">", DAGESH_UNKNOWN. "\\1", $t);
+	return $t;
+}
+
+// waxmanjo edit 20160828
+// In the past, we made the assumption that the shin or sin dot immediately followed the consonant shin/sin.
+// However, I've now encountered the shin and sin dot after the nikkud instead of preceding it. Rather than deal with both cases,
+// we will change one case into the other.
+function flipShinSinDotNikkud($t)
+{
+	$NIKUD = "(".PATACH."|".PATACH_GANUV."|".PATACH_UNKNOWN."|".CHATAF_PATACH."|".KAMETZ."|".CHATAF_KAMETZ."|".SHEVA_UNKNOWN."|".SEGOL."|".CHATAF_SEGOL."|".TZEIREI_UNKNOWN."|".TZEIREI_MALEI."|".TEZEIREI_CHASER."|".CHIRIK_MALEI."|".CHIRIK_CHASER."|".CHIRIK_UNKNOWN."|".CHOLAM_CHASER."|".CHOLAM_MALEI."|".CHOLAM_UNKNOWN."|".KUBUTZ.")";
+
+	$t = preg_replace("<".SHIN_UNKNOWN . $NIKUD . SHIN_DOT.">", SHIN_UNKNOWN . SHIN_DOT ."\\1", $t);
+	$t = preg_replace("<".SHIN_UNKNOWN . $NIKUD . SIN_DOT.">", SHIN_UNKNOWN . SIN_DOT ."\\1", $t);
+	return $t;
+}
+
+function ApplyRulesToIntermediateForm($t)
+{
+	// now that we have it in intermediate form
+	// we want to perform some transformations
 	
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<meta name="apple-mobile-web-app-capable" content="yes" />
-	<meta name="apple-mobile-web-app-status-bar-style" content="blue" />
- 	
-	<title>Transliterate</title>
-	<style type="text/css">
-	<!-- Optionally, redefine some defintions for gecko browsers -->
-	/*  phpBB3 Style Sheet some part is GNU GPL v2.0 License
-		--------------------------------------------------------------
-		Style name:		subSilver
-		Based on style:	subSilver Theme for phpBB2 by phpBB Group
-		Original author:	OryNider, using subsilver2 Theme as a base.	
-		This is an alternative subsilver2 style with default colors.
-		--------------------------------------------------------------
-	*/
-
-	/* Layout
-	 ------------ */
-	* {
-		/* Reset browsers default margin, padding and font sizes */
-		margin: 0;
-		padding: 0;
-	}
-
-	abbr {
-		text-decoration: none;
-	}
-
-	html {
-		font-size: 100%;
-	}
-	/* General page style. The scroll bar colours only visible in IE5.5+ */
-	body {
-		background-color: #E5E5E5;
-		scrollbar-face-color: #DEE3E7;
-		scrollbar-highlight-color: #FFFFFF;
-		scrollbar-shadow-color: #DEE3E7;
-		scrollbar-3dlight-color: #D1D7DC;
-		scrollbar-arrow-color:  #006699;
-		scrollbar-track-color: #EFEFEF;
-		scrollbar-darkshadow-color: #98AAB1;
-		padding-right: 0px; 
-		padding-left: 0px; 
-		background: url("./images/backgroundbluelight.gif"); 
-		padding-bottom: 0px; 
-		margin: 5px 10px 10px; 
-		font-family: "Roboto", Verdana, Geneva, 'Lucida Grande', Arial, "Helvetica Neue", Helvetica, sans-serif, droid-serif;  
-		padding-top: 0px;
-		font-size: 89.5%;
-		margin: 0;	
-	}
-
-	#wrapheader {
-		min-height: 120px;
-		height: auto !important;
-		height: 120px;
-	/*	background-image: url('./images/background.gif');
-		background-repeat: repeat-x;*/
-	/*	padding: 0 25px 15px 25px;*/
-		padding: 0;
-	}
-
-	#wrapcentre {
-		margin: 15px 25px 0 25px;
-	}
-
-	#wrapfooter {
-		text-align: center;
-		clear: both;
-	}
-
-	#wrapnav {
-		width: 100%;
-		margin: 0;
-		background-color: #ECECEC;
-		border-width: 1px;
-		border-style: solid;
-		border-color: #A9B8C2;
-	}
-
-	#logodesc {
-		margin-bottom: 5px;
-		padding: 5px 25px;
-		background: transparent none 0 0 no-repeat;		
-		border-bottom: 1px solid #D9DFE4;
-	}
-
-	#menubar {
-		margin: 0 25px;
-	}
-
-	#datebar {
-		margin: 10px 25px 0 25px;
-	}
-
-	#findbar {
-		width: 100%;
-		margin: 0;
-		padding: 0;
-		border: 0;
-	}
-
-	.forumrules {
-		background-color: #F9CC79;
-		border-width: 1px;
-		border-style: solid;
-		border-color: #BB9860;
-		padding: 4px;
-		font-weight: normal;
-		font-size: 1.1em;
-		font-family: "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
-	}
-
-	.forumrules h3 {
-		color: red;
-	}
-
-	#pageheader { }
-	#pagecontent { }
-	#pagefooter { }
-
-	#poll { }
-	#postrow { }
-	#postdata { }
-
-
-	/*  Text
-	 --------------------- */
-	h1 {
-		color: black;
-		font-family: "Lucida Grande", "Trebuchet MS", Verdana, sans-serif;
-		font-weight: bold;
-		font-size: 1.8em;
-		text-decoration: none;
-	}
-
-	h2 {
-		font-family: Arial, Helvetica, sans-serif;
-		font-weight: bold;
-		font-size: 1.5em;
-		text-decoration: none;
-		line-height: 120%;
-	}
-
-	h3 {
-		font-size: 1.3em;
-		font-weight: bold;
-		font-family: Arial, Helvetica, sans-serif;
-		line-height: 120%;
-	}
-
-	h4 {
-		margin: 0;
-		font-size: 1.1em;
-		font-weight: bold;
-	}
-
-	p {
-		font-size: 1.1em;
-	}
-
-	p.moderators {
-		margin: 0;
-		float: left;
-		color: black;
-		font-weight: bold;
-	}
-
-	.rtl p.moderators {
-		float: right;
-	}
-
-	p.linkmcp {
-		margin: 0;
-		float: right;
-		white-space: nowrap;
-	}
-
-	.rtl p.linkmcp {
-		float: left;
-	}
-
-	p.breadcrumbs {
-		margin: 0;
-		float: left;
-		color: black;
-		font-weight: bold;
-		white-space: normal;
-		font-size: 1em;
-	}
-
-	.rtl p.breadcrumbs {
-		float: right;
-	}
-
-	p.datetime {
-		margin: 0;
-		float: right;
-		white-space: nowrap;
-		font-size: 1em;
-	}
-
-	.rtl p.datetime {
-		float: left;
-	}
-
-	p.searchbar {
-		padding: 2px 0;
-		white-space: nowrap;
-	} 
-
-	p.searchbarreg {
-		margin: 0;
-		float: right;
-		white-space: nowrap;
-	}
-
-	.rtl p.searchbarreg {
-		float: left;
-	}
-
-	p.forumdesc {
-		padding-bottom: 4px;
-	}
-
-	p.topicauthor {
-		margin: 1px 0;
-	}
-
-	p.topicdetails {
-		margin: 1px 0;
-	}
-
-	.postreported, .postreported a:visited, .postreported a:hover, .postreported a:link, .postreported a:active {
-		margin: 1px 0;
-		color: red;
-		font-weight:bold;
-	}
-
-	.postapprove, .postapprove a:visited, .postapprove a:hover, .postapprove a:link, .postapprove a:active {
-		color: green;
-		font-weight:bold;
-	}
-
-	.postapprove img, .postreported img {
-		vertical-align: bottom;
-		padding-top: 5px;
-	}
-
-	.postauthor {
-		color: #000000;
-	}
-
-	.postdetails {
-		color: #000000;
-	}
-
-
-	/* The content of the posts (body of text) */
-	.postbody { 
-		font-size : 15px;
-		line-height: 14px;	
-		font-family: "Trebuchet MS", "Lucida Grande", Helvetica, Arial, Times, sans-serif;
-	}
-
-	.postbody li, ol, ul {
-		margin: 0 0 0 1.5em;
-	}
-
-	.rtl .postbody li, .rtl ol, .rtl ul {
-		margin: 0 1.5em 0 0;
-	}
-
-	.posthilit {
-		background-color: yellow;
-	}
-
-	.nav {
-		margin: 0;
-		color: black;
-		font-weight: bold;
-	}
-
-	/* Action-bars (container for post/reply buttons, pagination, etc.)
-	---------------------------------------- */
-
-	fa-fw {
-		width: 1.28571429em;
-		text-align: center;
-	}
-
-	.action-bar {
-		font-size: 11px;
-		margin: 4px 0;
-	}
-
-	.forabg + .action-bar {
-		margin-top: 2em;
-	}
-
-	.action-bar .button {
-		margin-right: 5px;
-		float: left;
-	}
-
-	.action-bar .button-search {
-		margin-right: 0;
-	}
-
-	.action-bar .newtopic, .action-bar .postreply {
-		border-color: #1C0046;
-		background-color: #AB95CB; /* Old browsers */ /* FF3.6+ */
-		background-image: -webkit-linear-gradient(top, #AB95CB 0%, #1A0040 100%);
-		background-image: linear-gradient(to bottom, #AB95CB 0%,#1A0040 100%); /* W3C */
-		filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#AB95CB', endColorstr='#1A0040',GradientType=0 ); /* IE6-9 */
-	}
-
-	.action-bar .newtopic:hover, .action-bar .postreply:hover {
-		background-color: #1A0040; /* Old browsers */ /* FF3.6+ */
-		background-image: -webkit-linear-gradient(top, #1A0040 0%, #AB95CB 100%);
-		background-image: linear-gradient(to bottom, #1A0040 0%,#AB95CB 100%); /* W3C */
-		filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#1A0040', endColorstr='#AB95CB',GradientType=0 ); /* IE6-9 */
-	}
-
-	.pagination {
-		padding: 4px;
-		color: black;
-		font-size: 1em;
-		font-weight: bold;
-	}
-
-	.cattitle {
-
-	}
-
-	/* General text */
-	.gen {
-		margin: 1px 1px;
-	}
-	.genmed {
-		margin: 1px 1px;
-	}
-	.gensmall {
-		margin: 1px 1px;
-	}
-
-	/* font sizes for old modules */
-	.gen { font-size : 12px; }
-	.genmed { font-size : 11px; }
-	.gensmall { font-size : 10px; }
-
-	.gen,.genmed,.gensmall { color : #000000; }
-	a.gen,a.genmed,a.gensmall { color: #072978; text-decoration: none; }
-	a.gen:hover,a.genmed:hover,a.gensmall:hover	{ color: #041642; text-decoration: underline; }
-
-
-	/* The register, login, search etc links at the top of the page */
-	.mainmenu		{ font-size : 11px; color : #000000 }
-	a.mainmenu		{ text-decoration: none; color : #072978;  }
-	a.mainmenu:hover{ text-decoration: underline; color : #041642; }
-
-	/* Forum category titles */
-	.cattitle		{ font-weight: bold; font-size: 12px ; letter-spacing: 1px; color : #072978}
-	a.cattitle		{ text-decoration: none; color : #072978; }
-	a.cattitle:hover{ text-decoration: underline; }
-
-	/* Forum title: Text and link to the forums used in: index.php */
-	.forumlink		{ font-weight: bold; font-size: 12px; color : #072978; }
-	a.forumlink 	{ text-decoration: none; color : #072978; }
-	a.forumlink:hover{ text-decoration: underline; color : #041642; }
-
-	/* Used for the navigation text, (Page 1,2,3 etc) and the navigation bar when in a forum */
-	.nav			{ font-weight: bold; font-size: 11px; color : #000000;}
-	a.nav			{ text-decoration: none; color : #072978; }
-	a.nav:hover		{ text-decoration: underline; }
-
-
-	/* titles for the topics: could specify viewed link colour too */
-	.topictitle,h1,h2	{ font-weight: bold; font-size: 11px; color : #000000; }
-	a.topictitle:link   { text-decoration: none; color : #072978; }
-	a.topictitle:visited { text-decoration: none; color : #072978; }
-	a.topictitle:hover	{ text-decoration: underline; color : #041642; }
-
-
-	/* Name of poster in viewmsg.php and viewtopic.php and other places */
-	.name			{ font-size : 11px; color : #000000;}
-
-	/* Location, number of posts, post date etc */
-	.postdetails		{ font-size : 10px; color : #000000; }
-
-	a.postlink:link	{ text-decoration: none; color : #072978 }
-	a.postlink:visited { text-decoration: none; color : #072978; }
-	a.postlink:hover { text-decoration: underline; color : #041642}
-
-
-	/* Quote & Code blocks */
-	.code {
-		font-family: Courier, 'Courier New', sans-serif; font-size: 11px; color: #006600;
-		background-color: #FAFAFA; border: #80BBEC; border-style: solid;
-		border-left-width: 1px; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px
-	}
-
-	.quote {
-		font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 11px; color: #444444; line-height: 125%;
-		background-color: #FAFAFA; border: #80BBEC; border-style: solid;
-		border-left-width: 1px; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px
-	}
-
-
-	/* Copyright and bottom info */
-	.copyright		{ font-size: 10px; font-family: Verdana, Arial, Helvetica, sans-serif; color: #444444; letter-spacing: -1px;}
-	a.copyright		{ color: #444444; text-decoration: none;}
-	a.copyright:hover { color: #000000; text-decoration: underline;}
-
-
-	.copyright {
-		color: #444;
-		font-weight: normal;
-		font-family: "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
-	}
-
-	.titles {
-		font-family: "Lucida Grande", Helvetica, Arial, sans-serif;
-		font-weight: bold;
-		font-size: 1.3em;
-		text-decoration: none;
-	}
-
-	.error {
-		color: red;
-	}
-
-
-	/* Horizontal lists
-	----------------------------------------*/
-	.navbar ul.linklist {
-		padding: 2px 0;
-		list-style-type: none;
-	}
-
-	ul.linklist {
-		display: block;
-		margin: 0;
-	}
-
-	.cp-main .panel {
-		padding: 5px 10px;
-	}
-
-	ul.linklist > li {
-		float: left;
-		font-size: 1.1em;
-		line-height: 2.2em;
-		list-style-type: none;
-		margin-right: 7px;
-		width: auto;
-	}
-
-	ul.linklist > li.rightside, p.rightside, a.rightside {
-		float: right;
-		margin-right: 0;
-		margin-left: 7px;
-		text-align: right;
-	}
-
-	ul.navlinks {
-		border-top: 1px solid transparent;
-	}
-
-	ul.leftside {
-		float: left;
-		margin-left: 0;
-		margin-right: 5px;
-		text-align: left;
-	}
-
-	ul.rightside {
-		float: right;
-		margin-left: 5px;
-		margin-right: -5px;
-		text-align: right;
-	}
-
-	ul.linklist li.responsive-menu {
-		position: relative;
-		margin: 0 5px 0 0;
-	}
-
-	.hasjs ul.linklist.leftside, .hasjs ul.linklist.rightside {
-		max-width: 48%;
-	}
-
-	.hasjs ul.linklist.fullwidth {
-		max-width: none;
-	}
-
-	li.responsive-menu.dropdown-right .dropdown {
-		left: -9px;
-	}
-
-	li.responsive-menu.dropdown-left .dropdown {
-		right: -6px;
-	}
-
-	ul.linklist .dropdown {
-		top: 22px;
-	}
-
-	ul.linklist .dropdown-up .dropdown {
-		bottom: 18px;
-		top: auto;
-	}
-
-	/* Bulletin icons for list items
-	----------------------------------------*/
-	ul.linklist.bulletin > li:before {
-		display: inline-block;
-		content: "\2022";
-		font-size: inherit;
-		line-height: inherit;
-		padding-right: 4px;
-	}
-
-	ul.linklist.bulletin > li:first-child:before,
-	ul.linklist.bulletin > li.rightside:last-child:before {
-		content: none;
-	}
-
-	ul.linklist.bulletin > li.no-bulletin:before {
-		content: none;
-	}
-
-	.responsive-menu:before {
-		display: none !important;
-	}
-
-	/* Profile in overall_header.html */
-	.header-profile {
-		display: inline-block;
-		vertical-align: top;
-	}
-
-	a.header-avatar,
-	a.header-avatar:hover {
-		text-decoration: none;
-	}
-
-	a.header-avatar img {
-		margin-bottom: 2px;
-		max-height: 20px;
-		vertical-align: middle;
-		width: auto;
-	}
-
-	a.header-avatar span:after {
-		content: '\f0dd';
-		display: inline-block;
-		font: normal normal normal 14px/1 FontAwesome;
-		padding-left: 6px;
-		padding-top: 2px;
-		vertical-align: top;
-	}
-
-	/* -------------------------------------------------------------- /*
-		$Icons
-	/* -------------------------------------------------------------- */
-
-	/* Global module setup
-	---------------------------------------- */
-
-	/* Renamed version of .fa class for agnostic usage of icon fonts.
-	 * Just change the name of the font after the 14/1 to the name of
-	 * the font you wish to use.
+	$t = flipDageshNikkud($t);
+	$t = flipShinSinDotNikkud($t);	
+
+	// first, arrive at correct shin/sin
+	// and alas! dagesh can intervene between shin and shin dot, and same for sin
+	$t = preg_replace("<DAGESH_UNKNOWN (SHIN_DOT|SIN_DOT)>", "\\1 DAGESH_UNKNOWN", $t);
+
+	$t = preg_replace("<SHIN_UNKNOWN SHIN_DOT>", "SHIN ", $t);
+	$t = preg_replace("<SHIN_UNKNOWN SIN_DOT>", "SIN ", $t);
+
+	// then, handle heh/mapik heh
+	$t = preg_replace("<HEH_UNKNOWN DAGESH_UNKNOWN>", "HEH_MAPIK", $t);
+	$t = preg_replace("<HEH_UNKNOWN>", "HEH", $t);
+
+	// vav cholam = cholam malei, every other cholam = chaser
+	$t = preg_replace("<VAV_UNKNOWN CHOLAM_UNKNOWN>", "CHOLAM_MALEI", $t);
+	$t = preg_replace("<CHOLAM_UNKNOWN>", "CHOLAM_CHASER", $t);
+
+	// handle examples like tetzavveh:
+	// vav_unknown dagesh_unknown vowel = vav_chazak vowel
+	$NIKUD = "(PATACH|PATACH_GANUV|CHATAF_PATACH|KAMETZ|CHATAF_KAMETZ|SHEVA_NA|SHEVA_NACH|SHEVA_UNKNOWN|SEGOL|CHATAF_SEGOL|TZEIREI_UNKNOWN|TZEIREI_MALEI|TEZEIREI_CHASER|CHIRIK_MALEI|CHIRIK_CHASER|CHOLAM_CHASER|CHOLAM_MALEI)";
+	$t = preg_replace("<VAV_UNKNOWN DAGESH_UNKNOWN $NIKUD>", "VAV_CHAZAK \\1", $t);
+
+	// else - vav_unknown dagesh_unknown = SHURUK
+	$t = preg_replace("<VAV_UNKNOWN DAGESH_UNKNOWN>", "SHURUK", $t);
+
+	// remaining vav will be actual vav
+	$t = preg_replace("<VAV_UNKNOWN>", "VAV", $t);
+
+	// shva at the end of a word will always be shva nach
+	$t = preg_replace("<SHEVA_UNKNOWN BOUNDARY>",
+			"SHEVA_NACH BOUNDARY", $t);
+
+	// BEGEDKEFET
+	// then, handle begedkefet at the beginning of a word = plosive
+	$t = preg_replace("<BOUNDARY ((BET|GIMEL|DALED|KAF|PEI|TAV)_UNKNOWN) DAGESH_UNKNOWN>", "BOUNDARY \\2", $t);
+
+	// begedkefet followed by anything but dagesh is the fricative
+	$BGDKFT_UNKNOWN = "(BET_UNKNOWN|GIMEL_UNKNOWN|DALED_UNKNOWN|KAF_UNKNOWN|PEI_UNKNOWN|TAV_UNKNOWN)";
+
+	$t = preg_replace("<BET_UNKNOWN BOUNDARY>", "BHET BOUNDARY", $t);
+	$t = preg_replace("<BET_UNKNOWN " . $NIKUD . ">", "BHET \\1", $t);
+
+	$t = preg_replace("<GIMEL_UNKNOWN BOUNDARY>", "GIMEL_UNKNOWN BOUNDARY", $t);
+	$t = preg_replace("<GIMEL_UNKNOWN " . $NIKUD . ">", "GHIMEL \\1", $t);
+
+	$t = preg_replace("<DALED_UNKNOWN BOUNDARY>", "DHALED BOUNDARY", $t);
+	$t = preg_replace("<DALED_UNKNOWN " . $NIKUD . ">", "DHALED \\1", $t);
+
+	// handle any chaf sofit nikud at the end
+	$t = preg_replace("<KAF_SOFIT_UNKNOWN $NIKUD BOUNDARY>", "KHAF_SOFIT \\1 BOUNDARY", $t);
+	// maybe user forgot the sheva nach?
+	$t = preg_replace("<KAF_SOFIT_UNKNOWN BOUNDARY>", "KHAF_SOFIT BOUNDARY", $t);
+
+	$t = preg_replace("<KAF_UNKNOWN " . $NIKUD . ">", "KHAF \\1", $t);
+
+	$t = preg_replace("<PEI_UNKNOWN BOUNDARY>", "PHEI BOUNDARY", $t);
+	$t = preg_replace("<PEI_UNKNOWN " . $NIKUD . ">", "PHEI \\1", $t);
+
+	$t = preg_replace("<TAV_UNKNOWN BOUNDARY>", "THAV BOUNDARY", $t);
+	$t = preg_replace("<TAV_UNKNOWN " . $NIKUD . ">", "THAV \\1", $t);
+
+	// then, handle patach ganuv vs. regular patach
+
+	$t = preg_replace("<(AYIN|CHET|HEH_MAPIK) PATACH_UNKNOWN BOUNDARY>",
+			"PATACH_GANUV \\1 BOUNDARY", $t);
+	$t = preg_replace("<PATACH_UNKNOWN>", "PATACH", $t);
+
+
+	// SHEVA:
+	// shva after a gutteral will always be shva nach
+	$t = preg_replace("<(ALEPH|HEH|CHET|AYIN) SHEVA_UNKNOWN>",
+			"\\1 SHEVA_NACH", $t);
+
+
+	// shva at beginning of word should be shva na
+	// some of these, such as PHEI_UNKNOWN, are not possible, but it
+	// is simpler to write
+	$NON_GUTTERALS = "(B(H?)ET|G(H?)IMEL|D(H?)ALED|VAV(_UNKNOWN)?|ZED|TET|YUD(_UNKNOWN)?|K(H?)AF(_UNKNOWN)?|LAMED|MEM|NUN|SAMECH|P(H?)EI(_UNKNOWN)?|TZADI|KUF|RESH|S(H?)IN(_UNKNOWN)?|T(H?)AV(_UNKNOWN)?)";
+	$t = preg_replace("<BOUNDARY " . $NON_GUTTERALS . " SHEVA_UNKNOWN>", "BOUNDARY \\1 SHEVA_NA", $t);
+
+
+	// for geminates, we should first have satisfied begedkefet rules
+
+	$GEMINATE_CANDIDATES = "(BET|GIMEL|DALED|VAV|ZED|TET|YUD|KAF|KAF_SOFIT|LAMED|MEM|NUN|SAMECH|PEI|TZADI|KUF|SHIN|SIN|TAV)";
+	$t = preg_replace("<" . $GEMINATE_CANDIDATES . " DAGESH_UNKNOWN>", "\\1_CHAZAK", $t);
+
+	// Generate yud chazak. Must handle this before tzeirei malei and chirik malei rules,
+	// because a chirik followed by yud chazak is really a chirik chaser and dagesh chazak.
+	$t = preg_replace("<YUD_UNKNOWN DAGESH_UNKNOWN>", "YUD_CHAZAK", $t);
+
+	// TZEIREI MALEI/CHASER
+	$t = preg_replace("<TZEIREI_UNKNOWN YUD_UNKNOWN>", "TZEIREI_MALEI", $t);
+	$t = preg_replace("<TZEIREI_UNKNOWN>", "TZEIREI_CHASER", $t);
+
+	// CHIRIK_MALEI/CHASER
+	$t = preg_replace("<CHIRIK_UNKNOWN YUD_UNKNOWN>", "CHIRIK_MALEI", $t);
+	$t = preg_replace("<CHIRIK_UNKNOWN>", "CHIRIK_CHASER", $t);
+
+	// yud followed by nikud, except for patach ganuv, is a full yud
+	// we must handle this rule AFTER patach ganuv to handle cases like mashiach
+	$NIKUD_WO_GANUV = "(PATACH|CHATAF_PATACH|KAMETZ|CHATAF_KAMETZ|SHEVA_NA|SHEVA_NACH|SHEVA_UNKNOWN|SEGOL|CHATAF_SEGOL|TZEIREI_MALEI|TEZEIREI_CHASER|CHIRIK_MALEI|CHIRIK_CHASER|CHOLAM_CHASER|CHOLAM_MALEI)";
+	$t = preg_replace("<YUD_UNKNOWN " . $NIKUD_WO_GANUV . ">", "YUD \\1", $t);
+
+	// more shva_na/nach
+	// *controversial: Short Vowel + non-plosive non geminate + shva should
+	// be nach. problem is that some hold by shva merachef and
+	// especially in the instance in which the dagesh disappears in yud and
+	// mem. however, we will assume that they are simple nachs.
+	$NON_FINAL_NON_PLOSIVES = "(ALEPH|BHET|GHIMEL|DHALED|HEH|VAV|ZED|CHET|TET|YUD|KHAF|LAMED|MEM|NUN|SAMECH|AYIN|PHEI|TZADI|KUF|RESH|SHIN|SIN|THAV)";
+	$SHORT_VOWELS = "(PATACH|SEGOL|CHIRIK_CHASER|KUBUTZ)";
+	$t = preg_replace("<" . $SHORT_VOWELS . $NON_FINAL_NON_PLOSIVES . "SHEVA_UNKNOWN>", "\\1 \\2 SHEVA_NACH", $t);
+
+
+	// before apply shva na/nach for long vowels, handle shva nach in
+	// consonant clusters
+	// sheva_? + letter + chataf = nach
+	$LETTER_AFTER_NACH = "(ALEPH|BET|HEH|VAV|ZED|CHET|TET|YUD|LAMED|MEM|NUN|SAMECH|AYIN|TZADI|KUF|RESH|SHIN|SIN)";
+	$BEGEDKEFET_UNKNOWN = "((BET|GIMEL|DALED|KAF|PEI|TAV)_UNKNOWN)";
+	$NAS = "(SHEVA_NA|CHATAF)";
+	$VOWELS = "(PATACH|SEGOL|CHIRIK|KUBUTZ|CHOLAM|KAMETZ|TZEIREI)";
+
+	$t = preg_replace("<SHEVA_UNKNOWN $LETTER_AFTER_NACH $NAS>", "SHEVA_NACH \\1 \\2", $t);
+	$t = preg_replace("<SHEVA_UNKNOWN $BEGEDKEFET_UNKNOWN DAGESH_UNKNOWN $NAS>", "SHEVA_NACH \\2 \\3", $t);
+	$t = preg_replace("<SHEVA_UNKNOWN $BEGEDKEFET_UNKNOWN DAGESH_UNKNOWN $VOWELS>", "SHEVA_NACH \\2 \\3", $t);
+
+
+
+	// similarly, Long vowel + non-plosive non geminate + shva
+	// should be na
+	$LONG_VOWELS = "(KAMETZ|TZEIREI_MALEI|TZEIREI_CHASER|CHIRIK_MALEI|CHOLAM_CHASER|CHOLAM_MALEI|SHURUK)";
+	// with an exception of e.g. ubhnei rather than ubhenei, not maintaining
+	// sheva merachef
+	$t = preg_replace("<BOUNDARY SHURUK" . $NON_FINAL_NON_PLOSIVES . "SHEVA_UNKNOWN>", "BOUNDARY SHURUK \\1 SHEVA_NACH", $t);
+	$t = preg_replace("<".$LONG_VOWELS . $NON_FINAL_NON_PLOSIVES . "SHEVA_UNKNOWN>", "\\1 \\2 SHEVA_NA", $t);
+
+	// back to begedkefet: handle shva nach begedkefet dagesh as non-geminate
+	$t = preg_replace("<SHEVA_NACH ((BET|GIMEL|DALED|KAF|PEI|TAV)_UNKNOWN) DAGESH_UNKNOWN>", "SHEVA_NACH \\2", $t);
+
+	// and then handle short vowel + begedkefet + dagesh --> geminate begedkefet
+	$t = preg_replace("<". $SHORT_VOWELS . $BEGEDKEFET_UNKNOWN . "DAGESH_UNKNOWN>", "\\1 \\3_CHAZAK", $t);
+
+	// some begedkefets, such as those followed by what were unknown
+	// vowels/matres lectiones, have not yet been handled. handle them now
+
+	$t = preg_replace("<BET_UNKNOWN>", "BHET", $t);
+	$t = preg_replace("<GIMEL_UNKNOWN>", "GHIMEL", $t);
+	$t = preg_replace("<DALED_UNKNOWN>", "DHALED", $t);
+	$t = preg_replace("<KAF_UNKNOWN>", "KHAF", $t);
+	$t = preg_replace("<PEI_UNKNOWN>", "PHEI", $t);
+	$t = preg_replace("<TAV_UNKNOWN>", "THAV", $t);
+
+
+	// chazak followed by sheva_unknown should make the shva into a na
+	$t = preg_replace("<_CHAZAK SHEVA_UNKNOWN>", "_CHAZAK SHEVA_NA", $t);
+
+
+
+	// handle certain yud_unknowns
+	// yud at the end of a word, unhandled before, is a mere yud
+	$t = preg_replace("<YUD_UNKNOWN BOUNDARY>", "YUD BOUNDARY", $t);
+	// yud after a segol is unpronounced and is there to show plurality
+	$t = preg_replace("<SEGOL YUD_UNKNOWN>", "SEGOL YUD_PLURAL", $t);
+	// finally, otherwise unmarked yud_unknowns should be made known
+	$t = preg_replace("<YUD_UNKNOWN>", "YUD", $t);
+
+
+
+	// handle certain Divine names which are written differently than they
+	// are pronounced
+	$t = preg_replace("<YUD SHEVA_NA HEH VAV KAMETZ HEH>",
+			"ALEPH CHATAF_PATACH DHALED CHOLAM_CHASER NUN KAMETZ YUD", $t);
+
+	$t = preg_replace("<YUD HEH VAV KAMETZ HEH>",
+			"ALEPH SHEVA_NACH DALED CHOLAM_CHASER NUN KAMETZ YUD", $t);
+
+
+
+	// certain other leters besides PLURAL YUD are there for etymological
+	// purposes. we can generally detect them as follows:
+	// vowel + letter1 + no nikud + letter2
+	// we will discard the letter which is an em haqeriya
+	// if both are, discard the first of the two
+	// thus, hu(w)`, we discard the vav in favor of the aleph
+	// zo(`)t, we discard the ALEPH
+	// ro(`)sh, we discard the ALEPH
+	// but in betnching, yer`u with no sheva after the resh, we discard the aleph
+	$EM_KERIYA = "(ALEPH|HEH|VAV|YUD)";
+	$t = preg_replace("<" . $NIKUD . $EM_KERIYA . $EM_KERIYA . ">", "\\1 (\\2) \\3", $t);
+
+	$NON_EM_KERIYA = "";
+	/*
+	 $t = preg_replace("<$NIKUD $EM_KERIYA $EM_KERIYA>", "\\1 (\\2) \\3", $t);
 	 */
-	.icon,
-	.button .icon,
-	blockquote cite:before,
-	.uncited:before {
-		font-family: FontAwesome;
-		font-size: 14px;
-		font-weight: normal;
-		font-style: normal;
-		font-variant: normal;
-		line-height: 1;
-		display: inline-block;
-		/* stylelint-disable order/declaration-block-properties-specified-order */
-		-moz-osx-font-smoothing: grayscale;
-		-webkit-font-smoothing: antialiased;
-		/* stylelint-enable order/declaration-block-properties-specified-order */
-		text-rendering: auto; /* optimizelegibility throws things off #1094 */
-	}
 
-	.icon:before {
-		padding-right: 2px;
-	}
 
-	.button .icon:before {
-		padding-right: 0;
-	}
-
-	/* Icon size classes - Default size is 14px, use these for small variations */
-
-	.icon.icon-xl {
-		font-size: 20px;
-	}
-
-	.icon.icon-lg {
-		font-size: 18px;
-	}
-
-	.icon.icon-md {
-		font-size: 12px;
-	}
-
-	.icon.icon-sm {
-		font-size: 10px;
-	}
-
-	/* icon modifiers */
-	.icon-tiny {
-		font-size: 16px;
-		vertical-align: text-bottom;
-		width: 12px;
-		-webkit-transform: scale(0.65, 0.75);
-		transform: scale(0.65, 0.75);
-	}
-
-	.arrow-right .icon {
-		float: right;
-	}
-
-	.arrow-left:hover .icon {
-		margin-right: 5px;
-		margin-left: -5px;
-	}
-
-	.arrow-left .icon {
-		float: left;
-	}
-
-	.arrow-right:hover .icon {
-		margin-right: -5px;
-		margin-left: 5px;
-	}
-
-	.post-buttons .dropdown-contents .icon {
-		float: right;
-		margin-left: 5px;
-	}
-
-	.alert_close .icon:before {
-		border-radius: 50%;
-		display: block;
-		width: 11px;
-		height: 12px;
-		padding: 0;
-	}
-
-	blockquote cite:before,
-	.uncited:before {
-		content: "\f10d"; /* Font Awesome quote-left */
-	}
-
-	.rtl blockquote cite:before,
-	.rtl .uncited:before {
-		content: "\f10e"; /* Font Awesome quote-right */
-	}
-
-	/* Dropdown menu
-	----------------------------------------*/
-	.dropdown-container {
-		position: relative;
-	}
-
-	.dropdown-container-right {
-		float: right;
-	}
-
-	.dropdown-container-left {
-		float: left;
-	}
-
-	.nojs .dropdown-container:hover .dropdown {
-		display: block !important;
-	}
-
-	.dropdown {
-		display: none;
-		position: absolute;
-		left: 0;
-		top: 1.2em;
-		z-index: 2;
-		border: 1px solid transparent;
-		border-radius: 5px;
-		padding: 9px 0 0;
-		margin-right: -500px;
-	}
-
-	.dropdown.live-search {
-		top: auto;
-	}
-
-	.dropdown-container.topic-tools {
-		float: left;
-	}
-
-	.dropdown-up .dropdown {
-		top: auto;
-		bottom: 1.2em;
-		padding: 0 0 9px;
-	}
-
-	.dropdown-left .dropdown, .nojs .rightside .dropdown {
-		left: auto;
-		right: 0;
-		margin-left: -500px;
-		margin-right: 0;
-	}
-
-	.dropdown-button-control .dropdown {
-		top: 24px;
-	}
-
-	.dropdown-button-control.dropdown-up .dropdown {
-		top: auto;
-		bottom: 24px;
-	}
-
-	.dropdown .pointer, .dropdown .pointer-inner {
-		position: absolute;
-		width: 0;
-		height: 0;
-		border-top-width: 0;
-		border-bottom: 10px solid transparent;
-		border-left: 10px dashed transparent;
-		border-right: 10px dashed transparent;
-		-webkit-transform: rotate(360deg); /* better anti-aliasing in webkit */
-		display: block;
-	}
-
-	.dropdown-up .pointer, .dropdown-up .pointer-inner {
-		border-bottom-width: 0;
-		border-top: 10px solid transparent;
-	}
-
-	.dropdown .pointer {
-		right: auto;
-		left: 10px;
-		top: -1px;
-		z-index: 3;
-	}
-
-	.dropdown-up .pointer {
-		bottom: -1px;
-		top: auto;
-	}
-
-	.dropdown-left .dropdown .pointer, .nojs .rightside .dropdown .pointer {
-		left: auto;
-		right: 10px;
-	}
-
-	.dropdown .pointer-inner {
-		top: auto;
-		bottom: -11px;
-		left: -10px;
-	}
-
-	.dropdown-up .pointer-inner {
-		bottom: auto;
-		top: -11px;
-	}
-
-	.dropdown .dropdown-contents {
-		z-index: 2;
-		overflow: hidden;
-		overflow-y: auto;
-		border: 1px solid transparent;
-		border-radius: 5px;
-		padding: 5px;
-		position: relative;
-		max-height: 300px;
-	}
-
-	.dropdown-contents a {
-		display: block;
-		padding: 5px;
-	}
-
-	.jumpbox {
-		margin: 5px 0;
-	}
-
-	.jumpbox .dropdown li {
-		border-top: 1px solid transparent;
-	}
-
-	.jumpbox .dropdown-select {
-		margin: 0;
-	}
-
-	.jumpbox .dropdown-contents {
-		padding: 0;
-		text-decoration: none;
-	}
-
-	.jumpbox .dropdown-contents li {
-		padding: 0;
-	}
-
-	.jumpbox .dropdown-contents a {
-		margin-right: 20px;
-		padding: 5px 10px;
-		text-decoration: none;
-		width: 100%;
-	}
-
-	.jumpbox .spacer {
-		display: inline-block;
-		width: 0px;
-	}
-
-	.jumpbox .spacer + .spacer {
-		width: 20px;
-	}
-
-	.dropdown-contents a {
-		display: block;
-		padding: 5px;
-	}
-
-	.jumpbox .dropdown-select {
-		margin: 0;
-	}
-
-	.jumpbox .dropdown-contents a {
-		text-decoration: none;
-	}
-
-	.dropdown li {
-		display: list-item;
-		border-top: 1px dotted transparent;
-		float: none !important;
-		line-height: normal !important;
-		font-size: 1em !important;
-		list-style: none;
-		margin: 0;
-		white-space: nowrap;
-		text-align: left;
-	}
-
-	.dropdown-contents > li {
-		padding-right: 15px;
-	}
-
-	.dropdown-nonscroll > li {
-		padding-right: 0;
-	}
-
-	.dropdown li:first-child, .dropdown li.separator + li, .dropdown li li {
-		border-top: 0;
-	}
-
-	.dropdown li li:first-child {
-		margin-top: 4px;
-	}
-
-	.dropdown li li:last-child {
-		padding-bottom: 0;
-	}
-
-	.dropdown li li {
-		border-top: 1px dotted transparent;
-		padding-left: 18px;
-	}
-
-	.wrap .dropdown li, .dropdown.wrap li, .dropdown-extended li {
-		white-space: normal;
-	}
-
-	.dropdown li.separator {
-		border-top: 1px solid transparent;
-		padding: 0;
-	}
-
-	.dropdown li.separator:first-child, .dropdown li.separator:last-child {
-		display: none !important;
-	}
-
-	/* jQuery popups
-	---------------------------------------- */
-	.phpbb_alert {
-		background-color: #FFFFFF;
-		border-color: #999999;
-	}
-	.darken {
-		background-color: #000000;
-	}
-
-	.loading_indicator {
-		background-color: #000000;
-		background-image: url("./images/loading.gif");
-	}
-
-	.dropdown-extended ul li {
-		border-top-color: #B9B9B9;
-	}
-
-	.dropdown-extended ul li:hover {
-		background-color: #cfd1f6;
-		color: #000000;
-	}
-
-	.dropdown-extended .header, .dropdown-extended .footer {
-		border-color: #B9B9B9;
-		color: #000000;
-	}
-
-	.dropdown-extended .footer {
-		border-top-style: solid;
-		border-top-width: 1px;
-	}
-
-	.dropdown-extended .header {
-		background-color: #f1f2ff; /* Old browsers */ /* FF3.6+ */
-		background-image: -webkit-linear-gradient(top, #f1f2ff 0%, #caceeb 100%);
-		background-image: linear-gradient(to bottom, #f1f2ff 0%,#caceeb 100%); /* W3C */
-		filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f1f2ff', endColorstr='#caceeb',GradientType=0 ); /* IE6-9 */
-	}
-
-	.dropdown .pointer {
-		border-color: #B9B9B9 transparent;
-	}
-
-	.dropdown .pointer-inner {
-		border-color: #FFF transparent;
-	}
-
-	.dropdown-extended .pointer-inner {
-		border-color: #f1f2ff transparent;
-	}
-
-	.dropdown .dropdown-contents {
-		background: #fff;
-		border-color: #B9B9B9;
-		box-shadow: 1px 3px 5px rgba(0, 0, 0, 0.2);
-	}
-
-	.dropdown-up .dropdown-contents {
-		box-shadow: 1px 0 5px rgba(0, 0, 0, 0.2);
-	}
-
-	.dropdown li, .dropdown li li {
-		border-color: #DCDCDC;
-	}
-
-	.dropdown li.separator {
-		border-color: #DCDCDC;
-	}
-
-	/* Notifications
-	---------------------------------------- */
-
-	.notification_list p.notification-time {
-		color: #4d4d77;
-	}
-
-	li.notification-reported strong, li.notification-disapproved strong {
-		color: #0d5aa2;
-	}
-
-	.badge {
-		background-color: #0d5aa2;
-		color: #ffffff;
-	}
-
-	/* Responsive breadcrumbs
-	----------------------------------------*/
-	.breadcrumbs .crumb {
-		float: left;
-		font-weight: bold;
-		word-wrap: normal;
-	}
-
-	.breadcrumbs .crumb:before {
-		content: '\2039';
-		font-weight: bold;
-		padding: 0 0.5em;
-	}
-
-	.breadcrumbs .crumb:first-child:before {
-		content: none;
-	}
-
-	.breadcrumbs .crumb a {
-		white-space: nowrap;
-		text-overflow: ellipsis;
-		vertical-align: bottom;
-		overflow: hidden;
-	}
-
-	.breadcrumbs.wrapped .crumb a { letter-spacing: -.3px; }
-	.breadcrumbs.wrapped .crumb.wrapped-medium a { letter-spacing: -.4px; }
-	.breadcrumbs.wrapped .crumb.wrapped-tiny a { letter-spacing: -.5px; }
-
-	.breadcrumbs .crumb.wrapped-max a { max-width: 120px; }
-	.breadcrumbs .crumb.wrapped-wide a { max-width: 100px; }
-	.breadcrumbs .crumb.wrapped-medium a { max-width: 80px; }
-	.breadcrumbs .crumb.wrapped-small a { max-width: 60px; }
-	.breadcrumbs .crumb.wrapped-tiny a { max-width: 40px; }
-
-	/* Tables
-	 ------------ */
-	th {
-		color: #FFA34F;
-		font-size: 1.1em;
-		font-weight: bold;
-		background-color: #006699;
-		background-image: url('./images/cellpic3.gif');
-		white-space: nowrap;
-		padding: 7px 5px;
-	}
-
-
-	/* General font families for common tags */
-	font,th,td,p { font-family: Verdana, Arial, Helvetica, sans-serif }
-	a:link,a:active,a:visited { color : #006699; }
-	a:hover		{ text-decoration: underline; color : #DD6900; }
-	hr	{ height: 0px; border: solid #80BBEC 0px; border-top-width: 1px;}
-
-
-	/* This is the border line & background colour round the entire page */
-	.bodyline	{ 
-		background-color: #E3F0FB;
-		background-image: url("./images/bodyline.jpg");
-		padding-bottom: 40px; 	
-		border: 1px #4B8DF1 solid; 
-	}
-
-	/* This is the outline round the main subsilver-ish forum tables */
-	.forumline	{ background-color: #E3F0FB; border: 2px #006699 solid; }
-	.bodyline	{ border: 1px #98AAB1 solid; padding: 0px 0px 0px 0px; }
-	.forumline	{ border: 2px #006699 solid; padding: 0px 0px 0px 0px; }
-
-	td {
-		padding: 0.4px;
-	}
-	td.profile {
-		padding: 2px;
-	}
-	.profile {
-		padding: 2px;
-	}
-
-	.tablebg {
-		background-color: #A9B8C2;
-	}
-
-	/* Main table cell colours and backgrounds */
-
-	.row1 {
-		background-color: #DAECFA;
-		padding: 4px;
-	}
-
-	.row2 {
-		background-color: #BADBF5;
-		padding: 4px;
-	}
-
-	.row3 {
-		background-color: #80BBEC;
-		padding: 4px;
-	}
-
-	.row4 { 
-		background-color: #E4E8EB;
-		padding: 4px;	
-	}
-
-	.col1 { 
-		background-color: #BADBF5;
-		padding: 4px;	
-	}
-
-	.col2 { 
-		background-color: #DAECFA;
-		padding: 4px;	
-	}
-
-	/* Edit this colors for every subsilver-ish ported template */
-	.row1, .bg1	{ background-color: #EFEFEF; } /* .bg1 */
-	.row2, .bg2	{ background-color: #DEE3E7; } /* .bg2 */
-	.row2, .bg3	{ background-color: #D1D7DC; } /* .bg3 */
-	.row4, .bg4	{ background-color: #EFEFEF; }
-	.row5, .bg5	{ background-color: #DEE3E7; }
-	.row6, .bg6	{ background-color: #D1D7DC; }
-
+	// some work on kametz katon
+	// 1) a stop-word - kol, bakol, lakol, lekhol, etc. that is, consider
+	// 	morphology
+	// This is by no means complete. For example, for a moment, we didn't handle shebechol because the bet chazak was not part of the pattern
+	// . Maybe it would pay to create a stemmer here?
+	// For now, consider on case by case basis and just look for this particular suffix.
+
+	$t = preg_replace("<(BET|BHET|BET_CHAZAK|LAMED|KAF|KHAF) (SHEVA_NA KHAF) (KAMETZ) (LAMED BOUNDARY)>", "\\1 \\2 \\3_KATAN \\4", $t);
+	$t = preg_replace("<(BET|BHET|BET_CHAZAK|LAMED|KAF|KHAF) (PATACH KAF_CHAZAK) (KAMETZ) (LAMED BOUNDARY)>", "\\1 \\2 \\3_KATAN \\4", $t);
+	$t = preg_replace("<(MEM CHIRIK_CHASER KAF_CHAZAK) (KAMETZ) (LAMED BOUNDARY)>", "\\1 \\2_KATAN \\3", $t);
+	$t = preg_replace("<(KAF) (KAMETZ) (LAMED BOUNDARY)>", "\\1 \\2_KATAN \\3", $t);
+
+	// 1.5) catches the above rule much better
+	//    kametz + consonant + boundary + dash --> kametz katan
+	$LETTER_AFTER_KATAN = "(BHET|GHIMEL|DHALED|VAV|ZED|TET|KHAF_SOFIT|LAMED|MEM_SOFIT|NUN_SOFIT|SAMECH||TZADI_SOFIT|KUF|RESH|SHIN|SIN|THAV)";
+
+	//	echo $t;
+	$t = preg_replace("<(KAMETZ)" . $LETTER_AFTER_KATAN . "(BOUNDARY DASH)>", "\\1_KATAN \\2 \\3", $t);
+
+
+	// 2) Another common word - chochma and related forms
+	// we are modifying from the incorrectly computed transliteration
+
+	$t = preg_replace("<(CHET) (KAMETZ) (KHAF) SHEVA_NA (MEM) (KAMETZ|PATACH)>", "\\1 \\2_KATAN \\3 SHEVA_NACH \\4 \\5", $t);
+
+
+	// 3) kametz + cons + chataf_kametz, that first kametz was katon
+	$t = preg_replace("<(KAMETZ)" . $NON_FINAL_NON_PLOSIVES . "(CHATAF_KAMETZ)>",
+			"\\1_KATAN \\2 \\3", $t);
+
+
+	// 4) kametz katan generally results from reduction from cholam.
+	//	various forms betray this reduction happened
+	// 		one common form is kametz + cons + shva_nach + bgdkft_plosive
+	//		because kametz is a long vowel and so in unstressed
+	//		syllables it should be open.
+	//		the problem is where it occurs in stressed syllables
+	//		s.t. we will need to undo the damage we are about to cause
+
+	$t = preg_replace("<(KAMETZ)" . $NON_FINAL_NON_PLOSIVES ."(SHEVA_NACH) (BET|GIMEL|DALED|KAF|PEI|TAV)>",
+			"\\1_KATAN \\2 \\3 \\4", $t);
+
+
+	return $t;
+}
+
+function CleanUpPunctuation($t)
+{
+	$t = preg_replace("<BOUNDARY>", "", $t);
+	$t = preg_replace("<COMMA >", ",", $t);
+	$t = preg_replace("<DASH >", "-", $t);
+	$t = preg_replace("<SEMICOLON >", ";", $t);
+	$t = preg_replace("<PERIOD >", ".", $t);
+	$t = preg_replace("< >", "", $t);
+	$t = preg_replace("<SPACE>", " ", $t);
+	return $t;
+}
+
+
+function AcademicFontFriendlyTransliteration($t)
+{
+	$GEMINATE_CANDIDATES = "(".ALEPH."|".BET."|".GIMEL."|".DALED."|".VAV."|".ZED."|".TET."|".YUD."|".KAF."|".KAF_SOFIT."|".LAMED."|".MEM."|".NUN."|".SAMECH."|".PEI."|".TZADI."|".KUF."|".SHIN."|".SIN."|".TAV.")";
+	$t = preg_replace("<" . $GEMINATE_CANDIDATES . "_CHAZAK>", "\\1 \\1", $t);
+	
+	$t = preg_replace("<".ALEPH.">", "`", $t);
+	$t = preg_replace("<".BET.">", "b", $t);
+	$t = preg_replace("<".BHET.">", "bh", $t);
+	$t = preg_replace("<".GIMEL.">", "g", $t);
+	$t = preg_replace("<".GHIMEL.">", "gh", $t);
+	$t = preg_replace("<".DALED.">", "d", $t);
+	$t = preg_replace("<".DHALED.">", "dh", $t);
+	$t = preg_replace("<".HEH_MAPIK.">", "h", $t);
+	$t = preg_replace("<".HEH.">", "h", $t);
+	$t = preg_replace("<".VAV.">", "w", $t);
+	$t = preg_replace("<".ZED.">", "z", $t);
+	$t = preg_replace("<".CHET.">", "h", $t); 	//$t = preg_replace("<".CHET.">", "&#295;", $t);
+	$t = preg_replace("<".TET.">", "o", $t); //$t = preg_replace("<".TET.">", "&#335;", $t);
+	$t = preg_replace("<".YUD_PLURAL.">", "(y)", $t);
+	$t = preg_replace("<".YUD.">", "y", $t);
+	$t = preg_replace("<".KAF.">", "k", $t);
+	$t = preg_replace("<".KHAF_SOFIT."?>", "kh", $t);
+	$t = preg_replace("<".LAMED.">", "l", $t);
+	$t = preg_replace("<".MEM_SOFIT."?>", "m", $t);
+	$t = preg_replace("<".NUN_SOFIT."?>", "n", $t);
+	$t = preg_replace("<".SAMECH.">", "s", $t);
+	$t = preg_replace("<".AYIN.">", "'", $t);
+	$t = preg_replace("<".PEI.">", "p", $t);
+	$t = preg_replace("<".PHEI_SOFIT."?>", "ph", $t);
+	$t = preg_replace("<".TZADI_SOFIT."?>", "&#351;", $t);
+	$t = preg_replace("<".KUF.">", "q", $t);
+	$t = preg_replace("<".RESH.">", "r", $t);
+	$t = preg_replace("<".SHIN.">", "&#353;", $t);
+	$t = preg_replace("<".SIN.">", "&#347;", $t);
+	$t = preg_replace("<".TAV.">", "t", $t);
+	$t = preg_replace("<".THAV.">", "th", $t);
+	
+	$t = preg_replace("<".CHATAF_KAMETZ.">", "&#335;", $t);
+	$t = preg_replace("<".KAMETZ_KATAN.">", "o", $t);
+	$t = preg_replace("<".KAMETZ.">", "&#257;", $t);
+	$t = preg_replace("<".CHATAF_PATACH.">", "&#259;", $t);
+	$t = preg_replace("<".PATACH_GANUV.">", "<sup>a</sup>", $t);
+	$t = preg_replace("<".PATACH.">", "a", $t);
+	$t = preg_replace("<".SHEVA_NACH.">", "", $t);
+	$t = preg_replace("<".SHEVA.">", "&#601;", $t);
+	$t = preg_replace("<".CHATAF_SEGOL.">", "&#277;", $t);
+	$t = preg_replace("<".SEGOL.">", "e", $t);
+	$t = preg_replace("<".TZEIREI_MALEI.">", "&#234;", $t);
+	$t = preg_replace("<".TZEIREI_CHASER.">", "&#275;", $t);
+	$t = preg_replace("<".CHIRIK_MALEI.">", "&#238;", $t);
+	$t = preg_replace("<".CHIRIK_CHASER.">", "i", $t);
+	$t = preg_replace("<".CHOLAM_MALEI.">", "&#244;", $t);
+	$t = preg_replace("<".CHOLAM_CHASER.">", "&#333;", $t);
+	$t = preg_replace("<".MAPIQ.">", "&#333;", $t);
+	$t = preg_replace("<".SHURUK.">", "&#251;", $t); //
+	$t = preg_replace("<".KUBUTZ.">", "u", $t);
+	 	
+	/*	$t = preg_replace("<BOUNDARY COMMA BOUNDARY>", ",", $t);
+	 $t = preg_replace("<COMMA>", ",", $t);
+	 $t = preg_replace("<BOUNDARY DASH BOUNDARY>", "-", $t);
+	 $t = preg_replace("<BOUNDARY SEMICOLON BOUNDARY>", ";", $t);
+	 $t = preg_replace("<SEMICOLON>", ";", $t);
+	 $t = preg_replace("< >", "", $t);
+	 $t = preg_replace("<BOUNDARY>", " ", $t);
+	 $t = preg_replace("<PERIOD>", ".", $t);
+	 */
+	$t = CleanUpPunctuation($t);
+	return $t;
+}
+
+function AshkenazicTransliteration($t)
+{
+	//Definitions https://github.com/symbl-cc/symbl-data 
+	//Backup: https://github.com/anio/unicode-table-data/blob/95d28cae674791b18798e5cdb846bbffde017097/loc/de/symbols/0500.txt#L200C3-L200C3
+	$ALEPH = 'א';
+	$BHET = 'ב';
+	$GHIMEL = $GIMEL = 'ג';
+	$DHALED = $DALED = 'ד';
+	$HEH_MAPIK = $HEH = 'ה';
+	$VAV = 'ו';
+	$ZED = 'ז';
+	$CHET = 'ח';
+	$TET = 'ט';
+	$YUD_PLURAL = $YUD = 'י';
+	$KHAF_SOFIT = 'ך';
+	$KAF = 'כ';
+	$LAMED = 'ל';
+	$MEM_SOFIT = 'ם';
+	$MEM = 'מ';
+	$NUN_SOFIT = 'ן';
+	$NUN = 'נ';
+	$SAMECH = 'ס';
+	$AYIN = 'ע';
+	$PHEI_SOFIT = 'ף';
+	$PEI = 'פ';
+	$TZADI_SOFIT = 'ץ';
+	$TZADI = 'צ';
+	$KUF = 'ק';
+	$RESH = 'ר';
+	$SHIN = 'ש';
+	$THAV = 'ת';	
+		
+	$BET = 'בּ';
+	$GIMEL = 'גּ';
+	$DALED = 'דּ';
+	$HEH_MAPIK = 'הִ';
+	$KAF = 'כּ';
+	$TAV = 'תּ';
+	
 	/*
-	  This is for the table cell above the Topics, Post & Last posts on the index.php page
-	  By default this is the fading out gradiated silver background.
-	  However, you could replace this with a bitmap specific for each forum
+	DAGESH_LETTER: return 'דגש\שורוק'
+	Niqqud.KAMATZ: return 'קמץ'
+	Niqqud.PATAKH: return 'פתח'
+	Niqqud.TZEIRE: return 'צירה'
+	Niqqud.SEGOL: return 'סגול'
+	Niqqud.SHVA: return 'שוא'
+	Niqqud.HOLAM: return 'חולם'
+	Niqqud.KUBUTZ: return 'קובוץ'
+	Niqqud.HIRIK: return 'חיריק'
+	Niqqud.REDUCED_KAMATZ: return 'חטף-קמץ'
+	Niqqud.REDUCED_PATAKH: return 'חטף-פתח'
+	Niqqud.REDUCED_SEGOL: return 'חטף-סגול'
+	SHIN_SMALIT: return 'שין-שמאלית'
+	SHIN_YEMANIT: return 'שין-ימנית'
 	*/
-	.rowpic {
-			background-color: #E3F0FB;
-			background-image: url('./images/cellpic2.jpg');
-			background-repeat: repeat-y;
-	}
+	
+	$SHEVA_NACH = $SHEVA = 'ְ'; //SHVA = '\u05B0'
+	$CHATAF_SEGOL = 'ֱ'; //REDUCED_SEGOL = '\u05B1'
+	$CHATAF_PATACH = 'ֲ'; //REDUCED_PATAKH = '\u05B2'
+	$CHATAF_KAMETZ = 'ֳ'; //REDUCED_KAMATZ = '\u05B3'
+	$CHIRIK_MALEI = $CHIRIK_CHASER = $CHIRIK_U = 'ִ'; //HIRIK = '\u05B4'
+	$TZEIREI_MALEI = $TZEIREI_CHASER = $TZEIREI = 'ֵ'; //TZEIRE = '\u05B5'
+	$SEGOL = 'ֶ'; //SEGOL = '\u05B6'  
+	$PATACH_GANUV = '׆'; //\u05C6: Hebräisches Satzzeichen Nun Hafucha || 05C6: Hebräisches Interpunktions-Nonne Hafukha
+	$PATACH = 'ַ'; //PATAKH = '\u05B7'; 
+	$KAMETZ_KATAN = 'ׇ'; //\u05C7: Hebräisches Zeichen Kametz Katan || 05C7: Hebräischer Punkt Qamats Qatan
+	$KAMETZ = 'ָ'; //KAMATZ = '\u05B8'; 
+	$CHOLAM_CHASER = 'ֺ';//For Wav
+	$HOLAM_HASHER = 'ֹֹ'; //HOLAM HASHER for Wav 
+	$CHOLAM_MALEI = $CHOLAM = 'ֹֹ';//HOLAM = '\u05B9'
+	$HOLAM_MEM = 'מֹ';   
+	$HOLAM_VAV = 'וֺ';
+	$HOLAM_LAMED = 'לֹ';
+	$HOLAM = preg_replace("<".$LAMED.">", "", $HOLAM_LAMED); //$HOLAM = ' ֹ ';
+	$METEG = 'ֽ'; //METEG = '\u05BD'
+	$MAPIQ = 'ּ'; //u05BC
+	$MAQAF = '־'; //u05BE
+	$RAFE = 'ֿ'; //u05BF
+	$KUBUTZ = 'ֻ'; //KUBUTZ = '\u05BB' 
+	$SHURUK = $DAGESH = 'ּ'; //SHURUK = '\u05BC' //or: DAGESH_LETTER = '\u05bc'
+	$SHIN_DOT = 'ׁ';  //SHIN_YEMANIT = '\u05c1' &#x05C1 in BabelMap
+	$SIN_DOT = 'ׂ'; //SHIN_SMALIT = '\u05c2' &#x05C2 in BabelMap	
+	$TIPEHA = '֖'; //U+0596 HEBREW ACCENT TIPEHA : tarha, me'ayla ~ mayla
+	$MERKHA = '֥'; //U+05A5 HEBREW ACCENT MERKHA : yored
+	$MERKHA_KEFULA = '֦'; //U+05A6 HEBREW ACCENT MERKHA KEFULA	
+	$MUNAH = '֣'; //U+05A3 HEBREW ACCENT MUNAH		
+	$ETNAHTA = '֑'; //U+0591 HEBREW ACCENT ETNAHTA : atnah
+	$ATNAH_HAFUKH = '֢'; //U+05A2 HEBREW ACCENT ATNAH HAFUKH
+	$YERAH_BEN_YOMO = '֪'; //U+05AA HEBREW ACCENT YERAH BEN YOMO : galgal
+	
+	// do not double letters in general
+	$GEMINATE_CANDIDATES = "($ALEPH|$BET|$BHET|$GIMEL|$DALED|$VAV|$HOLAM_VAV|$ZED|$TET|$YUD|$KAF|$KHAF_SOFIT|$LAMED|$MEM|$HOLAM_MEM|$NUN|$SAMECH|$PEI|$TZADI|$KUF|$SHIN$SHIN_DOT|$SHIN$SIN_DOT|$TAV)";
+	$t = preg_replace("<" . $GEMINATE_CANDIDATES . "_CHAZAK>", "\\1", $t);
+	
+	$t = preg_replace("<".$HOLAM_VAV.">", "uo", $t);
+	$t = preg_replace("<".$HOLAM_MEM.">", "mo", $t);
+	$t = preg_replace("<".$HOLAM_LAMED.">", "lo", $t);		
+		
+	$t = preg_replace("<".$ALEPH.">", "e", $t);
+	$t = preg_replace("<".$BET.">", "b", $t);
+	$t = preg_replace("<".$BHET.">", "v", $t);
+	$t = preg_replace("<".$GIMEL.">", "g", $t);
+	$t = preg_replace("<".$GHIMEL.">", "g", $t);
+	$t = preg_replace("<".$DALED.">", "d", $t);
+	$t = preg_replace("<".$DHALED.">", "d", $t);
+	$t = preg_replace("<".$HEH_MAPIK.">", "h", $t);
+	$t = preg_replace("<".$HEH.">", "h", $t);
+	$t = preg_replace("<".$HEH.">", "h", $t);
+	$t = preg_replace("<".$VAV.">", "v", $t);
+	$t = preg_replace("<".$ZED.">", "z", $t);
+	$t = preg_replace("<".$CHET.">", "ch", $t);
+	$t = preg_replace("<".$TET.">", "t", $t);
+	$t = preg_replace("<".$YUD_PLURAL.">", "i", $t);
+	$t = preg_replace("<".$YUD.">", "y", $t);
+	$t = preg_replace("<".$KAF.">", "k", $t);
+	$t = preg_replace("<".$KHAF_SOFIT.">", "ch", $t);
+	$t = preg_replace("<".$LAMED.">", "l", $t);
+	$t = preg_replace("<".$MEM.">", "m", $t);
+	$t = preg_replace("<".$MEM_SOFIT.">", "m", $t);
+	$t = preg_replace("<".$NUN.">", "n", $t);
+	$t = preg_replace("<".$NUN_SOFIT.">", "n", $t);
+	$t = preg_replace("<".$SAMECH.">", "s", $t);
+	$t = preg_replace("<".$AYIN.">", "a", $t);
+	$t = preg_replace("<".$PEI.">", "p", $t);
+	$t = preg_replace("<".$PHEI_SOFIT.">", "f", $t);
+	$t = preg_replace("<".$TZADI.">", "tz", $t);
+	$t = preg_replace("<".$TZADI_SOFIT.">", "ts", $t);
+	$t = preg_replace("<".$KUF.">", "k", $t);
+	$t = preg_replace("<".$RESH.">", "r", $t);
+	$t = preg_replace("<".$SHIN.$SHIN_DOT.">", "sh", $t);
+	$t = preg_replace("<".$SHIN.$SIN_DOT.">", "s", $t);
+	$t = preg_replace("<".$TAV.">", "t", $t);
+	$t = preg_replace("<".$THAV.">", "s", $t);
+	
+	
+	$t = preg_replace("<".$CHATAF_KAMETZ.">", "a", $t);
+	$t = preg_replace("<".$KAMETZ_KATAN.">", "o", $t);
+	$t = preg_replace("<".$KAMETZ.">", "a", $t);
+	$t = preg_replace("<".$CHATAF_PATACH.">", "e", $t);
+	$t = preg_replace("<".$PATACH_GANUV.">", "a", $t);
+	$t = preg_replace("<".$PATACH.">", "a", $t);
+	$t = preg_replace("<".$SHEVA_NACH.">", "e", $t);
+	$t = preg_replace("<".$SHEVA.">", "'", $t);
+	$t = preg_replace("<".$CHATAF_SEGOL.">", "e", $t);
+	$t = preg_replace("<".$SEGOL.">", "e", $t);
+	$t = preg_replace("<".$TZEIREI_MALEI.">", "ei", $t);
+	$t = preg_replace("<".$TZEIREI_CHASER.">", "ei", $t);
+	$t = preg_replace("<".$CHIRIK_MALEI.">", "i", $t);
+	$t = preg_replace("<".$CHIRIK_CHASER.">", "i", $t);
+	$t = preg_replace("<".$CHOLAM.">", "o", $t);
+	$t = preg_replace("<".$CHOLAM_MALEI.">", "o", $t);
+	$t = preg_replace("<".$CHOLAM_CHASER.">", "o", $t);
+	$t = preg_replace("<".$MAPIQ.">", "o", $t);
+	$t = preg_replace("<".$KUBUTZ.">", "u", $t);
+	$t = preg_replace("<".$TIPEHA.">", "'", $t); 
+	$t = preg_replace("<".$MERKHA.">", "'", $t); 
+	$t = preg_replace("<".$MERKHA_KEFULA.">", "''", $t);	
+	$t = preg_replace("<".$MUNAH.">", "'", $t);		
+	$t = preg_replace("<".$ETNAHTA.">", "´", $t); 
+	$t = preg_replace("<".$ATNAH_HAFUKH.">", "^", $t); 
+	$t = preg_replace("<".$YERAH_BEN_YOMO.">", "°", $t); 
+	
+	ExtractTrup();
+	$t = CleanUpPunctuation($t);
+	return $t;
+}
 
-	.catdiv {
-		height: 28px;
-		margin: 0;
-		padding: 0;
-		border: 0;
-		background: white url('./images/cellpic2.jpg') repeat-y scroll top left;
-	}
+function SefardicTransliteration($t)
+{
+	//Definitions https://github.com/symbl-cc/symbl-data 
+	//Backup: https://github.com/anio/unicode-table-data/blob/95d28cae674791b18798e5cdb846bbffde017097/loc/de/symbols/0500.txt#L200C3-L200C3
+	$ALEPH = 'א';
+	$BHET = 'ב';
+	$GHIMEL = $GIMEL = 'ג';
+	$DHALED = $DALED = 'ד';
+	$HEH_MAPIK = $HEH = 'ה';
+	$VAV = 'ו';
+	$ZED = 'ז';
+	$CHET = 'ח';
+	$TET = 'ט';
+	$YUD_PLURAL = $YUD = 'י';
+	$KHAF_SOFIT = 'ך';
+	$KAF = 'כ';
+	$LAMED = 'ל';
+	$MEM_SOFIT = 'ם';
+	$MEM = 'מ';
+	$NUN_SOFIT = 'ן';
+	$NUN = 'נ';
+	$SAMECH = 'ס';
+	$AYIN = 'ע';
+	$PHEI_SOFIT = 'ף';
+	$PEI = 'פ';
+	$TZADI_SOFIT = 'ץ';
+	$TZADI = 'צ';
+	$KUF = 'ק';
+	$RESH = 'ר';
+	$SHIN = 'ש';
+	$THAV = 'ת';
+	
+	$BET = 'בּ';
+	$GIMEL = 'גּ';
+	$DALED = 'דּ';
+	$HEH_MAPIK = 'הִ';
+	$KAF = 'כּ';
+	$TAV = 'תּ';
+	
+	$SHEVA_NACH = $SHEVA = 'ְ'; //SHVA = '\u05B0'
+	$CHATAF_SEGOL = 'ֱ'; //REDUCED_SEGOL = '\u05B1'
+	$CHATAF_PATACH = 'ֲ'; //REDUCED_PATAKH = '\u05B2'
+	$CHATAF_KAMETZ = 'ֳ'; //REDUCED_KAMATZ = '\u05B3'
+	$CHIRIK_MALEI = $CHIRIK_CHASER = $CHIRIK_U = 'ִ'; //HIRIK = '\u05B4'
+	$TZEIREI_MALEI = $TZEIREI_CHASER = $TZEIREI = 'ֵ'; //TZEIRE = '\u05B5'
+	$SEGOL = 'ֶ'; //SEGOL = '\u05B6'  
+	$PATACH_GANUV = '׆'; //\u05C6: Hebräisches Satzzeichen Nun Hafucha || 05C6: Hebräisches Interpunktions-Nonne Hafukha
+	$PATACH = 'ַ'; //PATAKH = '\u05B7'; 
+	$KAMETZ_KATAN = 'ׇ'; //\u05C7: Hebräisches Zeichen Kametz Katan || 05C7: Hebräischer Punkt Qamats Qatan
+	$KAMETZ = 'ָ'; //KAMATZ = '\u05B8'; 
+	$CHOLAM_CHASER = 'ֺ';//For Wav
+	$HOLAM_HASHER = 'ֹׄ'; //HOLAM HASHER for Wav 
+	$CHOLAM = $CHOLAM_MALEI = 'ֹֹ';//HOLAM = '\u05B9'
+	$HOLAM_MEM = 'מֹ';   
+	$HOLAM_VAV = 'וֺ';
+	$HOLAM_LAMED = 'לֹ';
+	$HOLAM_TAV = 'תֹּ';
+	$HOLAM = preg_replace("<".$LAMED.">", "", $HOLAM_LAMED); //$HOLAM = ' ֹ ';
+	$METEG = 'ֽ'; //METEG = '\u05BD'
+	$MAQAF = '־'; //u05BE
+	$RAFE = 'ֿ'; //u05BF
+	$KUBUTZ = 'ֻ'; //KUBUTZ = '\u05BB' 
+	$MAPIQ = $SHURUK = $DAGESH = 'ּ'; //SHURUK = '\u05BC' //or: DAGESH_LETTER = '\u05bc'
+	$SHIN_DOT = 'ׁ';  //SHIN_YEMANIT = '\u05c1' &#x05C1 in BabelMap
+	$SIN_DOT = 'ׂ'; //SHIN_SMALIT = '\u05c2' &#x05C2 in BabelMap	
+	$TIPEHA = '֖'; //U+0596 HEBREW ACCENT TIPEHA : tarha, me'ayla ~ mayla
+	$MERKHA = '֥'; //U+05A5 HEBREW ACCENT MERKHA : yored
+	$MERKHA_KEFULA = '֦'; //U+05A6 HEBREW ACCENT MERKHA KEFULA	
+	$MUNAH = '֣'; //U+05A3 HEBREW ACCENT MUNAH		
+	$ETNAHTA = '֑'; //U+0591 HEBREW ACCENT ETNAHTA : atnah
+	$ATNAH_HAFUKH = '֢'; //U+05A2 HEBREW ACCENT ATNAH HAFUKH
+	$YERAH_BEN_YOMO = '֪'; //U+05AA HEBREW ACCENT YERAH BEN YOMO : galgal
+	
+	
+	// do not double letters in general
+	$GEMINATE_CANDIDATES = "($ALEPH|$BET|$BHET|$GIMEL|$DALED|$VAV|$HOLAM_VAV|$ZED|$TET|$YUD|$KAF|$KHAF_SOFIT|$LAMED|$MEM|$HOLAM_MEM|$NUN|$SAMECH|$PEI|$TZADI|$KUF|$SHIN$SHIN_DOT|$SHIN$SIN_DOT|$TAV)";
+	$t = preg_replace("<" . $GEMINATE_CANDIDATES . "_CHAZAK>", "\\1", $t);
 
-	.rtl .catdiv {
-		background: white url('./images/cellpic2_rtl.jpg') repeat-y scroll top right;
-	}
+	$t = preg_replace("<".$HOLAM_VAV.">", "uō", $t);
+	$t = preg_replace("<".$HOLAM_MEM.">", "mō", $t);
+	$t = preg_replace("<".$HOLAM_LAMED.">", "lō", $t);
+	$t = preg_replace("<".$HOLAM_TAV.">", "tō", $t);
+	
+	$t = preg_replace("<".$ALEPH.">", "e", $t);
+	$t = preg_replace("<".$BET.">", "b", $t);
+	$t = preg_replace("<".$BHET.">", "v", $t);
+	$t = preg_replace("<".$GIMEL.">", "g", $t);
+	$t = preg_replace("<".$GHIMEL.">", "g", $t);
+	$t = preg_replace("<".$DALED.">", "d", $t);
+	$t = preg_replace("<".$DHALED.">", "d", $t);
+	$t = preg_replace("<".$HEH_MAPIK.">", "h", $t);
+	$t = preg_replace("<".$HEH.">", "h", $t);
+	$t = preg_replace("<".$HEH.">", "h", $t);
+	$t = preg_replace("<".$VAV.">", "u", $t);
+	$t = preg_replace("<".$HOLAM_VAV.">", "uō", $t);
+	$t = preg_replace("<".$ZED.">", "z", $t);
+	$t = preg_replace("<".$CHET.">", "ḥ", $t); // h dot
+	$t = preg_replace("<".$TET.">", "th", $t);
+	$t = preg_replace("<".$YUD_PLURAL.">", "y", $t);
+	$t = preg_replace("< ".$YUD.">", " y", $t);
+	$t = preg_replace("<".$YUD.">", "y", $t);
+	$t = preg_replace("<".$KAF.">", "k", $t);
+	$t = preg_replace("<".$KHAF_SOFIT.">", "kh", $t);
+	$t = preg_replace("<".$LAMED.">", "l", $t);
+	$t = preg_replace("<".$MEM.">", "m", $t);
+	$t = preg_replace("<".$MEM_SOFIT.">", "m", $t);
+	$t = preg_replace("<".$NUN.">", "n", $t);
+	$t = preg_replace("<".$NUN_SOFIT.">", "n", $t);
+	$t = preg_replace("<".$SAMECH.">", "s", $t);
+	$t = preg_replace("<".$AYIN.">", "a", $t);
+	$t = preg_replace("<".$PEI.">", "p", $t);
+	$t = preg_replace("<".$PHEI_SOFIT.">", "f", $t);
+	$t = preg_replace("<".$TZADI.">", "tz", $t);
+	$t = preg_replace("<".$TZADI_SOFIT.">", "ts", $t);
+	$t = preg_replace("<".$KUF.">", "q", $t);
+	$t = preg_replace("<".$RESH.">", "r", $t);
+	$t = preg_replace("<".$SHIN.$SHIN_DOT.">", "sh", $t);
+	$t = preg_replace("<".$SHIN.$SIN_DOT.">", "s", $t);
+	$t = preg_replace("<".$TAV.">", "t", $t);
+	$t = preg_replace("<".$THAV.">", "t", $t);
+	$t = preg_replace("<".$CHATAF_KAMETZ.">", "a", $t);
+	$t = preg_replace("<".$KAMETZ_KATAN.">", "a", $t);
+	$t = preg_replace("<".$KAMETZ.">", "a", $t);
+	$t = preg_replace("<".$CHATAF_PATACH.">", "a", $t);
+	$t = preg_replace("<".$PATACH_GANUV.">", "e", $t);
+	$t = preg_replace("<".$PATACH.">", "e", $t);
+	$t = preg_replace("<".$SHEVA_NACH.">", "ə", $t);
+	$t = preg_replace("<".$SHEVA.">", "ə", $t);
+	$t = preg_replace("<".$CHATAF_SEGOL.">", "e", $t);
+	$t = preg_replace("<".$SEGOL.">", "e", $t);
+	$t = preg_replace("<".$TZEIREI_MALEI.">", "e", $t);
+	$t = preg_replace("<".$TZEIREI_CHASER.">", "e", $t);
+	$t = preg_replace("<".$CHIRIK_MALEI.">", "i", $t);
+	$t = preg_replace("<".$CHIRIK_CHASER.">", "i", $t);
+	$t = preg_replace("<".$CHOLAM.">", "o", $t);
+	$t = preg_replace("<".$CHOLAM_MALEI.">", "o", $t);
+	$t = preg_replace("<".$CHOLAM_CHASER.">", "o", $t);
+	$t = preg_replace("<".$MAPIQ.">", "o", $t);
+	$t = preg_replace("<".$METEG.">", "a", $t);
+	$t = preg_replace("<".$KUBUTZ.">", "u", $t);
+	$t = preg_replace("<".$TIPEHA.">", "'", $t); 
+	$t = preg_replace("<".$MERKHA.">", "'", $t); 
+	$t = preg_replace("<".$MERKHA_KEFULA.">", "''", $t);	
+	$t = preg_replace("<".$MUNAH.">", "'", $t);		
+	$t = preg_replace("<".$ETNAHTA.">", "´", $t); 
+	$t = preg_replace("<".$ATNAH_HAFUKH.">", "^", $t); 
+	$t = preg_replace("<".$YERAH_BEN_YOMO.">", "°", $t); 
+	
+	$t = preg_replace("<ֹsh>", "osh", $t);
+	$t = preg_replace("<ֹr>", "or", $t);
+	$t = preg_replace("<ֹt>", "ot", $t);
+	$t = preg_replace("<mosheh>", "Mosheh", $t);
+	$t = preg_replace("<əə>", "ə", $t);	
+	$t = preg_replace("<yisəraeel>", "YisəraeEel", $t);	
+	$t = preg_replace("<iīsîrāeeīl>", "IīsârāeEīl", $t);
+	$t = preg_replace("<yəerədəen>", "Iəerədəen", $t);
+	$t = preg_replace("< yi>", " iy·", $t);
+	$t = preg_replace("< ue>", " ue·", $t);
+	$t = preg_replace("< uə>", " uə·", $t);
+	$t = preg_replace("< he>", " he·", $t);
+	$t = preg_replace("< bə>", " bə·", $t);
+	$t = preg_replace("<bə·ā>", "bəā", $t);
+	$t = preg_replace("< ha>", " ha·", $t);
+	$t = preg_replace("< bə·eyn>", " bəein", $t);
+	$t = preg_replace("<bəaaa>", "bəa·aa", $t);
+	
+	ExtractTrup();
+	$t = CleanUpPunctuation($t);
+	return $t;
+}
 
-	/* Header cells - the blue and silver gradient backgrounds */
-	th	{
-		color: #FFA34F; font-size: 11px; font-weight : bold;
-		background-color: #006699;
-		background-image: url('./images/cellpic3.gif');
-	}
-
-	.cat {
-		background-color: #C7D0D7;
-		text-indent: 4px;
-	}
-
-
-	.cat,.catHead,.catSides,.catLeft,.catRight,.catBottom {
-				background-image: url('./images/cellpic1.gif');
-				background-color:#80BBEC; border: #E3F0FB; border-style: solid;
-	}
-
-
+function AcademicTransliteration($t)
+{
+	//Definitions https://github.com/symbl-cc/symbl-data 
+	//Backup: https://github.com/anio/unicode-table-data/blob/95d28cae674791b18798e5cdb846bbffde017097/loc/de/symbols/0500.txt#L200C3-L200C3
+	$ALEPH = 'א';
+	$BHET = 'ב';
+	$GHIMEL = $GIMEL = 'ג';
+	$DHALED = $DALED = 'ד';
+	$HEH_MAPIK = $HEH = 'ה';
+	$VAV = 'ו';
+	$ZED = 'ז';
+	$CHET = 'ח';
+	$TET = 'ט';
+	$YUD_PLURAL = $YUD = 'י';
+	$KHAF_SOFIT = 'ך';
+	$KAF = 'כ';
+	$LAMED = 'ל';
+	$MEM_SOFIT = 'ם';
+	$MEM = 'מ';
+	$NUN_SOFIT = 'ן';
+	$NUN = 'נ';
+	$SAMECH = 'ס';
+	$AYIN = 'ע';
+	$PHEI_SOFIT = 'ף';
+	$PEI = 'פ';
+	$TZADI_SOFIT = 'ץ';
+	$TZADI = 'צ';
+	$KUF = 'ק';
+	$RESH = 'ר';
+	$SHIN = 'ש';
+	$THAV = 'ת';
+	
+	$BET = 'בּ';
+	$GIMEL = 'גּ';
+	$DALED = 'דּ';
+	$HEH_MAPIK = 'הִ';
+	$KAF = 'כּ';
+	$TAV = 'תּ';	
+	
 	/*
-	  Setting additional nice inner borders for the main table cells.
-	  The names indicate which sides the border will be on.
-	  Don't worry if you don't understand this, just ignore it :-)
+	DAGESH_LETTER: return 'דגש\שורוק'
+	Niqqud.KAMATZ: return 'קמץ'
+	Niqqud.PATAKH: return 'פתח'
+	Niqqud.TZEIRE: return 'צירה'
+	Niqqud.SEGOL: return 'סגול'
+	Niqqud.SHVA: return 'שוא'
+	Niqqud.HOLAM: return 'חולם'
+	Niqqud.KUBUTZ: return 'קובוץ'
+	Niqqud.HIRIK: return 'חיריק'
+	Niqqud.REDUCED_KAMATZ: return 'חטף-קמץ'
+	Niqqud.REDUCED_PATAKH: return 'חטף-פתח'
+	Niqqud.REDUCED_SEGOL: return 'חטף-סגול'
+	SHIN_SMALIT: return 'שין-שמאלית'
+	SHIN_YEMANIT: return 'שין-ימנית'
 	*/
-	td.cat,td.catHead,td.catBottom {
-		height: 29px;
-		border-width: 0px 0px 0px 0px;
-	}
-	th.thHead,th.thSides,th.thTop,th.thLeft,th.thRight,th.thBottom,th.thCornerL,th.thCornerR {
-		font-weight: bold; border: #E3F0FB; border-style: solid; height: 28px; }
-	td.row3Right,td.spaceRow {
-		background-color: #80BBEC; border: #E3F0FB; border-style: solid; }
-
-	th.thHead,td.catHead { font-size: 12px; border-width: 1px 1px 0px 1px; }
-	th.thSides,td.catSides,td.spaceRow	 { border-width: 0px 1px 0px 1px; }
-	th.thRight,td.catRight,td.row3Right	 { border-width: 0px 1px 0px 0px; }
-	th.thLeft,td.catLeft	  { border-width: 0px 0px 0px 1px; }
-	th.thBottom,td.catBottom  { border-width: 0px 1px 1px 1px; }
-	th.thTop	 { border-width: 1px 0px 0px 0px; }
-	th.thCornerL { border-width: 1px 0px 0px 1px; }
-	th.thCornerR { border-width: 1px 1px 0px 0px; } 
-
-	.overflow-wrap {
-	  line-break: auto;
-	  overflow-wrap: break-word;
-	  word-wrap: break-word;
-	  overflow: hidden-lg-down;
-	  hyphens: auto;
-	}
-
-	.spacer {
-		background-color: #D1D7DC;
-	}
-
-	hr {
-		height: 1px;
-		border-width: 0;
-		background-color: #D1D7DC;
-		color: #D1D7DC;
-	}
-
-	.legend {
-		text-align:center;
-		margin: 0 auto;
-	}
-
-	/* Links
-	 ------------ */
-
-	/* Links adjustment to correctly display an order of rtl/ltr mixed content */
-	.rtl a {
-		direction: rtl;
-		unicode-bidi: embed;
-	}
-
-	/* CSS spec requires a:link, a:visited, a:hover and a:active rules to be specified in this order. */
-	/* See http://www.phpbb.com/bugs/phpbb3/59685 */
-	a:link {
-		color: #006597;
-		text-decoration: none;
-	}
-
-	a:active,
-	a:visited {
-		color: #005784;
-		text-decoration: none;
-	}
-
-	a:hover {
-		color: #D46400;
-		text-decoration: underline;
-	}
-
-	a:active {
-		color: #005784;
-		text-decoration: none;
-	}
-
-	a.forumlink {
-		color: #069;
-		font-weight: bold;
-		font-family: "Lucida Grande", Helvetica, Arial, sans-serif;
-		font-size: 1.2em;
-	}
-
-	a.topictitle {
-		margin: 1px 0;
-		font-family: "Lucida Grande", Helvetica, Arial, sans-serif;
-		font-weight: bold;
-		font-size: 1.2em;
-	}
-
-	a.topictitle:visited {
-		color: #5493B4;
-		text-decoration: none;
-	}
-
-	th a,
-	th a:visited {
-		color: #FFA34F !important;
-		text-decoration: none;
-	}
-
-	th a:hover {
-		text-decoration: underline;
-	}
-
-
-	/* Form Elements
-	 ------------ */
-	form {
-		margin: 0;
-		padding: 0;
-		border: 0;
-	}
-
-	input {
-		color: #333333;
-		font-family: "Lucida Grande", Verdana, Helvetica, sans-serif;
-		font-size: 1.1em;
-		font-weight: normal;
-		padding: 1px;
-		border: 1px solid #A9B8C2;
-		background-color: #FAFAFA;
-	}
-
-	textarea {
-		background-color: #FAFAFA;
-		color: #333333;
-		font-family: "Lucida Grande", Verdana, Helvetica, Arial, sans-serif;
-		font-size: 1.3em; 
-		line-height: 1.4em;
-		font-weight: normal;
-		border: 1px solid #A9B8C2;
-		padding: 2px;
-	}
-
-	select {
-		color: #333333;
-		background-color: #FAFAFA;
-		font-family: "Lucida Grande", Verdana, Helvetica, sans-serif;
-		font-size: 1.1em;
-		font-weight: normal;
-		border: 1px solid #A9B8C2;
-		padding: 1px;
-	}
-
-	option {
-		padding: 0 1em 0 0;
-	}
-
-	option.disabled-option {
-		color: graytext;
-	}
-
-	.rtl option {
-		padding: 0 0 0 1em;
-	}
-
-	input.radio {
-		border: none;
-		background-color: transparent;
-	}
-
-	.post {
-		background-color: white;
-		border-style: solid;
-		border-width: 1px;
-	}
-
-	.btnbbcode {
-		color: #000000;
-		font-weight: normal;
-		font-size: 1.1em;
-		font-family: "Lucida Grande", Verdana, Helvetica, sans-serif;
-		background-color: #EFEFEF;
-		border: 1px solid #666666;
-	}
-
-	.btnmain {
-		font-weight: bold;
-		background-color: #ECECEC;
-		border: 1px solid #A9B8C2;
-		cursor: pointer;
-		padding: 1px 5px;
-		font-size: 1.1em;
-	}
-
-	.btnlite {
-		font-weight: normal;
-		background-color: #ECECEC;
-		border: 1px solid #A9B8C2;
-		cursor: pointer;
-		padding: 1px 5px;
-		font-size: 1.1em;
-	}
-
-	.btnfile {
-		font-weight: normal;
-		background-color: #ECECEC;
-		border: 1px solid #A9B8C2;
-		padding: 1px 5px;
-		font-size: 1.1em;
-	}
-
-	.helpline {
-		background-color: #DEE3E7;
-		border-style: none;
-	}
-
-
-	/* BBCode
-	 ------------ */
-	.quotetitle, .attachtitle {
-		margin: 10px 5px 0 5px;
-		padding: 4px;
-		border-width: 1px 1px 0 1px;
-		border-style: solid;
-		border-color: #A9B8C2;
-		color: #333333;
-		background-color: #A9B8C2;
-		font-size: 0.85em;
-		font-weight: bold;
-	}
-
-	.quotetitle .quotetitle {
-		font-size: 1em;
-	}
-
-	.quotecontent, .attachcontent {
-		margin: 0 5px 10px 5px;
-		padding: 5px;
-		border-color: #A9B8C2;
-		border-width: 0 1px 1px 1px;
-		border-style: solid;
-		font-weight: normal;
-		font-size: 1em;
-		line-height: 1.4em;
-		font-family: "Lucida Grande", "Trebuchet MS", Helvetica, Arial, sans-serif;
-		background-color: #FAFAFA;
-		color: #4B5C77;
-	}
-
-	.attachcontent {
-		font-size: 0.85em;
-	}
-
-	.codetitle {
-		margin: 10px 5px 0 5px;
-		padding: 2px 4px;
-		border-width: 1px 1px 0 1px;
-		border-style: solid;
-		border-color: #A9B8C2;
-		color: #333333;
-		background-color: #A9B8C2;
-		font-family: "Lucida Grande", Verdana, Helvetica, Arial, sans-serif;
-		font-size: 0.8em;
-	}
-
-	.codecontent {
-		direction: ltr;
-		margin: 0 5px 10px 5px;
-		padding: 5px;
-		border-color: #A9B8C2;
-		border-width: 0 1px 1px 1px;
-		border-style: solid;
-		font-weight: normal;
-		color: #006600;
-		font-size: 0.85em;
-		font-family: Monaco, 'Courier New', monospace;
-		background-color: #FAFAFA;
-	}
-
-	.postimage {
-		max-width: 100%;
-	}
-
-	.syntaxbg {
-		color: #FFFFFF;
-	}
-
-	.syntaxcomment {
-		color: #FF8000;
-	}
-
-	.syntaxdefault {
-		color: #0000BB;
-	}
-
-	.syntaxhtml {
-		color: #000000;
-	}
-
-	.syntaxkeyword {
-		color: #007700;
-	}
-
-	.syntaxstring {
-		color: #DD0000;
-	}
-
-
-	/* Private messages
-	 ------------------ */
-	.pm_marked_colour {
-		background-color: #000000;
-	}
-
-	.pm_replied_colour {
-		background-color: #A9B8C2;
-	}
-
-	.pm_friend_colour {
-		background-color: #007700;
-	}
-
-	.pm_foe_colour {
-		background-color: #DD0000;
-	}
-
-
-	/* Misc
-	 ------------ */
-	img {
-		border: none;
-	}
-
-	.sep {
-		color: black;
-		background-color: #FFA34F;
-	}
-
-	table.colortable td {
-		padding: 0;
-	}
-
-	pre {
-		font-size: 1.1em;
-		font-family: Monaco, 'Courier New', monospace;
-	}
-
-	.nowrap {
-		white-space: nowrap;
-	}
-
-	.username-coloured {
-		font-weight: bold;
-	}
-	/* GYM Sitemaps & RSS - www.phpbb-seo.com */
-	div.gymsublist {
-		display:block;
-		position:relative;
-		padding-left:10px;
-		padding-top:5px;
-		padding-bottom:10px;
-		padding-right:0;
-		margin:0;
-	}
-	div.gymsublist ul {
-		display:block;
-		position:relative;
-		height:1%;
-		padding-left:30px;
-	}
-	div.gymsublist ul li {
-		display:block;
-		position:relative;
-		line-height:18px;
-		font-size:11px;
-	}
-	.emoji {
-		min-height: 18px;
-		min-width: 18px;
-		height: 1em;
-		width: 1em;
-	}
-
-	/* The largest text used in the index page title and toptic title etc. */
-	.maintitle,h1,h2	{
-				font-weight: bold; font-size: 22px; font-family: "Trebuchet MS",Verdana, Arial, Helvetica, sans-serif;
-				text-decoration: none; line-height : 120%; color : #000000;
-	}
-
-
-	/* Form elements */
-	input,textarea, select {
-		color : #000000;
-		font: normal 11px Verdana, Arial, Helvetica, sans-serif;
-		border-color : #000000;
-	}
-
-	/* The text input fields background colour */
-	input.post, textarea.post, select {
-		background-color : #E3F0FB;
-	}
-
-	input { text-indent : 2px; }
-
-	/* The buttons used for bbCode styling in message post */
-	input.button {
-		background-color : #DAECFA;
-		color : #000000;
-		font-size: 11px; font-family: Verdana, Arial, Helvetica, sans-serif;
-	}
-
-	/* The main submit button option */
-	input.mainoption {
-		background-color : #FAFAFA;
-		font-weight : bold;
-	}
-
-	/* None-bold submit button */
-	input.liteoption {
-		background-color : #FAFAFA;
-		font-weight : normal;
-	}
-
-	/* This is the line in the posting page which shows the rollover
-	  help line. This is actually a text box, but if set to be the same
-	  colour as the background no one will know ;)
-	*/
-	.helpline { background-color: #BADBF5; border-style: none; }
-
-
-	/* Former imageset */
-	span.imageset {
-		display: inline-block;
-		background: transparent none 0 0 no-repeat;
-		margin: 0;
-		padding: 0;
-		width: 0;
-		height: 0;
-		overflow: hidden;
-	}
-	a.imageset {
-		text-decoration: none !important;
-	}
-
-	/* Global imageset items */
-	.imageset.site_logo {
-		background-image: url("./images/site_logo.png");
-		padding-top: 0px;	
-		padding-left: 240px;
-		padding-right: 0px;  
-		padding-bottom: 100px;  
-	}
-	.imageset.upload_bar {
-		background-image: url("./images/upload_bar.gif");
-		padding-left: 280px;
-		padding-top: 16px;
-	}
-	.imageset.poll_left {
-		background-image: url("./images/poll_left.gif");
-		padding-left: 4px;
-		padding-top: 12px;
-	}
-	.imageset.poll_center {
-		background-image: url("./images/poll_center.gif");
-		padding-left: 1px;
-		padding-top: 12px;
-	}
-	.imageset.poll_right {
-		background-image: url("./images/poll_right.gif");
-		padding-left: 4px;
-		padding-top: 12px;
-	}
-	.imageset.forum_link {
-		background-image: url("./images/forum_link.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.forum_read {
-		background-image: url("./images/forum_read.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.forum_read_locked {
-		background-image: url("./images/forum_read_locked.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.forum_read_subforum {
-		background-image: url("./images/forum_read_subforum.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.forum_unread {
-		background-image: url("./images/forum_unread.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.forum_unread_locked {
-		background-image: url("./images/forum_unread_locked.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.forum_unread_subforum {
-		background-image: url("./images/forum_unread_subforum.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.topic_moved {
-		background-image: url("./images/topic_moved.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_read {
-		background-image: url("./images/topic_read.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_read_mine {
-		background-image: url("./images/topic_read_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_read_hot {
-		background-image: url("./images/topic_read_hot.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_read_hot_mine {
-		background-image: url("./images/topic_read_hot_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_read_locked {
-		background-image: url("./images/topic_read_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_read_locked_mine {
-		background-image: url("./images/topic_read_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_unread {
-		background-image: url("./images/topic_unread.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_unread_mine {
-		background-image: url("./images/topic_unread_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_unread_hot {
-		background-image: url("./images/topic_unread_hot.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_unread_hot_mine {
-		background-image: url("./images/topic_unread_hot_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_unread_locked {
-		background-image: url("./images/topic_unread_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_unread_locked_mine {
-		background-image: url("./images/topic_unread_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_read {
-		background-image: url("./images/sticky_read.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_read_mine {
-		background-image: url("./images/sticky_read_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_read_locked {
-		background-image: url("./images/sticky_read_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_read_locked_mine {
-		background-image: url("./images/sticky_read_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_unread {
-		background-image: url("./images/sticky_unread.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_unread_mine {
-		background-image: url("./images/sticky_unread_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_unread_locked {
-		background-image: url("./images/sticky_unread_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_unread_locked_mine {
-		background-image: url("./images/sticky_unread_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_read {
-		background-image: url("./images/announce_read.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_read_mine {
-		background-image: url("./images/announce_read_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_read_locked {
-		background-image: url("./images/announce_read_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_read_locked_mine {
-		background-image: url("./images/announce_read_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_unread {
-		background-image: url("./images/announce_unread.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_unread_mine {
-		background-image: url("./images/announce_unread_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_unread_locked {
-		background-image: url("./images/announce_unread_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_unread_locked_mine {
-		background-image: url("./images/announce_unread_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_read {
-		background-image: url("./images/global_read.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_read_mine {
-		background-image: url("./images/global_read_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_read_locked {
-		background-image: url("./images/global_read_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_read_locked_mine {
-		background-image: url("./images/global_read_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_unread {
-		background-image: url("./images/global_unread.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_unread_mine {
-		background-image: url("./images/global_unread_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_unread_locked {
-		background-image: url("./images/global_unread_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_unread_locked_mine {
-		background-image: url("./images/global_unread_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.pm_read {
-		background-image: url("./images/topic_read.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.pm_unread {
-		background-image: url("./images/topic_unread.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.icon_post_target {
-		background-image: url("./images/icon_post_target.gif");
-		padding-left: 12px;
-		padding-top: 9px;
-	}
-	.imageset.icon_post_target_unread {
-		background-image: url("./images/icon_post_target_unread.gif");
-		padding-left: 12px;
-		padding-top: 9px;
-	}
-	.imageset.icon_topic_attach {
-		background-image: url("./images/icon_topic_attach.gif");
-		padding-left: 14px;
-		padding-top: 18px;
-	}
-	.imageset.icon_topic_latest {
-		background-image: url("./images/icon_topic_latest.gif");
-		padding-left: 18px;
-		padding-top: 9px;
-	}
-	.imageset.icon_topic_newest {
-		background-image: url("./images/icon_topic_newest.gif");
-		padding-left: 18px;
-		padding-top: 9px;
-	}
-	.imageset.icon_topic_reported {
-		background-image: url("./images/icon_topic_reported.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.icon_topic_unapproved {
-		background-image: url("./images/icon_topic_unapproved.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.icon_topic_deleted {
-		background-image: url("./images/icon_topic_deleted.gif");
-		padding-left: 14px;
-		padding-top: 14px;
-	}
-
-
-	/* English images for fallback */
-	.imageset.phpbb_aol-icon, .imageset.icon_contact_aim {
-		background-image: url("./en/icon_contact_aim.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_contact_email {
-		background-image: url("./en/icon_contact_email.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.phpbb_icq-icon, .imageset.icon_contact_icq {
-		background-image: url("./en/icon_contact_icq.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_contact_jabber {
-		background-image: url("./en/icon_contact_jabber.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.phpbb_wlm-icon, .imageset.icon_contact_msnm {
-		background-image: url("./en/icon_contact_msnm.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_contact_pm {
-		background-image: url("./en/icon_contact_pm.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.phpbb_yahoo-icon, .imageset.icon_contact_yahoo {
-		background-image: url("./en/icon_contact_yahoo.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.phpbb_website-icon, .imageset.icon_contact_www {
-		background-image: url("./en/icon_contact_www.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_post_delete {
-		background-image: url("./en/icon_post_delete.gif");
-		padding-left: 20px;
-		padding-top: 20px;
-	}
-	.imageset.icon_post_edit {
-		background-image: url("./en/icon_post_edit.gif");
-		padding-left: 90px;
-		padding-top: 20px;
-	}
-	.imageset.icon_post_info {
-		background-image: url("./en/icon_post_info.gif");
-		padding-left: 20px;
-		padding-top: 20px;
-	}
-	.imageset.icon_post_quote {
-		background-image: url("./en/icon_post_quote.gif");
-		padding-left: 90px;
-		padding-top: 20px;
-	}
-	.imageset.icon_post_report {
-		background-image: url("./en/icon_post_report.gif");
-		padding-left: 20px;
-		padding-top: 20px;
-	}
-	.imageset.icon_user_online {
-		background-image: url("./en/icon_user_online.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_user_offline {
-		background-image: url("./en/icon_user_offline.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_user_profile {
-		background-image: url("./en/icon_user_profile.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_user_search {
-		background-image: url("./en/icon_user_search.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_user_warn {
-		background-image: url("./en/icon_user_warn.gif");
-		padding-left: 20px;
-		padding-top: 20px;
-	}
-	.imageset.button_pm_new {
-		background-image: url("./en/button_pm_new.gif");
-		padding-left: 97px;
-		padding-top: 27px;
-	}
-	.imageset.button_pm_reply {
-		background-image: url("./en/button_pm_reply.gif");
-		padding-left: 90px;
-		padding-top: 20px;
-	}
-	.imageset.button_topic_locked {
-		background-image: url("./en/button_topic_locked.gif");
-		padding-left: 97px;
-		padding-top: 27px;
-	}
-	.imageset.button_topic_new {
-		background-image: url("./en/button_topic_new.gif");
-		padding-left: 97px;
-		padding-top: 27px;
-	}
-	.imageset.button_topic_reply {
-		background-image: url("./en/button_topic_reply.gif");
-		padding-left: 97px;
-		padding-top: 27px;
-	}
-
-	/* Responsive breadcrumbs
-	----------------------------------------*/
-	.rtl .breadcrumbs .crumb {
-		float: right;
-	}
-
-	/* Table styles
-	----------------------------------------*/
-	table.table1 {
-		width: 100%;
-	}
-	table.table2 {
-		width: 100%;
-	}
-	table.table3 {
-		width: 100%;
-	}
-	.ucp-main table.table1 {
-		padding: 2px;
-	}
-
-	table.table1 thead th {
-		font-weight: normal;
-		text-transform: uppercase;
-		line-height: 1.3em;
-		font-size: 1em;
-		padding: 0 0 4px 3px;
-	}
-
-	table.table1 thead th span {
-		padding-left: 7px;
-	}
-
-	table.table1 tbody tr {
-		border: 1px solid transparent;
-	}
-
-	table.table1 td {
-		font-size: 1.1em;
-	}
-
-	table.table1 tbody td {
-		padding: 5px;
-		border-top: 1px solid transparent;
-	}
-
-	table.table1 tbody th {
-		padding: 5px;
-		border-bottom: 1px solid transparent;
-		text-align: left;
-	}
-
-	/* Specific column styles */
-	table.table1 .name		{ text-align: left; }
-	table.table1 .center		{ text-align: center; }
-	table.table3 .reportby	{ width: 15%; }
-	table.table1 .posts		{ text-align: center; width: 7%; }
-	table.table1 .joined		{ text-align: left; width: 15%; }
-	table.table1 .active		{ text-align: left; width: 15%; }
-	table.table1 .mark		{ text-align: center; width: 7%; }
-	table.table1 .info		{ text-align: left; width: 30%; }
-	table.table2 .info div		{ width: 100%; white-space: normal; overflow: hidden; }
-	table.table1 .autocol		{ line-height: 2em; white-space: nowrap; }
-	table.table1 thead .autocol { padding-left: 1em; }
-
-	table.table1 span.rank-img {
-		float: right;
-		width: auto;
-	}
-
-	table.info td {
-		padding: 3px;
-	}
-
-	table.info tbody th {
-		padding: 3px;
-		text-align: right;
-		vertical-align: top;
-		font-weight: normal;
-	}
-
-
-	.cat,.catHead,.catSides,.catLeft,.catRight,.catBottom {
-				background-image: url('./images/cellpic1.gif');
-				background-color:#80BBEC; border: #E3F0FB; border-style: solid; height: 28px;
-	}
-
+	
+	$SHEVA_NACH = $SHEVA = 'ְ'; //SHVA = '\u05B0'
+	$CHATAF_SEGOL = 'ֱ'; //REDUCED_SEGOL = '\u05B1'
+	$CHATAF_PATACH = 'ֲ'; //REDUCED_PATAKH = '\u05B2'
+	$CHATAF_KAMETZ = 'ֳ'; //REDUCED_KAMATZ = '\u05B3'
+	$CHIRIK_MALEI = $CHIRIK_CHASER = $CHIRIK_U = 'ִ'; //HIRIK = '\u05B4'
+	$TZEIREI_MALEI = $TZEIREI_CHASER = $TZEIREI = 'ֵ'; //TZEIRE = '\u05B5'
+	$SEGOL = 'ֶ'; //SEGOL = '\u05B6'  
+	$PATACH_GANUV = '׆'; //\u05C6: Hebräisches Satzzeichen Nun Hafucha || 05C6: Hebräisches Interpunktions-Nonne Hafukha
+	$PATACH = 'ַ'; //PATAKH = '\u05B7'; 
+	$KAMETZ_KATAN = 'ׇ'; //\u05C7: Hebräisches Zeichen Kametz Katan || 05C7: Hebräischer Punkt Qamats Qatan
+	$KAMETZ = 'ָ'; //KAMATZ = '\u05B8'; 
+	$CHOLAM_CHASER = 'ֺ';//For Wav
+	$HOLAM_HASHER = 'ֹׄ'; //HOLAM HASHER for Wav 
+	$CHOLAM_MALEI = 'ֹֹ';//HOLAM = '\u05B9'
+	$HOLAM_MEM = 'מֹ';   
+	$HOLAM_VAV = 'וֺ';
+	$HOLAM_LAMED = 'לֹ';
+	$HOLAM = preg_replace("<".$LAMED.">", "", $HOLAM_LAMED); //$HOLAM = ' ֹ ';
+	$METEG = 'ֽ'; //METEG = '\u05BD'
+	$MAQAF = '־'; //u05BE
+	$RAFE = 'ֿ'; //u05BF
+	$KUBUTZ = 'ֻ'; //KUBUTZ = '\u05BB
+	$MAPIQ = $SHURUK = $DAGESH = 'ּ'; //SHURUK = '\u05BC' //or: DAGESH_LETTER = '\u05bc'
+	$SHIN_DOT = 'ׁ';  //SHIN_YEMANIT = '\u05c1' &#x05C1 in BabelMap
+	$SIN_DOT = 'ׂ'; //SHIN_SMALIT = '\u05c2' &#x05C2 in BabelMap	
+	$TIPEHA = '֖'; //U+0596 HEBREW ACCENT TIPEHA : tarha, me'ayla ~ mayla
+	$MERKHA = '֥'; //U+05A5 HEBREW ACCENT MERKHA : yored
+	$MERKHA_KEFULA = '֦'; //U+05A6 HEBREW ACCENT MERKHA KEFULA	
+	$MUNAH = '֣'; //U+05A3 HEBREW ACCENT MUNAH		
+	$ETNAHTA = '֑'; //U+0591 HEBREW ACCENT ETNAHTA : atnah
+	$ATNAH_HAFUKH = '֢'; //U+05A2 HEBREW ACCENT ATNAH HAFUKH
+	$YERAH_BEN_YOMO = '֪'; //U+05AA HEBREW ACCENT YERAH BEN YOMO : galgal
+		
+	// do not double letters in general
+	$GEMINATE_CANDIDATES = "($ALEPH|$BET|$BHET|$GIMEL|$DALED|$VAV|$HOLAM_VAV|$ZED|$TET|$YUD|$KAF|$KHAF_SOFIT|$LAMED|$MEM|$HOLAM_MEM|$NUN|$SAMECH|$PEI|$TZADI|$KUF|$SHIN$SHIN_DOT|$SHIN$SIN_DOT|$TAV)";
+	$t = preg_replace("<" . $GEMINATE_CANDIDATES . "_CHAZAK>", "\\1", $t);
+
+	$t = preg_replace("<".$HOLAM_VAV.">", "uō", $t);
+	$t = preg_replace("<".$HOLAM_MEM.">", "mō", $t);
+	$t = preg_replace("<".$HOLAM_LAMED.">", "lō", $t);
+	
+	/* Consonants */
+	$t = preg_replace("<".$ALEPH.">", "ʾ", $t);
+	$t = preg_replace("<".$BET.">", "b", $t);
+	$t = preg_replace("<".$BHET.">", "ḇ", $t);
+	$t = preg_replace("<".$GIMEL.">", "g", $t);
+	$t = preg_replace("<".$GHIMEL.">", "ḡ", $t);
+	$t = preg_replace("<".$DALED.">", "d", $t);
+	$t = preg_replace("<".$DHALED.">", "ḏ", $t);
+	$t = preg_replace("<".$HEH_MAPIK.">", "h", $t);
+	$t = preg_replace("<".$HEH.">", "h", $t);
+	$t = preg_replace("<".$HEH.">", "h", $t);
+	$t = preg_replace("<".$VAV.">", "w", $t);
+	$t = preg_replace("<".$ZED.">", "z", $t);
+	$t = preg_replace("<".$CHET.">", "ḥ", $t);
+	$t = preg_replace("<".$TET.">", "th", $t);
+	$t = preg_replace("<".$YUD_PLURAL.">", "i", $t);
+	$t = preg_replace("<".$YUD_PLURAL.">", "(y)", $t);
+	$t = preg_replace("<".$YUD.">", "y", $t);
+	$t = preg_replace("<".$KAF.">", "k", $t);
+	$t = preg_replace("<".$KHAF_SOFIT.">", "ḵ", $t);
+	$t = preg_replace("<".$LAMED.">", "l", $t);
+	$t = preg_replace("<".$MEM.">", "m", $t);
+	$t = preg_replace("<".$MEM_SOFIT.">", "ɱ", $t);
+	$t = preg_replace("<".$NUN.">", "n", $t);
+	$t = preg_replace("<".$NUN_SOFIT.">", "ɳ", $t);
+	$t = preg_replace("<".$SAMECH.">", "s", $t);
+	$t = preg_replace("<".$AYIN.">", "ʿ", $t);
+	$t = preg_replace("<".$PEI.">", "p", $t);
+	$t = preg_replace("<".$PHEI_SOFIT.">", "p̄", $t);
+	$t = preg_replace("<".$TZADI_SOFIT.">", "ţ̄", $t);
+	$t = preg_replace("<".$TZADI.">", "ţ", $t);
+	$t = preg_replace("<".$KUF.">", "q", $t);
+	$t = preg_replace("<".$RESH.">", "r", $t);
+	$t = preg_replace("<".$SHIN.$SHIN_DOT.">", "š", $t);
+	$t = preg_replace("<".$SHIN.$SIN_DOT.">", "ś", $t);	
+	$t = preg_replace("<".$TAV.">", "t", $t);
+	$t = preg_replace("<".$THAV.">", "ṯ", $t);
+	
+	/* Vowels */
+	$t = preg_replace("<".$CHATAF_KAMETZ.">", "ŏ", $t);
+	$t = preg_replace("<".$KAMETZ_KATAN.">", "ā", $t);
+	$t = preg_replace("<".$KAMETZ.">", "ā", $t);
+	$t = preg_replace("<".$CHATAF_PATACH.">", "ə", $t);
+	$t = preg_replace("<".$PATACH_GANUV.">", "<sup>ē</sup>", $t);
+	$t = preg_replace("<".$PATACH.">", "ē", $t);
+	$t = preg_replace("<".$SHEVA_NACH.">", "ə", $t);
+	$t = preg_replace("<".$SHEVA.">", "ə", $t);
+	$t = preg_replace("<".$CHATAF_SEGOL.">", "ă", $t);
+	$t = preg_replace("<".$SEGOL.">", "ę", $t);
+	$t = preg_replace("<".$TZEIREI_MALEI.">", "ê", $t);
+	$t = preg_replace("<".$TZEIREI_CHASER.">", "ē", $t);
+	$t = preg_replace("<".$CHIRIK_MALEI.">", "ī", $t);
+	$t = preg_replace("<".$CHIRIK_CHASER.">", "ī", $t);
+	$t = preg_replace("<".$CHOLAM_MALEI.">", "ō", $t);
+	$t = preg_replace("<".$CHOLAM_CHASER.">", "ō", $t);
+	$t = preg_replace("<".$MAPIQ.">", "ō", $t);
+	$t = preg_replace("<".$METEG.">", "a", $t);
+	$t = preg_replace("<".$KUBUTZ.">", "ū", $t);
+	$t = preg_replace("<".$TIPEHA.">", "'", $t); 
+	$t = preg_replace("<".$MERKHA.">", "'", $t); 
+	$t = preg_replace("<".$MERKHA_KEFULA.">", "''", $t);	
+	$t = preg_replace("<".$MUNAH.">", "'", $t);		
+	$t = preg_replace("<".$ETNAHTA.">", "´", $t); 
+	$t = preg_replace("<".$ATNAH_HAFUKH.">", "^", $t); 
+	$t = preg_replace("<".$YERAH_BEN_YOMO.">", "°", $t); 	
+	
+	/* Vowels */
+	$t = preg_replace("<ֹş>", "ōş", $t);
+	$t = preg_replace("<ֹr>", "ōr", $t);
+	$t = preg_replace("<ֹt>", "ōt", $t);
+	$t = preg_replace("<mōşęh>", "Mōşęh", $t);
+	$t = preg_replace("<ââ>", "â", $t);	
+	$t = preg_replace("<iīsârāeél>", "IīsârāeEél", $t);	
+	$t = preg_replace("<iīsîrāeeīl>", "IīsârāeEīl", $t);
+	$t = preg_replace("<iâērâdâéɳ>", "Iâērâdâéɳ", $t);
+	$t = preg_replace("< iī>", " iī·", $t);
+	$t = preg_replace("< uē>", " uē·", $t);
+	$t = preg_replace("< uâ>", " uî·", $t);
+	$t = preg_replace("< hē>", " hē·", $t);
+	$t = preg_replace("< bâ>", " bî·", $t);
+	$t = preg_replace("<bî·ā>", "bâā", $t);
+	$t = preg_replace("< hā>", " hā·", $t);
+	$t = preg_replace("< bî·éiɳ>", " bâéiɳ", $t);
+	$t = preg_replace("<bâāaā>", "bîā·aā", $t);
+	
+	ExtractTrup();
+	$t = CleanUpPunctuation($t);
+	return $t;
+}
+
+function MichiganClaremontTranslit($t)
+{
+	//Definitions https://github.com/symbl-cc/symbl-data 
+	//Backup: https://github.com/anio/unicode-table-data/blob/95d28cae674791b18798e5cdb846bbffde017097/loc/de/symbols/0500.txt#L200C3-L200C3
+	$ALEPH = 'א';
+	$BHET = 'ב';
+	$GHIMEL = $GIMEL = 'ג';
+	$DHALED = $DALED = 'ד';
+	$HEH_MAPIK = $HEH = 'ה';
+	$VAV = 'ו';
+	$ZED = 'ז';
+	$CHET = 'ח';
+	$TET = 'ט';
+	$YUD_PLURAL = $YUD = 'י';
+	$KHAF_SOFIT = 'ך';
+	$KAF = 'כ';
+	$LAMED = 'ל';
+	$MEM_SOFIT = 'ם';
+	$MEM = 'מ';
+	$NUN_SOFIT = 'ן';
+	$NUN = 'נ';
+	$SAMECH = 'ס';
+	$AYIN = 'ע';
+	$PHEI_SOFIT = 'ף';
+	$PEI = 'פ';
+	$TZADI_SOFIT = 'ץ';
+	$TZADI = 'צ';
+	$KUF = 'ק';
+	$RESH = 'ר';
+	$SHIN = 'ש';
+	$THAV = 'ת';
+	
+	$BET = 'בּ';
+	$GIMEL = 'גּ';
+	$DALED = 'דּ';
+	$HEH_MAPIK = 'הִ';
+	$KAF = 'כּ';
+	$TAV = 'תּ';	
+	
+	$SHEVA_NACH = $SHEVA = 'ְ'; //SHVA = '\u05B0'
+	$CHATAF_SEGOL = 'ֱ'; //REDUCED_SEGOL = '\u05B1'
+	$CHATAF_PATACH = 'ֲ'; //REDUCED_PATAKH = '\u05B2'
+	$CHATAF_KAMETZ = 'ֳ'; //REDUCED_KAMATZ = '\u05B3'
+	$CHIRIK_MALEI = $CHIRIK_CHASER = $CHIRIK_U = 'ִ'; //HIRIK = '\u05B4'
+	$TZEIREI_MALEI = $TZEIREI_CHASER = $TZEIREI = 'ֵ'; //TZEIRE = '\u05B5'
+	$SEGOL = 'ֶ'; //SEGOL = '\u05B6'  
+	$PATACH_GANUV = '׆'; //\u05C6: Hebräisches Satzzeichen Nun Hafucha || 05C6: Hebräisches Interpunktions-Nonne Hafukha
+	$PATACH = 'ַ'; //PATAKH = '\u05B7'; 
+	$KAMETZ_KATAN = 'ׇ'; //\u05C7: Hebräisches Zeichen Kametz Katan || 05C7: Hebräischer Punkt Qamats Qatan
+	$KAMETZ = 'ָ'; //KAMATZ = '\u05B8'; 
+	$CHOLAM_CHASER = 'ֺ';//For Wav
+	$HOLAM_HASHER = 'ֹֹ'; //HOLAM HASHER for Wav 
+	$CHOLAM_MALEI = $CHOLAM = 'ֹֹ';//HOLAM = '\u05B9'
+	$HOLAM_MEM = 'מֹ';   
+	$HOLAM_VAV = 'וֺ';
+	$HOLAM_LAMED = 'לֹ';
+	$HOLAM = preg_replace("<".$LAMED.">", "", $HOLAM_LAMED); //$HOLAM = ' ֹ ';	
+	$METEG = 'ֽ'; //METEG = '\u05BD'
+	$MAPIQ = 'ּ'; //u05BC
+	$MAQAF = '־'; //u05BE
+	$RAFE = 'ֿ'; //u05BF
+	$KUBUTZ = 'ֻ'; //KUBUTZ = '\u05BB' 
+	$SHURUK = $DAGESH = 'ּ'; //SHURUK = '\u05BC' //or: DAGESH_LETTER = '\u05bc'
+	$SHIN_DOT = 'ׁ';  //SHIN_YEMANIT = '\u05c1' &#x05C1 in BabelMap
+	$SIN_DOT = 'ׂ'; //SHIN_SMALIT = '\u05c2' &#x05C2 in BabelMap	
+	$TIPEHA = '֖'; //U+0596 HEBREW ACCENT TIPEHA : tarha, me'ayla ~ mayla
+	$MERKHA = '֥'; //U+05A5 HEBREW ACCENT MERKHA : yored
+	$MERKHA_KEFULA = '֦'; //U+05A6 HEBREW ACCENT MERKHA KEFULA	
+	$MUNAH = '֣'; //U+05A3 HEBREW ACCENT MUNAH		
+	$ETNAHTA = '֑'; //U+0591 HEBREW ACCENT ETNAHTA : atnah
+	$ATNAH_HAFUKH = '֢'; //U+05A2 HEBREW ACCENT ATNAH HAFUKH
+	$YERAH_BEN_YOMO = '֪'; //U+05AA HEBREW ACCENT YERAH BEN YOMO : galgal	
+	
+	// do not double letters in general
+	$GEMINATE_CANDIDATES = "($ALEPH|$BET|$BHET|$GIMEL|$DALED|$VAV|$HOLAM_VAV|$ZED|$TET|$YUD|$KAF|$KHAF_SOFIT|$LAMED|$MEM|$HOLAM_MEM|$NUN|$SAMECH|$PEI|$TZADI|$KUF|$SHIN$SHIN_DOT|$SHIN$SIN_DOT|$TAV)";
+	$t = preg_replace("<" . $GEMINATE_CANDIDATES . "_CHAZAK>", "\\1", $t);
+
+	$t = preg_replace("<".$HOLAM_VAV.">", "WO", $t);
+	$t = preg_replace("<".$HOLAM_MEM.">", "MO", $t);
+	$t = preg_replace("<".$HOLAM_LAMED.">", "LO", $t);
+	
+	//Consonants
+	$t = preg_replace("<".$ALEPH.">", ")", $t);
+	$t = preg_replace("<".$BET.">", "B.", $t);
+	$t = preg_replace("<".$BHET.">", "V", $t);
+	$t = preg_replace("<".$GIMEL.">", "G", $t);
+	$t = preg_replace("<".$GHIMEL.">", "G", $t);
+	$t = preg_replace("<".$DALED.">", "D", $t);
+	$t = preg_replace("<".$DHALED.">", "D", $t);
+	$t = preg_replace("<".$HEH_MAPIK.">", "H", $t);
+	$t = preg_replace("<".$HEH.">", "H.", $t);
+	$t = preg_replace("<".$HEH.">", "H", $t);
+	$t = preg_replace("<".$VAV.">", "W", $t);
+	$t = preg_replace("<".$ZED.">", "Z", $t);
+	$t = preg_replace("<".$CHET.">", "X", $t);
+	$t = preg_replace("<".$TET.">", "+", $t);
+	$t = preg_replace("<".$YUD_PLURAL.">", "Y", $t);
+	$t = preg_replace("< ".$YUD.">", "Y.", $t);
+	$t = preg_replace("<".$YUD.">", "y", $t);
+	$t = preg_replace("<".$KAF.">", "K.", $t);
+	$t = preg_replace("<".$KHAF_SOFIT.">", "K", $t);
+	$t = preg_replace("<".$LAMED.">", "L", $t);
+	$t = preg_replace("<".$MEM.">", "M.", $t);
+	$t = preg_replace("<".$MEM_SOFIT.">", "M", $t);
+	$t = preg_replace("<".$NUN.">", "N.", $t);
+	$t = preg_replace("<".$NUN_SOFIT.">", "N", $t);
+	$t = preg_replace("<".$SAMECH.">", "S", $t);
+	$t = preg_replace("<".$AYIN.">", "(", $t);
+	$t = preg_replace("<".$PEI.">", "P.", $t);
+	$t = preg_replace("<".$PHEI_SOFIT.">", "P", $t);
+	$t = preg_replace("<".$TZADI.">", "TZ", $t);
+	$t = preg_replace("<".$TZADI_SOFIT.">", "C", $t);
+	$t = preg_replace("<".$KUF.">", "Q", $t);
+	$t = preg_replace("<".$RESH.">", "R", $t);
+	$t = preg_replace("<".$SHIN.$SHIN_DOT.">", "$", $t);
+	$t = preg_replace("<".$SHIN.$SIN_DOT.">", "&", $t);
+	$t = preg_replace("<".$TAV.">", "T.", $t);
+	$t = preg_replace("<".$THAV.">", "T.", $t);
+	$t = preg_replace("<".$CHATAF_KAMETZ.">", ":F", $t);
+	$t = preg_replace("<".$KAMETZ_KATAN.">", "F", $t);
+	$t = preg_replace("<".$KAMETZ.">", "F", $t);
+	$t = preg_replace("<".$CHATAF_PATACH.">", ":A", $t);
+	$t = preg_replace("<".$PATACH_GANUV.">", "A", $t);
+	$t = preg_replace("<".$PATACH.">", "A", $t);
+	$t = preg_replace("<".$SHEVA_NACH.">", "Ə", $t);
+	$t = preg_replace("<".$SHEVA.">", ":", $t);
+	$t = preg_replace("<".$CHATAF_SEGOL.">", ":E", $t);
+	$t = preg_replace("<".$SEGOL.">", "E", $t);
+	$t = preg_replace("<".$TZEIREI_MALEI.">", "\"", $t);
+	$t = preg_replace("<".$TZEIREI_CHASER.">", "\"", $t);
+	$t = preg_replace("<".$CHIRIK_MALEI.">", "I", $t);
+	$t = preg_replace("<".$CHIRIK_CHASER.">", "I", $t);
+	$t = preg_replace("<".$CHOLAM_MALEI.">", "O", $t);
+	$t = preg_replace("<".$CHOLAM_CHASER.">", "O", $t);
+	$t = preg_replace("<".$MAPIQ.">", "O", $t);
+	$t = preg_replace("<".$METEG.">", "a", $t);
+	$t = preg_replace("<".$KUBUTZ.">", "U", $t);
+	$t = preg_replace("<".$TIPEHA.">", "'", $t); 
+	$t = preg_replace("<".$MERKHA.">", "'", $t); 
+	$t = preg_replace("<".$MERKHA_KEFULA.">", "''", $t);	
+	$t = preg_replace("<".$MUNAH.">", "'", $t);		
+	$t = preg_replace("<".$ETNAHTA.">", "´", $t); 
+	$t = preg_replace("<".$ATNAH_HAFUKH.">", "^", $t); 
+	$t = preg_replace("<".$YERAH_BEN_YOMO.">", "°", $t); 
+	
+	//Vowels	
+	$t = preg_replace("<ֹş>", "ōş", $t);
+	$t = preg_replace("<ֹr>", "ōr", $t);
+	$t = preg_replace("<ֹt>", "ōt", $t);
+	$t = preg_replace("<mōşęh>", "Mōşęh", $t);
+	$t = preg_replace("<ââ>", "â", $t);	
+	$t = preg_replace("<iīsârāeél>", "IīsârāeEél", $t);	
+	$t = preg_replace("<iīsîrāeeīl>", "IīsârāeEīl", $t);
+	$t = preg_replace("<iâērâdâéɳ>", "Iâērâdâéɳ", $t);
+	$t = preg_replace("< iī>", " iī·", $t);
+	$t = preg_replace("< uē>", " uē·", $t);
+	$t = preg_replace("< uâ>", " uî·", $t);
+	$t = preg_replace("< hē>", " hē·", $t);
+	$t = preg_replace("< bâ>", " bî·", $t);
+	$t = preg_replace("<bî·ā>", "bâā", $t);
+	$t = preg_replace("< hā>", " hā·", $t);
+	$t = preg_replace("< bî·éiɳ>", " bâéiɳ", $t);
+	$t = preg_replace("<bâāaā>", "bîā·aā", $t);
+	
+	ExtractTrup();
+	$t = CleanUpPunctuation($t);
+	return $t;
+}
+
+function RomanianTransliteration($t)
+{
+	//Definitions https://github.com/symbl-cc/symbl-data 
+	//Backup: https://github.com/anio/unicode-table-data/blob/95d28cae674791b18798e5cdb846bbffde017097/loc/de/symbols/0500.txt#L200C3-L200C3
+	$ALEPH = 'א';
+	$BHET = 'ב';
+	$GHIMEL = 'ג';
+	$DHALED = 'ד';
+	$HEH = 'ה';
+	$VAV = 'ו';
+	$ZED = 'ז';
+	$CHET = 'ח';
+	$TET = 'ט';
+	$YUD_PLURAL = $YUD = 'י';
+	$KHAF_SOFIT = 'ך';
+	$KHAF = 'כ';
+	$LAMED = 'ל';
+	$MEM_SOFIT = 'ם';
+	$MEM = 'מ';
+	$NUN_SOFIT = 'ן';
+	$NUN = 'נ';
+	$SAMECH = 'ס';
+	$AYIN = 'ע';
+	$PHEI_SOFIT = 'ף';
+	$PEI = 'פ';
+	$TZADI_SOFIT = 'ץ';
+	$TZADI = 'צ';
+	$KUF = 'ק';
+	$RESH = 'ר';
+	$SHIN = 'ש';
+	$THAV = 'ת';
+	
+	$BET = 'בּ';
+	$GIMEL = 'גּ';
+	$DALED = 'דּ';
+	$HEH_MAPIK = 'הִ';
+	$KAF = 'כּ';
+	$TAV = 'תּ';
+	
 	/*
-	  Setting additional nice inner borders for the main table cells.
-	  The names indicate which sides the border will be on.
-	  Don't worry if you don't understand this, just ignore it :-)
+	DAGESH_LETTER: return 'דגש\שורוק'
+	Niqqud.KAMATZ: return 'קמץ'
+	Niqqud.PATAKH: return 'פתח'
+	Niqqud.TZEIRE: return 'צירה'
+	Niqqud.SEGOL: return 'סגול'
+	Niqqud.SHVA: return 'שוא'
+	Niqqud.HOLAM: return 'חולם'
+	Niqqud.KUBUTZ: return 'קובוץ'
+	Niqqud.HIRIK: return 'חיריק'
+	Niqqud.REDUCED_KAMATZ: return 'חטף-קמץ'
+	Niqqud.REDUCED_PATAKH: return 'חטף-פתח'
+	Niqqud.REDUCED_SEGOL: return 'חטף-סגול'
+	SHIN_SMALIT: return 'שין-שמאלית'
+	SHIN_YEMANIT: return 'שין-ימנית'
 	*/
-	td.cat,td.catHead,td.catBottom {
-		height: 29px;
-		border-width: 0px 0px 0px 0px;
-	}
-	th.thHead,th.thSides,th.thTop,th.thLeft,th.thRight,th.thBottom,th.thCornerL,th.thCornerR {
-		font-weight: bold; border: #E3F0FB; border-style: solid; height: 28px; }
-	td.row3Right,td.spaceRow {
-		background-color: #80BBEC; border: #E3F0FB; border-style: solid; }
-
-	th.thHead,td.catHead { font-size: 12px; border-width: 1px 1px 0px 1px; }
-	th.thSides,td.catSides,td.spaceRow	 { border-width: 0px 1px 0px 1px; }
-	th.thRight,td.catRight,td.row3Right	 { border-width: 0px 1px 0px 0px; }
-	th.thLeft,td.catLeft	  { border-width: 0px 0px 0px 1px; }
-	th.thBottom,td.catBottom  { border-width: 0px 1px 1px 1px; }
-	th.thTop	 { border-width: 1px 0px 0px 0px; }
-	th.thCornerL { border-width: 1px 0px 0px 1px; }
-	th.thCornerR { border-width: 1px 1px 0px 0px; } 
-
-	table.table1 tbody tr:hover, table.table1 tbody tr.hover {
-		background-color: #CFE1F6;
-		color: #000;
-	}
-
-	table.table1 td {
-		color: #536482;
-	}
-
-	table.table1 tbody td {
-		border-top-color: #FAFAFA;
-	}
-
-	table.table1 tbody th {
-		border-bottom-color: #000000;
-		color: #333333;
-		background-color: #FFFFFF;
-	}
-
-	table.info tbody th {
-		color: #000000;
-	}
-
-	table.table1 td {
-		color: #536482;
-	}
-		
-	table.table1 td {
-		font-size: 1.1em;
-	}
-
-	table.fixed-width-table {
-		table-layout: fixed;
-	}
-
-	.rtl table.table1 thead th {
-		padding: 0 3px 4px 0;
-	}
-
-	.rtl table.table1 thead th span {
-		padding-left: 0;
-		padding-right: 7px;
-	}
-
-	.rtl table.table1 tbody th {
-		text-align: right;
-	}
-
-	/* Specific column styles */
-	.rtl table.table1 .name		{ text-align: right; }
-	.rtl table.table1 .joined		{ text-align: right; }
-	.rtl table.table1 .active		{ text-align: right; }
-	.rtl table.table1 .info		{ text-align: right; }
-	.rtl table.table1 thead .autocol { padding-left: 0; padding-right: 1em; }
-
-	/* Specific column styles */
-	.ltr table.table1 .name		{ text-align: left; }
-	.ltr table.table1 .joined		{ text-align: left; }
-	.ltr table.table1 .active		{ text-align: left; }
-	.ltr table.table1 .info		{ text-align: left; }
-	.ltr table.table1 thead .autocol { padding-right: 0; padding-left: 1em; }
-
-	.rtl table.table1 span.rank-img {
-		float: left;
-	}
-
-	.rtl table.info tbody th {
-		text-align: left;
-	}
-
-	.rtl .forumbg table.table1 {
-		margin: 0 -1px -1px -2px;
-	}
-
-	.forumbg table.table1 {
-		margin: 0;
-	}
-
-	.forumbg-table > .inner {
-		margin: 0 -1px;
-	}
-
-	.color_palette_placeholder table {
-		border-collapse: separate;
-		border-spacing: 1px;
-	}
-
-
-	/*
-	  Setting additional nice inner borders for the main table cells.
-	  The names indicate which sides the border will be on.
-	  Don't worry if you don't understand this, just ignore it :-)
-	*/
-	td.cat,td.catHead,td.catBottom {
-		height: 29px;
-		border-width: 0px 0px 0px 0px;
-	}
-	th.thHead,th.thSides,th.thTop,th.thLeft,th.thRight,th.thBottom,th.thCornerL,th.thCornerR {
-		font-weight: bold; border: #E3F0FB; border-style: solid; height: 28px; }
-	td.row3Right,td.spaceRow {
-		background-color: #80BBEC; border: #E3F0FB; border-style: solid; }
-
-	th.thHead,td.catHead { font-size: 12px; border-width: 1px 1px 0px 1px; }
-	th.thSides,td.catSides,td.spaceRow	 { border-width: 0px 1px 0px 1px; }
-	th.thRight,td.catRight,td.row3Right	 { border-width: 0px 1px 0px 0px; }
-	th.thLeft,td.catLeft	  { border-width: 0px 0px 0px 1px; }
-	th.thBottom,td.catBottom  { border-width: 0px 1px 1px 1px; }
-	th.thTop	 { border-width: 1px 0px 0px 0px; }
-	th.thCornerL { border-width: 1px 0px 0px 1px; }
-	th.thCornerR { border-width: 1px 1px 0px 0px; } 
-	 
-	 /* Control Panel Styles
-	---------------------------------------- */
-
-
-	/* Main CP box
-	----------------------------------------*/
-	.cp-menu {
-		float:left;
-		width: 19%;
-		margin-top: 1em;
-		margin-bottom: 5px;
-	}
-
-	.cp-main {
-		float: left;
-		width: 81%;
-	}
-
-	.cp-main .content {
-		padding: 0;
-	}
-
-	.panel-container .panel p {
-		font-size: 1.1em;
-	}
-
-	.panel-container .panel ol {
-		margin-left: 2em;
-		font-size: 1.1em;
-	}
-
-	.panel-container .panel li.row {
-		border-bottom: 1px solid transparent;
-		border-top: 1px solid transparent;
-	}
-
-	ul.cplist {
-		margin-bottom: 5px;
-		border-top: 1px solid transparent;
-	}
-
-	.panel-container .panel li.header dd, .panel-container .panel li.header dt {
-		margin-bottom: 2px;
-	}
-
-	.panel-container table.table1 {
-		margin-bottom: 1em;
-	}
-
-	.panel-container table.table1 thead th {
-		font-weight: bold;
-		border-bottom: 1px solid transparent;
-		padding: 5px;
-	}
-
-	.panel-container table.table1 tbody th {
-		font-style: italic;
-		background-color: transparent !important;
-		border-bottom: none;
-	}
-
-	.cp-main .pm-message {
-		border: 1px solid transparent;
-		margin: 10px 0;
-		width: auto;
-		float: none;
-	}
-
-	.pm-message h2 {
-		padding-bottom: 5px;
-	}
-
-	.cp-main .postbody h3, .cp-main .box2 h3 {
-		margin-top: 0;
-	}
-
-	.panel-container .postbody p.author {
-		font-size: 1.1em;
-	}
-
-	.cp-main .buttons {
-		margin-left: 0;
-	}
-
-	.cp-main ul.linklist {
-		margin: 0;
-	}
-
-	/* MCP Specific tweaks */
-	.mcp-main .postbody {
-		width: 100%;
-	}
-
-	.tabs-container h2 {
-		float: left;
-		margin-bottom: 0px;
-	}
-
-	/* CP tabs shared
-	----------------------------------------*/
-	.tabs, .minitabs {
-		line-height: normal;
-	}
-
-	.tabs > ul, .minitabs > ul {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		position: relative;
-	}
-
-	.tabs .tab, .minitabs .tab {
-		display: block;
-		float: left;
-		font-size: 1em;
-		font-weight: bold;
-		line-height: 1.4em;
-	}
-
-	.tabs .tab > a, .minitabs .tab > a {
-		display: block;
-		padding: 5px 9px;
-		position: relative;
-		text-decoration: none;
-		white-space: nowrap;
-		cursor: pointer;
-	}
-
-	/* CP tabbed menu
-	----------------------------------------*/
-	.tabs {
-		margin: 20px 0 0 7px;
-	}
-
-	.tabs .tab > a {
-		border: 1px solid transparent;
-		border-radius: 4px 4px 0 0;
-		margin: 1px 1px 0 0;
-	}
-
-	.tabs .activetab > a {
-		margin-top: 0;
-		padding-bottom: 7px;
-	}
-
-	/* Mini tabbed menu used in MCP
-	----------------------------------------*/
-	.minitabs {
-		float: right;
-		margin: 15px 7px 0 0;
-		max-width: 50%;
-	}
-
-	.minitabs .tab {
-		float: right;
-	}
-
-	.minitabs .tab > a {
-		border-radius: 5px 5px 0 0;
-		margin-left: 2px;
-	}
-
-	.minitabs .tab > a:hover {
-		text-decoration: none;
-	}
-
-	/* Responsive tabs
-	----------------------------------------*/
-	.responsive-tab {
-		position: relative;
-	}
-
-	.responsive-tab > a.responsive-tab-link {
-		display: block;
-		font-size: 1.6em;
-		position: relative;
-		width: 16px;
-		line-height: 0.9em;
-		text-decoration: none;
-	}
-
-	.responsive-tab .responsive-tab-link:before {
-		content: '';
-		position: absolute;
-		left: 10px;
-		top: 7px;
-		height: .125em;
-		width: 14px;
-		border-bottom: 0.125em solid transparent;
-		border-top: 0.375em double transparent;
-	}
-
-	.tabs .dropdown, .minitabs .dropdown {
-		top: 20px;
-		margin-right: -2px;
-		font-size: 1.1em;
-		font-weight: normal;
-	}
-
-	.minitabs .dropdown {
-		margin-right: -4px;
-	}
-
-	.tabs .dropdown-up .dropdown, .minitabs .dropdown-up .dropdown {
-		bottom: 20px;
-		top: auto;
-	}
-
-	.tabs .dropdown li {
-		text-align: right;
-	}
-
-	.minitabs .dropdown li {
-		text-align: left;
-	}
-
-	/* UCP navigation menu
-	----------------------------------------*/
-	/* Container for sub-navigation list */
-	.navigation {
-		width: 100%;
-		padding-top: 36px;
-	}
-
-	.navigation ul {
-		list-style: none;
-	}
-
-	/* Default list state */
-	.navigation li {
-		display: inline;
-		font-weight: bold;
-		margin: 1px 0;
-		padding: 0;
-	}
-
-	/* Link styles for the sub-section links */
-	.navigation a {
-		display: block;
-		padding: 5px;
-		margin: 1px 0;
-		text-decoration: none;
-	}
-
-	.navigation a:hover {
-		text-decoration: none;
-	}
-
-	/* Preferences pane layout
-	----------------------------------------*/
-	.cp-main h2 {
-		border-bottom: none;
-		padding: 0;
-		margin-left: 10px;
-	}
-
-	/* Friends list */
-	.cp-mini {
-		margin: 10px 15px 10px 5px;
-		max-height: 200px;
-		overflow-y: auto;
-		padding: 5px 10px;
-		border-radius: 7px;
-	}
-
-	dl.mini dt {
-		font-weight: bold;
-	}
-
-	dl.mini dd {
-		padding-top: 4px;
-	}
-
-	.friend-online {
-		font-weight: bold;
-	}
-
-	.friend-offline {
-		font-style: italic;
-	}
-
-	/* PM Styles
-	----------------------------------------*/
-	/* Defined rules list for PM options */
-	ol.def-rules {
-		padding-left: 0;
-	}
-
-	ol.def-rules li {
-		line-height: 180%;
-		padding: 1px;
-	}
-
-	/* PM marking colours */
-	.pmlist li.bg1 {
-		padding: 0 3px;
-	}
-
-	.pmlist li.bg2 {
-		padding: 0 3px;
-	}
-
-	.pmlist li.pm_message_reported_colour, .pm_message_reported_colour {
-		border-left-color: transparent;
-		border-right-color: transparent;
-	}
-
-	.pmlist li.pm_marked_colour, .pm_marked_colour,
-	.pmlist li.pm_replied_colour, .pm_replied_colour,
-	.pmlist li.pm_friend_colour, .pm_friend_colour,
-	.pmlist li.pm_foe_colour, .pm_foe_colour {
-		padding: 0;
-		border: solid 3px transparent;
-		border-width: 0 3px;
-	}
-
-	.pm-legend {
-		border-left-width: 10px;
-		border-left-style: solid;
-		border-right-width: 0;
-		margin-bottom: 3px;
-		padding-left: 3px;
-	}
-
-	/* Avatar gallery */
-	.gallery label {
-		position: relative;
-		float: left;
-		margin: 10px;
-		padding: 5px;
-		width: auto;
-		border: 1px solid transparent;
-		text-align: center;
-	}
-
-	/* Responsive *CP navigation
-	----------------------------------------*/
-	@media only screen and (max-width: 900px), only screen and (max-device-width: 900px)
+	
+	$SHEVA_NACH = $SHEVA = 'ְ'; //SHVA = '\u05B0'
+	$CHATAF_SEGOL = 'ֱ'; //REDUCED_SEGOL = '\u05B1'
+	$CHATAF_PATACH = 'ֲ'; //REDUCED_PATAKH = '\u05B2'
+	$CHATAF_KAMETZ = 'ֳ'; //REDUCED_KAMATZ = '\u05B3'
+	$CHIRIK_MALEI = $CHIRIK_CHASER = $CHIRIK_U = 'ִ'; //HIRIK = '\u05B4'
+	$TZEIREI_MALEI = $TZEIREI_CHASER = $TZEIREI = 'ֵ'; //TZEIRE = '\u05B5'
+	$SEGOL = 'ֶ'; //SEGOL = '\u05B6'  
+	$PATACH_GANUV = '׆'; //\u05C6: Hebräisches Satzzeichen Nun Hafucha || 05C6: Hebräisches Interpunktions-Nonne Hafukha
+	$PATACH = 'ַ'; //PATAKH = '\u05B7'; 
+	$KAMETZ_KATAN = 'ׇ'; //\u05C7: Hebräisches Zeichen Kametz Katan || 05C7: Hebräischer Punkt Qamats Qatan
+	$KAMETZ = 'ָ'; //KAMATZ = '\u05B8'; 
+	$CHOLAM_CHASER = 'ֺ';//For Wav
+	$HOLAM_HASHER = 'ֹֹ'; //HOLAM HASHER for Wav	
+	$CHOLAM_MALEI = $CHOLAM = 'ֹֹ';//HOLAM = '\u05B9'
+	$HOLAM_MEM = 'מֹ';   
+	$HOLAM_VAV = 'וֺ';
+	$HOLAM_LAMED = 'לֹ';
+	$HOLAM = preg_replace("<".$LAMED.">", "", $HOLAM_LAMED); //$HOLAM = ' ֹ ';	
+	$METEG = 'ֽ'; //METEG = '\u05BD'
+	$MAPIQ = 'ּ'; //u05BC
+	$MAQAF = '־'; //u05BE
+	$RAFE = 'ֿ'; //u05BF
+	$KUBUTZ = 'ֻ'; //KUBUTZ = '\u05BB' 
+	$SHURUK = $DAGESH = 'ּ'; //SHURUK = '\u05BC' //or: DAGESH_LETTER = '\u05bc'
+	$SHIN_DOT = 'ׁ';  //SHIN_YEMANIT = '\u05c1' &#x05C1 in BabelMap
+	$SIN_DOT = 'ׂ'; //SHIN_SMALIT = '\u05c2' &#x05C2 in BabelMap	
+	$TIPEHA = '֖'; //U+0596 HEBREW ACCENT TIPEHA : tarha, me'ayla ~ mayla
+	$MERKHA = '֥'; //U+05A5 HEBREW ACCENT MERKHA : yored
+	$MERKHA_KEFULA = '֦'; //U+05A6 HEBREW ACCENT MERKHA KEFULA	
+	$MUNAH = '֣'; //U+05A3 HEBREW ACCENT MUNAH		
+	$ETNAHTA = '֑'; //U+0591 HEBREW ACCENT ETNAHTA : atnah
+	$ATNAH_HAFUKH = '֢'; //U+05A2 HEBREW ACCENT ATNAH HAFUKH
+	$YERAH_BEN_YOMO = '֪'; //U+05AA HEBREW ACCENT YERAH BEN YOMO : galgal
+	
+	
+	// do not double letters in general
+	$GEMINATE_CANDIDATES = "($ALEPH|$BET|$BHET|$GIMEL|$DALED|$VAV|$HOLAM_VAV|$ZED|$TET|$YUD|$KAF|$KHAF_SOFIT|$LAMED|$MEM|$HOLAM_MEM|$NUN|$SAMECH|$PEI|$TZADI|$KUF|$SHIN$SHIN_DOT|$SHIN$SIN_DOT|$TAV)";
+	$t = preg_replace("<" . $GEMINATE_CANDIDATES . "_CHAZAK>", "\\1", $t);
+	
+	$t = preg_replace("<".$HOLAM_VAV.">", "uō", $t);
+	$t = preg_replace("<".$HOLAM_MEM.">", "mō", $t);
+	$t = preg_replace("<".$HOLAM_LAMED.">", "lō", $t);
+	
+	//Consonants
+	$t = preg_replace("<".$ALEPH.">", "e", $t);
+	$t = preg_replace("<".$BET.">", "b", $t);
+	$t = preg_replace("<".$BHET.">", "v", $t);
+	$t = preg_replace("<".$GIMEL.">", "g", $t);
+	$t = preg_replace("<".$GHIMEL.">", "g", $t);
+	$t = preg_replace("<".$DALED.">", "d", $t);
+	$t = preg_replace("<".$DHALED.">", "d", $t);
+	$t = preg_replace("<".$HEH_MAPIK.">", "h", $t);
+	$t = preg_replace("<".$HEH.">", "h", $t);
+	$t = preg_replace("<".$VAV.">", "u", $t);
+	$t = preg_replace("<".$ZED.">", "z", $t);
+	$t = preg_replace("<".$CHET.">", "ĥ", $t);
+	$t = preg_replace("<".$TET.">", "th", $t);
+	$t = preg_replace("<".$YUD_PLURAL.">", "i", $t);
+	$t = preg_replace("< ".$YUD.">", " i", $t);
+	$t = preg_replace("<".$YUD.">", "y", $t);
+	$t = preg_replace("<".$KAF.">", "c", $t);
+	$t = preg_replace("<".$KHAF_SOFIT.">", "k", $t);
+	$t = preg_replace("<".$LAMED.">", "l", $t);
+	$t = preg_replace("<".$MEM.">", "m", $t);
+	$t = preg_replace("<".$MEM_SOFIT.">", "ɱ", $t);
+	$t = preg_replace("<".$NUN.">", "n", $t);
+	$t = preg_replace("<".$NUN_SOFIT.">", "ɳ", $t);
+	$t = preg_replace("<".$SAMECH.">", "s", $t);
+	$t = preg_replace("<".$AYIN.">", "a", $t);
+	$t = preg_replace("<".$PEI.">", "p", $t);
+	$t = preg_replace("<".$PHEI_SOFIT.">", "f", $t);
+	$t = preg_replace("<".$TZADI.">", "ţ", $t);
+	$t = preg_replace("<".$TZADI_SOFIT.">", "ţ", $t);
+	$t = preg_replace("<".$KUF.">", "q", $t);
+	$t = preg_replace("<".$RESH.">", "r", $t);
+	$t = preg_replace("<".$SHIN.$SHIN_DOT.">", "ş", $t);
+	$t = preg_replace("<".$SHIN.$SIN_DOT.">", "s", $t);
+	$t = preg_replace("<".$TAV.">", "t", $t);
+	$t = preg_replace("<".$THAV.">", "t", $t);
+	$t = preg_replace("<".$CHATAF_KAMETZ.">", "ā", $t);
+	$t = preg_replace("<".$KAMETZ_KATAN.">", "ā", $t);
+	$t = preg_replace("<".$KAMETZ.">", "ā", $t);
+	$t = preg_replace("<".$CHATAF_PATACH.">", "ā", $t);
+	$t = preg_replace("<".$PATACH_GANUV.">", "ē", $t);
+	$t = preg_replace("<".$PATACH.">", "ē", $t);
+	$t = preg_replace("<".$SHEVA_NACH.">", "î", $t);
+	$t = preg_replace("<".$SHEVA.">", "â", $t);
+	$t = preg_replace("<".$CHATAF_SEGOL.">", "ă", $t);
+	$t = preg_replace("<".$SEGOL.">", "ę", $t);
+	$t = preg_replace("<".$TZEIREI_MALEI.">", "é", $t);
+	$t = preg_replace("<".$TZEIREI_CHASER.">", "é", $t);
+	$t = preg_replace("<".$CHIRIK_MALEI.">", "ī", $t);
+	$t = preg_replace("<".$CHIRIK_CHASER.">", "ī", $t);
+	$t = preg_replace("<".$CHOLAM_MALEI.">", "ō", $t);
+	$t = preg_replace("<".$CHOLAM_CHASER.">", "ō", $t);
+	$t = preg_replace("<".$MAPIQ.">", "ō", $t);
+	$t = preg_replace("<".$METEG.">", "a", $t);
+	$t = preg_replace("<".$KUBUTZ.">", "ū", $t);
+	$t = preg_replace("<".$TIPEHA.">", "'", $t); 
+	$t = preg_replace("<".$MERKHA.">", "'", $t); 
+	$t = preg_replace("<".$MERKHA_KEFULA.">", "''", $t);	
+	$t = preg_replace("<".$MUNAH.">", "'", $t);	
+	$t = preg_replace("<".$ETNAHTA.">", "´", $t); 
+	$t = preg_replace("<".$ATNAH_HAFUKH.">", "^", $t); 
+	$t = preg_replace("<".$YERAH_BEN_YOMO.">", "°", $t); 
+	
+	//Vowels	
+	$t = preg_replace("<ֹş>", "ōş", $t);
+	$t = preg_replace("<ֹr>", "ōr", $t);
+	$t = preg_replace("<ֹt>", "ōt", $t);
+	$t = preg_replace("<'ֹ'ֹ>", "ōp", $t);
+	$t = preg_replace("<ֹp>", "p", $t);
+	$t = preg_replace("<mōşęh>", "Mōşęh", $t);
+	$t = preg_replace("<ââ>", "â", $t);	
+	$t = preg_replace("<iīsârāeél>", "IīsârāeEél", $t);	
+	$t = preg_replace("<iīsîrāeél>", "IīsârāeEīl", $t);
+	$t = preg_replace("<iōērîdéɳ>", "Iōērâdéɳ", $t);
+	$t = preg_replace("< iī>", " iī·", $t);
+	$t = preg_replace("< uē>", " uē·", $t);
+	$t = preg_replace("< uî>", " uî·", $t);
+	$t = preg_replace("< bî>", " bî·", $t);
+	$t = preg_replace("< bē>", " bē·", $t);
+	$t = preg_replace("< uâ>", " uî·", $t);
+	$t = preg_replace("< bâ>", " bî·", $t);
+	$t = preg_replace("< bā>", " bā·", $t);
+	$t = preg_replace("< uō>", " uō·", $t);
+	$t = preg_replace("<bî·ā>", "bâā", $t);
+	$t = preg_replace("< hē>", " hē·", $t);
+	$t = preg_replace("< hā>", " hā·", $t);
+	$t = preg_replace("< bî·éiɳ>", " bâéiɳ", $t);
+	$t = preg_replace("<bâāaā>", "bîā·aā", $t);
+	$t = preg_replace("<pōāerāɳ>", "Pōāerāɳ", $t);		
+	$t = preg_replace("<aévęr hē·Iōērâdéɳ>", "Aévęr hē·Iōērâdéɳ", $t);
+	$t = preg_replace("<bā·aārāvāh muֹl suōf>", "bā·Aārāvāh Muֹl Suōf", $t);
+	$t = preg_replace("<tpęl>", "Tōpęl", $t);
+	$t = preg_replace("<lāvāɳ>", "Lāvāɳ", $t);
+	$t = preg_replace("<ĥāţérōt>", "Ĥāţérōt", $t);
+	
+	ExtractTrup();
+	$t = CleanUpPunctuation($t);
+	return $t;
+}
+
+$trup = null;
+$t_with_trup = null;
+$t_without_trup = null;
+
+function ExtractTrup()
+{
+	global $trup;
+	global $t_with_trup;
+	$t = $t_with_trup;
+	$words = explode_split("SPACE", $t);
+	$len = count($words);
+	//	echo "len: " . $len . "--";
+	for ($i = 0; $i < $len; $i++)
 	{
-		.nojs .tabs a span, .nojs .minitabs a span {
-			max-width: 40px;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			letter-spacing: -.5px;
-		}
-
-		.cp-menu, .navigation, .cp-main {
-			float: none;
-			width: auto;
-			margin: 0;
-		}
-
-		.navigation {
-			padding: 0;
-			margin: 0 auto;
-			max-width: 320px;
-		}
-
-		.navigation a {
-			background-image: none;
-		}
-
-		.navigation li:first-child a {
-			border-top-left-radius: 5px;
-			border-top-right-radius: 5px;
-		}
-
-		.navigation li:last-child a {
-			border-bottom-left-radius: 5px;
-			border-bottom-right-radius: 5px;
-		}
-	} 
-	  
-	/* Misc layout styles
-	---------------------------------------- */
-	/* column[1-2] styles are containers for two column layouts */
-	.rtl .column1 {
-		float: right;
-		clear: right;
-	}
-
-	.rtl .column2 {
-		float: left;
-		clear: left;
-	}
-
-	/* General classes for placing floating blocks */
-	.rtl .left-box {
-		float: right;
-		text-align: right;
-	}
-
-	.rtl .right-box {
-		float: left;
-		text-align: left;
-	}
-
-	.rtl dl.details dt {
-		float: right;
-		clear: right;
-		text-align: left;
-	}
-
-	.rtl dl.details dd {
-		margin-right: 0;
-		margin-left: 0;
-		padding-right: 5px;
-		padding-left: 0;
-		float: right;
-	}
-
-	*:first-child+html dl.details dd {
-		margin-right: 30%;
-		float: none;
-	}
-
-	* html dl.details dd {
-		margin-right: 30%;
-		float: none;
-	} 
-
-	/* RTL imageset entries */
-	.rtl .imageset.site_logo {
-		padding-right: 170px;
-		padding-left: 0;
-	}
-	.rtl .imageset.upload_bar {
-		padding-right: 280px;
-		padding-left: 0;
-	}
-	.rtl .imageset.poll_left, .rtl .imageset.poll_right {
-		padding-right: 4px;
-		padding-left: 0;
-	}
-	.rtl .imageset.poll_center {
-		padding-right: 1px;
-		padding-left: 0;
-	}
-	.rtl .imageset.forum_link, .rtl .imageset.forum_read, .rtl .imageset.forum_read_locked, .rtl .imageset.forum_read_subforum, .rtl .imageset.forum_unread, .rtl .imageset.forum_unread_locked, .rtl .imageset.forum_unread_subforum {
-		padding-right: 46px;
-		padding-left: 0;
-	}
-	.rtl .imageset.topic_moved, .rtl .imageset.topic_read, .rtl .imageset.topic_read_mine, .rtl .imageset.topic_read_hot, .rtl .imageset.topic_read_hot_mine, .rtl .imageset.topic_read_locked, .rtl .imageset.topic_read_locked_mine, .rtl .imageset.topic_unread, .rtl .imageset.topic_unread_mine, .rtl .imageset.topic_unread_hot, .rtl .imageset.topic_unread_hot_mine, .rtl .imageset.topic_unread_locked, .rtl .imageset.topic_unread_locked_mine, .rtl .imageset.sticky_read, .rtl .imageset.sticky_read_mine, .rtl .imageset.sticky_read_locked, .rtl .imageset.sticky_read_locked_mine, .rtl .imageset.sticky_unread, .rtl .imageset.sticky_unread_mine, .rtl .imageset.sticky_unread_locked, .rtl .imageset.sticky_unread_locked_mine, .rtl .imageset.announce_read, .rtl .imageset.announce_read_mine, .rtl .imageset.announce_read_locked, .rtl .imageset.announce_read_locked_mine, .rtl .imageset.announce_unread, .rtl .imageset.announce_unread_mine, .rtl .imageset.announce_unread_locked, .rtl .imageset.announce_unread_locked_mine, .rtl .imageset.global_read, .rtl .imageset.global_read_mine, .rtl .imageset.global_read_locked, .rtl .imageset.global_read_locked_mine, .rtl .imageset.global_unread, .rtl .imageset.global_unread_mine, .rtl .imageset.global_unread_locked, .rtl .imageset.global_unread_locked_mine, .rtl .imageset.pm_read, .rtl .imageset.pm_unread, .rtl .imageset.icon_topic_reported, .rtl .imageset.icon_topic_unapproved {
-		padding-right: 19px;
-		padding-left: 0;
-	}
-	.rtl .imageset.icon_post_target, .rtl .imageset.icon_post_target_unread {
-		padding-right: 12px;
-		padding-left: 0;
-	}
-	.rtl .imageset.icon_topic_attach {
-		padding-right: 14px;
-		padding-left: 0;
-	}
-	.rtl .imageset.icon_topic_latest, .rtl .imageset.icon_topic_newest {
-		padding-right: 18px;
-		padding-left: 0;
-	}
-
-	#notification_list {
-		display: none;
-		position: absolute;
-		width: 310px;
-		z-index: 1;
-		box-shadow: 3px 3px 5px darkgray;
-	}
-
-	#notification_list .notification_scroll {
-		max-height: 350px;
-		overflow-y: auto;
-		overflow-x: hidden;
-	}
-
-	#notification_list table {
-		width: 100%;
-	}
-
-	#notification_list .notification_title {
-		padding: 3px;
-	}
-
-	#notification_list .notification_title:after {
-		clear: both;
-		content: '';
-		display: block;
-	}
-
-	#notification_list .header {
-		padding: 5px;
-		font-weight: bold;
-		border: 1px solid #A9B8C2;
-		border-bottom: 0;
-	}
-
-	#notification_list > .header > .header_settings {
-		float: right;
-		font-weight: normal;
-		text-transform: none;
-	}
-
-	#notification_list .header:after {
-		content: '';
-		display: table;
-		clear: both;
-	}
-
-	#notification_list .footer {
-		text-align: center;
-		font-size: 1.2em;
-		border: 1px solid #A9B8C2;
-		border-top: 0;
-	}
-
-	.notification_list img {
-		max-width: 50px;
-		max-height: 50px;
-	}
-
-	#notification_list .footer > a {
-		display: block;
-	}
-
-	#notification_list .notification-time {
-		font-size: 0.9em;
-		float: right;
-	}
-
-	.notification_list .notifications_time {
-		font-size: 0.8em;
-	}
-
-
-	/* Responsive Design
-	---------------------------------------- */
-
-	@media (max-width: 320px) {
-		select, .inputbox {
-			max-width: 240px;
-		}
-	}
-
-	/* Notifications list
-	----------------------------------------*/
-	@media (max-width: 350px) {
-		.dropdown-extended .dropdown-contents {
-			width: auto;
-		}
-	}
-
-	@media (max-width: 430px) {
-		.action-bar .search-box .inputbox {
-			width: 120px;
-		}
-
-		.section-viewtopic .search-box .inputbox {
-			width: 57px;
-		}
-
-		.action-bar .search-box .inputbox ::-moz-placeholder {
-			content: "Search...";
-		}
-
-		.action-bar .search-box .inputbox :-ms-input-placeholder {
-			content: "Search...";
-		}
-
-		.action-bar .search-box .inputbox ::-webkit-input-placeholder {
-			content: "Search...";
-		}
-	}
-
-	@media (max-width: 500px) {
-		dd label {
-			white-space: normal;
-		}
-
-		select, .inputbox {
-			max-width: 260px;
-		}
-
-		.captcha-panel dd.captcha {
-			margin-left: 0;
-		}
-
-		.captcha-panel dd.captcha-image img {
-			width: 100%;
-		}
-
-		dl.details dt, dl.details dd {
-			width: auto;
-			float: none;
-			text-align: left;
-		}
-
-		dl.details dd {
-			margin-left: 20px;
-		}
-
-		p.responsive-center {
-			float: none;
-			text-align: center;
-			margin-bottom: 5px;
-		}
-
-		.action-bar > div {
-			margin-bottom: 5px;
-		}
-
-		.action-bar > .pagination {
-			float: none;
-			clear: both;
-			padding-bottom: 1px;
-			text-align: center;
-		}
-
-		.action-bar > .pagination li.page-jump {
-			margin: 0 2px;
-		}
-
-		p.jumpbox-return {
-			display: none;
-		}
-
-		.display-options > label:nth-child(1) {
-			display: block;
-			margin-bottom: 5px;
-		}
-
-		.attach-controls {
-			margin-top: 5px;
-			width: 100%;
-		}
-
-		.quick-links .dropdown-trigger span {
-			display: none;
-		}
-	}
-
-	@media (max-width: 550px) {
-		ul.topiclist.forums dt {
-			margin-right: 0;
-		}
-
-		ul.topiclist.forums dt .list-inner {
-			margin-right: 0;
-		}
-
-		ul.topiclist.forums dd.lastpost {
-			display: none;
-		}
-	}
-
-	@media (max-width: 700px) {
-		.responsive-hide { display: none !important; }
-		.responsive-show { display: block !important; }
-		.responsive-show-inline { display: inline !important; }
-		.responsive-show-inline-block { display: inline-block !important; }
-
-		/* Content wrappers
-		----------------------------------------*/
-		html {
-			height: auto;
-		}
-
-		body {
-			padding: 0;
-		}
-
-		.wrap {
-			border: none;
-			border-radius: 0;
-			margin: 0;
-			min-width: 290px;
-			padding: 0 5px;
-		}
-
-		/* Common block wrappers
-		----------------------------------------*/
-		.headerbar, .navbar, .forabg, .forumbg, .post, .panel {
-			border-radius: 0;
-			margin-left: -5px;
-			margin-right: -5px;
-		}
-
-		.cp-main .forabg, .cp-main .forumdb, .cp-main .post, .cp-main .panel {
-			border-radius: 7px;
-		}
-
-		/* Logo block
-		----------------------------------------*/
-		.site-description {
-			float: none;
-			width: auto;
-			text-align: center;
-		}
-
-		.logo {
-			/* change display value to inline-block to show logo */
-			display: none;
-			float: none;
-			padding: 10px;
-		}
-
-		.site-description h1, .site-description p {
-			text-align: inherit;
-			float: none;
-			margin: 5px;
-			line-height: 1.2em;
-			overflow: hidden;
-			text-overflow: ellipsis;
-		}
-
-		.site-description p, .search-header {
-			display: none;
-		}
-
-		/* Navigation
-		----------------------------------------*/
-		.headerbar + .navbar {
-			margin-top: -5px;
-		}
-
-		/* Search
-		----------------------------------------*/
-		.responsive-search { display: block !important; }
-
-		/* .topiclist lists
-		----------------------------------------*/
-		li.header dt {
-			text-align: center;
-			text-transform: none;
-			line-height: 1em;
-			font-size: 1.2em;
-			padding-bottom: 4px;
-		}
-
-		ul.topiclist li.header dt, ul.topiclist li.header dt .list-inner {
-			margin-right: 0 !important;
-			padding-right: 0;
-		}
-
-		ul.topiclist li.header dd {
-			display: none !important;
-		}
-
-		ul.topiclist dt, ul.topiclist dt .list-inner,
-		ul.topiclist.missing-column dt, ul.topiclist.missing-column dt .list-inner,
-		ul.topiclist.two-long-columns dt, ul.topiclist.two-long-columns dt .list-inner,
-		ul.topiclist.two-columns dt, ul.topiclist.two-columns dt .list-inner {
-			margin-right: 0;
-		}
-
-		ul.topiclist dt .list-inner.with-mark {
-			padding-right: 34px;
-		}
-
-		ul.topiclist dt .list-inner {
-			min-height: 28px;
-		}
-
-		ul.topiclist li.header dt .list-inner {
-			min-height: 0;
-		}
-
-		ul.topiclist dd {
-			display: none;
-		}
-		ul.topiclist dd.mark {
-			display: block;
-		}
-
-		/* Forums and topics lists
-		----------------------------------------*/
-		ul.topiclist.forums dt {
-			margin-right: -250px;
-		}
-
-		ul.topiclist dd.mark {
-			display: block;
-			position: absolute;
-			right: 5px;
-			top: 0;
-			margin: 0;
-			width: auto;
-			min-width: 0;
-			text-align: left;
-		}
-
-		ul.topiclist.forums dd.topics dfn, ul.topiclist.topics dd.posts dfn {
-			position: relative;
-			left: 0;
-			width: auto;
-			display: inline;
-			font-weight: normal;
-		}
-
-		li.row .responsive-show strong {
-			font-weight: bold;
-			color: inherit;
-		}
-
-		ul.topiclist li.row dt a.subforum {
-			vertical-align: bottom;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			max-width: 100px;
-		}
+		$letters = explode_split("SPACE", $words[$i]);
+		$len2 = count($letters);
+		//		echo  "lettercount: " . $len2;
+		$firstTrup = null;
+		for ($j = 0; $j < $len2; $j++)
+		{
+			//			echo " ". $letters[$j];
+
+			if($letters[$j] == "REVII")
+			{
+				$trup[] = "REVII";
+				break;
+			}
+			else if ($letters[$j] == "MAHPACH")
+			{
+				if ($j = 1) // it is a yetiv
+					$trup[] = "YETIV";
+					else
+						$trup[] = "MAHPACH";
+						break;
+			}
+			else if ($letters[$j] == "KADMA")
+			{
+				if ($j = $len - 1 || $firstTrup == "KADMA") // last symbol or repetition
+				{
+					$trup[] = "PASHTA";
+					break;
+				}
+				$firstTrup = "KADMA";
+			}
+			else if ($letters[$j] == "MUNACH")
+			{
+				$firstTrup = "MUNACH";
+			}
+			else if ($letters[$j] == "METEG")
+			{
+				$firstTrup = "SILLUK";
+			}
+			else if ($letters[$j] == "ZAKEF_KATON" || $letters[$j] == "ZAKEF_GADOL" || $letters[$j] == "MERCHA" || $letters[$j] == "TIPCHA" || $letters[$j] == "ETNACHTA" || $letters[$j] == "TEVIR" || $letters[$j] == "GERESH" || $letters[$j] == "GERSHAYIM" || $letters[$j] == "ZARKA" || $letters[$j] == "SEGOLTA" || $letters[$j] == "TELISHA_KETANA" || $letters[$j] == "TELISHA_GEDOLA")
+			{
+				$firstTrup = $letters[$j]; // supplanting previous trup
+			}
+			else if ($letters[$j] == "SOF_PASUK")
+			{
+				// do nothing;
+			}
+
+		} // end for on letters of word
+
+		// now, for non-supplanted trup
+		if (! is_null($firstTrup) )
+			$trup[] = $firstTrup;
+
+	} // end for on words in sentence
+
+	print_r ($trup);
+} // end function
+
+function RemoveTrup($t)
+{
+	global $t_without_trup;
+	// strip trup from input text
+	$t = preg_replace("<REVII >", "", $t);
+	$t = preg_replace("<MAHPACH >", "", $t);
+	$t = preg_replace("<KADMA >", "", $t);
+	$t = preg_replace("<MUNACH >", "", $t);
+	$t = preg_replace("<ZAKEF_KATON >", "", $t);
+	$t = preg_replace("<ZAKEF_GADOL >", "", $t);
+	$t = preg_replace("<MERCHA >", "", $t);
+	$t = preg_replace("<TIPCHA >", "", $t);
+	$t = preg_replace("<ETNACHTA >", "", $t);
+	$t = preg_replace("<METEG >", "", $t);
+	$t = preg_replace("<SOF_PASUK >", "", $t);
+	$t = preg_replace("<TEVIR >", "", $t);
+	$t = preg_replace("<DARGA >", "", $t);
+	$t = preg_replace("<GERESH >", "", $t);
+	$t = preg_replace("<GERSHAYIM >", "", $t);
+	$t = preg_replace("<ZARKA >", "", $t);
+	$t = preg_replace("<SEGOLTA >", "", $t);
+	$t = preg_replace("<TELISHA_KETANA >", "", $t);
+	$t = preg_replace("<TELISHA_GEDOLA >", "", $t);
+
+	return $t;
+}
+
+
+function chunker($t)
+{
+	// this function separated words into syllables
+	// is operated grammatically, such that geminate consonants
+	// close the previous syllable
+	// END_SYL with be the marker for the end of a syllable
+
+	$NON_FINAL_NON_PLOSIVES = "(".ALEPH."|".BHET."|".GHIMEL."|".DHALED."|".HEH."|".VAV."|".ZED."|".CHET."|".TET."|".YUD."|".KHAF."|".LAMED."|".MEM."|".NUN."|".SAMECH."|".AYIN."|".PHEI."|".TZADI."|".KUF."|".RESH."|".SHIN."|".SIN."|".THAV.")";
+
+	$t = ereg_repl("NON_FINAL_NON_PLOSIVES (SHEVA_NACH)", "\\1 \\2 END_SYL", $t);
+	$t = ereg_repl("NON_FINAL_NON_PLOSIVES (SHEVA_NACH)", "\\1 \\2 END_SYL", $t);
+
+}
+
+$root = null;
+
+
+function generateAndPrintTrup()
+{
+	global $root;
+	global $trup;
+	global $t_without_trup;
+	$len = count($trup);
+	$root = new tree_node(0, $len - 1);
+	$root->generate_trup_tree();
+	$root->print_trup_tree();
+}
+
+function generateTransliteration($sourcetext, $targetlang, $isFirefox = false, $isOpera = false)
+{
+	global $origHebrew, $_SERVER;
+	
+	$t = $sourcetext;
 		
-		/* Forums and topics lists
-		----------------------------------------*/	
-		dd.cat-title {
-			width: 50px;	
-			min-width: 20px;	
-			overflow: hidden;
-			text-align: left;
-			line-height: 2.2em;
-			font-size: 1.1em;
-		}
-		
-		dd.catdiv {
-			min-width: 20px;
-			overflow: hidden;
-			text-align: center;
-			line-height: 2.2em;
-			font-size: 1.1em;
-		} 
-		
-		dd.topicdetails {
-			width: 50px;	
-			overflow: hidden;
-			margin-left: 2px;
-			margin-right: 2px;
-			text-align: left;
-			line-height: 1.2em;
-			font-size: 1.1em;
-		}   
-		
-		dd.forumdesc {
-			margin-left: 2px;
-			margin-right: 2px;
-			text-align: left;
-			line-height: 1.2em;
-			font-size: 1.1em;
-		}   
-		
-		dd.nav {
-			overflow: hidden;
-			text-align: center;
-			font-size: 1.1em;
-		}   
-		
-		dd.views {
-			min-width: 100px;
-			overflow: hidden;
-			text-align: center;
-			font-size: 1.1em;   
-		}   
-		
-		dd.answers {
-			min-width: 60px;
-			overflow: hidden;
-			text-align: center;
-			line-height: 1.2em;
-			font-size: 1.1em;   
-		}   
-		
-		dd.forumlink {
-			min-width: 60px;
-			text-align: center;
-			font-size: 1.1em;
-			}   
-		
-		dd.lastpost {
-			width: 50px;	
-			min-width: 10px;
-			text-align: left;
-			font-size: 1.1em;
-		}   
-		
-		div.legend {
-			text-align: center;
-			vertical-align: middle;
-			line-height: 1.2em;
-			font-size: 1.1em;
-		}	
-		
-		/* Responsive breadcrumbs
-		----------------------------------------*/
-		.rtl .breadcrumbs .crumb {
-			float: right;
-		}
-
-		/* Table styles
-		----------------------------------------*/
-		.rtl table.table1 thead th {
-			padding: 0 3px 4px 0;
-		}
-
-		.rtl table.table1 thead th span {
-			padding-left: 0;
-			padding-right: 7px;
-		}
-
-		.rtl table.table1 tbody th {
-			text-align: right;
-		}
-
-		/* Specific column styles */
-		.rtl table.table1 .name		{ text-align: right; }
-		.rtl table.table1 .joined		{ text-align: right; }
-		.rtl table.table1 .active		{ text-align: right; }
-		.rtl table.table1 .info		{ text-align: right; }
-		.rtl table.table1 thead .autocol { padding-left: 0; padding-right: 1em; }
-
-		.rtl table.table1 span.rank-img {
-			float: left;
-		}
-
-		.rtl table.info tbody th {
-			text-align: left;
-		}
-
-		.rtl .forumbg table.table1 {
-			margin: 0 -1px -1px -2px;
-		}
-
-		/* Misc layout styles
-		---------------------------------------- */
-		/* column[1-2] styles are containers for two column layouts */
-		.rtl .column1 {
-			float: right;
-			clear: right;
-		}
-
-		.rtl .column2 {
-			float: left;
-			clear: left;
-		}
-
-		/* General classes for placing floating blocks */
-		.rtl .left-box {
-			float: right;
-			text-align: right;
-		}
-
-		.rtl .right-box {
-			float: left;
-			text-align: left;
-		}
-
-		.rtl dl.details dt {
-			float: right;
-			clear: right;
-			text-align: left;
-		}
-
-		.rtl dl.details dd {
-			margin-right: 0;
-			margin-left: 0;
-			padding-right: 5px;
-			padding-left: 0;
-			float: right;
-		}
-
-		*:first-child+html dl.details dd {
-			margin-right: 30%;
-			float: none;
-		}
-
-		* html dl.details dd {
-			margin-right: 30%;
-			float: none;
-		} 	
-
-		/* Pagination
-		----------------------------------------*/
-		.pagination > ul {
-			margin: 5px 0 0;
-		}
-
-		.row .pagination .ellipsis + li {
-			display: none !important;
-		}
-
-		/* Responsive tables
-		----------------------------------------*/
-		table {
-			border-collapse: collapse;
-			border-spacing: 0;
-		}		
-		
-		table.responsive, table.responsive tbody, table.responsive tr, table.responsive td {
-			display: block;
-		}
-
-		table.responsive thead, table.responsive th {
-			display: none;
-		}
-
-		table.responsive.show-header thead, table.responsive.show-header th:first-child {
-			display: block;
-			width: auto !important;
-			text-align: left !important;
-		}
-
-		table.responsive.show-header th:first-child span.rank-img {
-			display: none;
-		}
-
-		table.responsive tr {
-			margin: 2px 0;
-		}
-
-		table.responsive td {
-			width: auto !important;
-			text-align: left !important;
-			padding: 4px;
-		}
-
-		table.responsive td.empty {
-			display: none !important;
-		}
-
-		table.responsive td > dfn {
-			display: inline-block !important;
-		}
-
-		table.responsive td > dfn:after {
-			content: ':';
-			padding-right: 5px;
-		}
-
-		table.responsive span.rank-img {
-			float: none;
-			padding-right: 5px;
-		}
-
-		table.responsive.memberlist td:first-child input[type="checkbox"] {
-			float: right;
-		}
-		
-
-		/* Tabbed menu
-			Based on: http://www.alistapart.com/articles/slidingdoors2/
-		----------------------------------------*/
-		#tabs {
-			line-height: normal;
-			margin: 0 0 -6px 7px;
-			min-width: 600px;
-		}
-
-		.rtl #tabs {
-			margin: 0 7px -6px 0;
-		}
-
-		#tabs ul {
-			margin:0;
-			padding: 0;
-			list-style: none;
-		}
-
-		#tabs li {
-			display: inline;
-			margin: 0;
-			padding: 0;
-			font-size: 0.85em;
-			font-weight: bold;
-		}
-
-		#tabs a {
-			float: left;
-			background:url("images/bg_tabs1.gif") no-repeat 0% -34px;
-			margin: 0 1px 0 0;
-			padding: 0 0 0 7px;
-			text-decoration: none;
-			position: relative;
-		}
-
-		.rtl #tabs a {
-			float: right;
-		}
-
-		#tabs a span {
-			float: left;
-			display: block;
-			background: url("images/bg_tabs2.gif") no-repeat 100% -34px;
-			padding: 7px 10px 4px 4px;
-			color: #767676;
-			white-space: nowrap;
-			font-family: Arial, Helvetica, sans-serif;
-			text-transform: uppercase;
-			font-weight: bold;
-		}
-
-		.rtl #tabs a span {
-			float: right;
-		}
-
-		/* Commented Backslash Hack hides rule from IE5-Mac \*/
-		#tabs a span, .rtl #tabs a span { float:none;}
-		/* End hack */
-
-		#tabs a:hover span {
-			color: #BC2A4D;
-		}
-
-		#tabs #activetab a {
-			background-position: 0 0;
-			border-bottom: 1px solid #DCDEE2;
-		}
-
-		#tabs #activetab a span {
-			background-position: 100% 0;
-			padding-bottom: 5px;
-			color: #23649F;
-		}
-
-		#tabs a:hover {
-			background-position: 0 -69px;
-		}
-
-		#tabs a:hover span {
-			background-position: 100% -69px;
-		}
-
-		#tabs #activetab a:hover span {
-			color: #115098;
-		}
-		
-		/* Forms
-		----------------------------------------*/
-		fieldset dt, fieldset.fields1 dt, fieldset.fields2 dt {
-			width: auto;
-			float: none;
-		}
-
-		fieldset dd, fieldset.fields1 dd, fieldset.fields2 dd {
-			margin-left: 0px;
-		}
-
-		textarea, dd textarea, .message-box textarea {
-			width: 100%;
-			-moz-box-sizing: border-box;
-			box-sizing: border-box;
-		}
-
-		dl.pmlist dt {
-			width: auto !important;
-			margin-bottom: 5px;
-		}
-
-		dl.pmlist dd {
-			display: inline-block;
-			margin-left: 0 !important;
-		}
-
-		dl.pmlist dd:first-of-type {
-			padding-left: 20px;
-		}
-
-		.smiley-box, .message-box {
-			float: none;
-			width: auto;
-		}
-
-		.smiley-box {
-			margin-top: 5px;
-		}
-
-		.bbcode-status {
-			display: none;
-		}
-
-		.colour-palette, .colour-palette tbody, .colour-palette tr {
-			display: block;
-		}
-
-		.colour-palette td {
-			display: inline-block;
-			margin-right: 2px;
-		}
-
-		.horizontal-palette td:nth-child(2n), .vertical-palette tr:nth-child(2n) {
-			display: none;
-		}
-
-		fieldset.quick-login label {
-			display: block;
-			margin-bottom: 5px;
-			white-space: normal;
-		}
-
-		fieldset.quick-login label > span {
-			display: inline-block;
-			min-width: 100px;
-		}
-
-		fieldset.quick-login input.inputbox {
-			width: 85%;
-			max-width: 300px;
-			margin-left: 20px;
-		}
-
-		fieldset.quick-login label[for="autologin"] {
-			display: inline-block;
-			text-align: right;
-			min-width: 50%;
-		}
-
-		/* User profile
-		----------------------------------------*/
-		.column1, .column2, .left-box.profile-details {
-			float: none;
-			width: auto;
-		}
-
-		/* Polls
-		----------------------------------------*/
-		fieldset.polls dt {
-			width: 90%;
-		}
-
-		fieldset.polls dd.resultbar {
-			padding-left: 20px;
-		}
-
-		fieldset.polls dd.poll_option_percent {
-			width: 20%;
-		}
-
-		fieldset.polls dd.resultbar, fieldset.polls dd.poll_option_percent {
-			margin-top: 5px;
-		}
-
-		/* Post
-		----------------------------------------*/
-		.postbody {
-			position: inherit;
-		}
-
-		.postprofile, .postbody, .search .postbody {
-			display: block;
-			width: auto;
-			float: none;
-			padding: 0;
-			min-height: 0;
-		}
-
-		.post .postprofile {
-			width: auto;
-			border-width: 0 0 1px 0;
-			padding-bottom: 5px;
-			margin: 0;
-			margin-bottom: 5px;
-			min-height: 40px;
-			overflow: hidden;
-		}
-
-		.postprofile dd {
-			display: none;
-		}
-
-		.postprofile dt, .postprofile dd.profile-rank, .search .postprofile dd {
-			display: block;
-			margin: 0;
-		}
-
-		.postprofile .has-avatar .avatar-container {
-			margin: 0;
-			overflow: inherit;
-		}
-
-		.postprofile .avatar-container:after {
-			clear: none;
-		}
-
-		.postprofile .avatar {
-			margin-right: 5px;
-		}
-
-		.postprofile .avatar img {
-			width: auto !important;
-			height: auto !important;
-			max-height: 32px;
-		}
-
-		.has-profile .postbody h3 {
-			margin-left: 0 !important;
-			margin-right: 0 !important;
-		}
-
-		.has-profile .post-buttons {
-			right: 30px;
-			top: 15px;
-		}
-
-		.online {
-			background-size: 40px;
-		}
-
-		/* Misc stuff
-		----------------------------------------*/
-		h2 {
-			margin-top: .5em;
-		}
-
-		p {
-			margin-bottom: .5em;
-			overflow: hidden;
-		}
-
-		p.rightside {
-			margin-bottom: 0;
-		}
-
-		fieldset.display-options label {
-			display: block;
-			clear: both;
-			margin-bottom: 5px;
-		}
-
-		dl.mini dd.pm-legend {
-			float: left;
-			min-width: 200px;
-		}
-
-		.topicreview {
-			margin: 0 -5px;
-			padding: 0 5px;
-		}
-
-		fieldset.display-actions {
-			white-space: normal;
-		}
-
-		.phpbb_alert {
-			width: auto;
-			margin: 0 5px;
-		}
-
-		.attach-comment dfn {
-			width: 100%;
-		}
-	}
-
-	@media (min-width: 700px) {
-		.postbody { width: 70%; }
-	}
-
-	@media (min-width: 850px) {
-		.postbody { width: 76%; }
-	}
-
-	@media (max-width: 850px) {
-		.postprofile { width: 28%; }
-
-
-	}
-
-	@media (min-width: 701px) and (max-width: 950px) {
-
-		ul.topiclist dt {
-			margin-right: -410px;
-		}
-
-		ul.topiclist dt .list-inner {
-			margin-right: 410px;
-		}
-
-		dd.posts, dd.topics, dd.views {
-			width: 80px;
-		}
-	}
-
-
-
-	/* Show scrollbars for items with overflow on iOS devices
-	----------------------------------------*/
-	.postbody .content::-webkit-scrollbar, .topicreview::-webkit-scrollbar, .post_details::-webkit-scrollbar, .codebox code::-webkit-scrollbar, .attachbox dd::-webkit-scrollbar, .attach-image::-webkit-scrollbar, .dropdown-extended ul::-webkit-scrollbar {
-		width: 8px;
-		height: 8px;
-		-webkit-appearance: none;
-		background: rgba(0, 0, 0, .1);
-		border-radius: 3px;
-	}
-
-	.postbody .content::-webkit-scrollbar-thumb, .topicreview::-webkit-scrollbar-thumb, .post_details::-webkit-scrollbar-thumb, .codebox code::-webkit-scrollbar-thumb, .attachbox dd::-webkit-scrollbar-thumb, .attach-image::-webkit-scrollbar-thumb, .dropdown-extended ul::-webkit-scrollbar-thumb {
-		background: rgba(0, 0, 0, .3);
-		border-radius: 3px;
-	}
-
-	#memberlist tr.inactive, #team tr.inactive {
-		font-style: italic;
-	}
-
-	/* Tables */
-	.light_row
+	if (!empty($_SERVER["HTTP_USER_AGENT"]))
 	{
-		background-color: #F2F6FC;
-		font-size: 13px;
+		$origHebrew = $t;
+		$t = "BOUNDARY " . PostHebrewToIntermediate($sourcetext) . "BOUNDARY";
 	}
-	.dark_row
+	else
 	{
-		background-color: #DADEEE;
-		font-size: 13px;
+		$origHebrew = PostHebrewExtendedASCIIToEncodedUnicode($t);
+		$t = "BOUNDARY " . PostHebrewExtendedASCIIToIntermediate($sourcetext) . "BOUNDARY";
 	}
+	
+	$s = $sourcetext;
 
-	/* Links */
-	.plain_link
+	global $t_with_trup;
+	$t_with_trup = $t;
+	$t = RemoveTrup($t);
+	$t = ApplyRulesToIntermediateForm($t);
+
+	//	echo $t;
+	//	echo $s;
+
+	// AND here is the next step: change the intermediate code into
+	// transliteration
+	//	echo "<p>";
+
+	$target = $targetlang;
+	if ($target=="academic")
 	{
-		color: #000000;
-		text-decoration: none;
+		if (!empty($_SERVER["HTTP_USER_AGENT"]))
+		{
+			$t1 = AcademicTransliteration($t);
+			echo $t1;
+
+		}
+		else // IE
+		{
+			echo AcademicFontFriendlyTransliteration($t);
+		}
 	}
-	.light_row:hover, .dark_row:hover
+	else if ($target == "academic_u")
 	{
-		background-color: #FFFFA8;
+		$t1 = AcademicTransliteration($t);
+		echo $t1;
 	}
-
-	/* Buttons */
-	.button
+	else if ($target == "academic_ff")
 	{
-		color: #707070;
-		background-color: #F2F6FC;
-		font-family: sans-serif;
-		font-size: 11px;
-		text-align: left;
-		vertical-align: middle;
-		font-weight: bold;
-		cursor: pointer;
-		border: none;
-		padding: 3px 10px 3px 10px;
+		echo AcademicFontFriendlyTransliteration($t);
 	}
-
-	/* Misc. */
-	.paragraph
+	else if ($target == "ashkenazic")
 	{
-		background: #F2F6FC;
-		font-size: 13px;
-		color: #000020;
+		$t2 = AshkenazicTransliteration($t);
+		echo $t2;
+		global $t_without_trup;
+		$t_without_trup = explode_split("SPACE", $t2);
+		generateAndPrintTrup();
 	}
-	<!-- // -->
-	</style>
-</head>
-<body bgcolor=#ffffff text=#000000 link=#0000cc vlink=#551a8b alink=#ff0000>
-<table cellspacing=2 cellpadding=0 border=0 width=99%>
-<tr>
-<td width=100% align=right>
-<table cellspacing=0 cellpadding=0 border=0 width=100%>
-<tr>
-<td bgcolor=#3366cc colspan=2>
-<img width=1 height=1 alt="" />
-</td>
-</tr>
-<tr bgcolor=#E5ECF9>
-<td><b>&nbsp;Transliterate</b></td>
-<td align=right><font size=-1>&nbsp;|&nbsp;<a href="index.php?copy=about">All About Hebrew Transliteration</a></font>
-</td>
-</tr>
-</table>
-</td>
-</tr>
-</table>
+	else if ($target == "sefardic")
+	{
+		$t2 = SefardicTransliteration($t);
+		echo $t2;
+	}
+	else if ($target == "romanian")
+	{
+		$t2 = RomanianTransliteration($t);
+		echo $t2;
+	}
+	else if ($target == "mc")
+	{
+		$t2 = MichiganClaremontTranslit($t);
+		echo $t2;
+	}
+}
 
+/*
+ KAMETZ
+ PATACH
+ PATACH_UNKOWN
+ SEGOL
+ TZEIREI_CHASER
+ TZEIREI_MALEI
+ TZEIREI_UNKNOWN
+ TZEIREI_UNKNOWN
+ CHIRIK_CHASER
+ CHIRIK_MALEI
+ CHIRIK_UNKNOWN
+ CHOLAM_CHASER
+ CHOLAM_MALEI
+ CHOLAM_UNKNOWN
+ KUBUTZ
+ SHURUK
+ SHEVA_UNKNOWN
+ SHEVA_NA
+ SHEVA_NACH
+ CHATAF_PATACH
+ CHATAF_KAMETZ
+ CHATAF_SEGOL
+ PATACH_GANUV
 
-<table cellspacing=0 cellpadding=2 border=0 width=99%>
-<tr bgcolor=#E6ECF9>
-<td>
-<table width=100% border=0 cellspacing=0 cellpadding=1>
-<tr>
-<td>
-<form action="http://www.google.com/search">
-<font size=-1>&nbsp;This text has been automatically transliterated from Hebrew:</font><br>&nbsp;&nbsp;
-<textarea name=q rows=5 cols=45 wrap=PHYSICAL>
-<?php 
-$targetlang = isset($_POST['targetlang']) ? $_POST['targetlang'] : 'Romanian';
-$sourcetext = isset($_POST['sourcetext']) ? $_POST['sourcetext'] : 'בְּרֵאשִׁ֖ית בָּרָ֣א אֱלֹהִ֑ים אֵ֥ת הַשָּׁמַ֖יִם וְאֵ֥ת הָאָֽרֶץ׃';
-generateTransliteration($sourcetext, $targetlang, false, false); 
+ ALEPH
+ BET
+ BHET
+ BET_UNKNOWN
+ GIMEL
+ GHIMEL
+ GIMEL_UNKNOWN
+ DALED
+ DHALED
+ DALED_UNKNOWN
+ HEH
+ HEH_MAPIK
+ HEH_UNKNOWN
+ VAV
+ ZED
+ CHET
+ TET
+ YUD
+ KAF
+ KAF_SOFIT
+ KHAF
+ KHAF-SOFIT
+ KAF_UNKNOWN
+ KAF_SOFIT_UNKNOWN
+ LAMED
+ MEM
+ MEM_SOFIT
+ NUN
+ NUN_SOFIT
+ SAMECH
+ AYIN
+ PEI
+ PEI_SOFIT
+ PHEI
+ PHEI_SOFIT
+ PEI_UNKNOWN
+ PEI_SOFIT_UNKNOWN
+ TZADI
+ TZADI_SOFIT
+ KUF
+ RESH
+ SHIN
+ SIN
+ SHIN_UNKNOWN
+ TAV
+ THAV
+ TAV_UNKNOWN
+ */
 ?>
-</textarea>&nbsp;&nbsp;
-<input type=hidden name=hl value="en" />
-<input type=hidden name=ie value="UTF8" />
-<input type=hidden name=oe value="UTF8" />
-<input type=submit value="Google Search" />
-</form>
-</td>
-</tr>
-
-<tr>
-<td>
-<table width=100% cellpadding=3 cellspacing=0 border=0>
-<tr bgcolor=#ffffff>
-<td>
-<form action=index.php method=post>
-<font size=-1>&nbsp;&nbsp;Transliterate text</font>
-<br>&nbsp;&nbsp;
-<textarea name="sourcetext" rows="5" cols="45" wrap=PHYSICAL>
-<?php print $origHebrew; ?>
-</textarea><br>&nbsp;&nbsp;
-<font size=-1>from Hebrew to</font>
-<select name="targetlang" selected="<?php $targetlang ?>">
-<option value="academic" <?php if($targetlang == 'academic') { print("selected"); } ?> >Academic</option>
-<option value="academic_u" <?php if($targetlang == 'academic_u'){ print("selected"); } ?> >Academic Unicode</option>
-<option value="academic_ff" <?php if($targetlang == 'academic_ff'){ print("selected"); } ?> >Academic Font Friendly</option>
-<option value="ashkenazic" <?php if($targetlang == 'ashkenazic'){ print("selected"); } ?> >Ashkenazic</option>
-<option value="sefardic" <?php if($targetlang == 'sefardic'){ print("selected"); } ?> >Sefardic</option>
-<option value="romanian" <?php if($targetlang == 'romanian'){ print("selected"); } ?> >Romanian</option>
-<option value="mc" <?php if($targetlang == 'mc'){ print("selected");} ?> >Michigan - Claremont</option>
-</select>
-<input type=hidden name=hl value="en" />
-<input type=hidden name=ie value="UTF8" />
-<input type=submit value="Transliterate" />
-</form>
-</td>
-</tr>
-
-</table>
-</td>
-</tr>
-</table>
-</td>
-</tr>
-</table>
-<font size=-1>&nbsp;This mechanism is offered as-is to support customers for the purpose of transliterating Hebrew Alphabet.
-Here is the first verse of Deuteronomy chapt. 2, available <a href="http://mechon-mamre.org/p/pt/pt0201.htm">here at mechon-mamre</a>:</font>&nbsp;
-<br>
-&#1488;&#1461;&#1500;&#1468;&#1462;&#1492; 
-&#1492;&#1463;&#1491;&#1468;&#1456;&#1489;&#1464;&#1512;&#1460;&#1497;&#1501;, 
-&#1488;&#1458;&#1513;&#1473;&#1462;&#1512; 
-&#1491;&#1468;&#1460;&#1489;&#1468;&#1462;&#1512; 
-&#1502;&#1465;&#1513;&#1473;&#1462;&#1492; 
-&#1488;&#1462;&#1500;-&#1499;&#1468;&#1464;&#1500;-&#1497;&#1460;&#1513;&#1474;&#1456;&#1512;&#1464;&#1488;&#1461;&#1500;, 
-&#1489;&#1468;&#1456;&#1506;&#1461;&#1489;&#1462;&#1512; 
-&#1492;&#1463;&#1497;&#1468;&#1463;&#1512;&#1456;&#1491;&#1468;&#1461;&#1503;  
-&#1489;&#1468;&#1463;&#1502;&#1468;&#1460;&#1491;&#1456;&#1489;&#1468;&#1464;&#1512;, 
-&#1489;&#1468;&#1464;&#1506;&#1458;&#1512;&#1464;&#1489;&#1464;&#1492;, 
-&#1502;&#1493;&#1465;&#1500; &#1505;&#1493;&#1468;&#1507;, 
-&#1489;&#1468;&#1461;&#1497;&#1503;-&#1508;&#1468;&#1464;&#1488;&#1512;&#1464;&#1503;, 
-&#1493;&#1468;&#1489;&#1461;&#1497;&#1503;-&#1514;&#1468;&#1465;&#1508;&#1462;&#1500;, 
-&#1493;&#1456;&#1500;&#1464;&#1489;&#1464;&#1503;, 
-&#1493;&#1463;&#1495;&#1458;&#1510;&#1461;&#1512;&#1465;&#1514;--&#1493;&#1456;&#1491;&#1460;&#1497; 
-&#1494;&#1464;&#1492;&#1464;&#1489;
-:
-<br>
-<p></p>
-<center><font size=-1>&copy;2006 Joshua Waxman & &copy;2023 Florin C. Bodin</font>
-<!-- 
-&#1488; &#1493;&#1456;&#1488;&#1461;&#1431;&#1500;&#1468;&#1462;&#1492; &#1513;&#1473;&#1456;&#1502;&#1493;&#1465;&#1514;&#1433; &#1489;&#1468;&#1456;&#1504;&#1461;&#1443;&#1497; &#1497;&#1460;&#1513;&#1474;&#1456;&#1512;&#1464;&#1488;&#1461;&#1428;&#1500; &#1492;&#1463;&#1489;&#1468;&#1464;&#1488;&#1460;&#1430;&#1497;&#1501; &#1502;&#1460;&#1510;&#1456;&#1512;&#1464;&#1425;&#1497;&#1456;&#1502;&#1464;&#1492; &#1488;&#1461;&#1443;&#1514; &#1497;&#1463;&#1469;&#1506;&#1458;&#1511;&#1465;&#1428;&#1489; &#1488;&#1460;&#1445;&#1497;&#1513;&#1473; &#1493;&#1468;&#1489;&#1461;&#1497;&#1514;&#1430;&#1493;&#1465; &#1489;&#1468;&#1464;&#1469;&#1488;&#1493;&#1468;&#1475; &#1489; &#1512;&#1456;&#1488;&#1493;&#1468;&#1489;&#1461;&#1443;&#1503; &#1513;&#1473;&#1460;&#1502;&#1456;&#1506;&#1428;&#1493;&#1465;&#1503; &#1500;&#1461;&#1493;&#1460;&#1430;&#1497; &#1493;&#1460;&#1469;&#1497;&#1492;&#1493;&#1468;&#1491;&#1464;&#1469;&#1492;&#1475; &#1490; &#1497;&#1460;&#1513;&#1468;&#1474;&#1464;&#1513;&#1499;&#1464;&#1445;&#1512; &#1494;&#1456;&#1489;&#1493;&#1468;&#1500;&#1467;&#1430;&#1503; &#1493;&#1468;&#1489;&#1460;&#1504;&#1456;&#1497;&#1464;&#1502;&#1460;&#1469;&#1503;&#1475; &#1491; &#1491;&#1468;&#1464;&#1445;&#1503; &#1493;&#1456;&#1504;&#1463;&#1508;&#1456;&#1514;&#1468;&#1464;&#1500;&#1460;&#1430;&#1497; &#1490;&#1468;&#1464;&#1445;&#1491; &#1493;&#1456;&#1488;&#1464;&#1513;&#1473;&#1461;&#1469;&#1512;&#1475; &#1492; &#1493;&#1463;&#1469;&#1497;&#1456;&#1492;&#1460;&#1431;&#1497; &#1499;&#1468;&#1464;&#1500;&#1470;&#1504;&#1462;&#1435;&#1508;&#1462;&#1513;&#1473; &#1497;&#1465;&#1469;&#1510;&#1456;&#1488;&#1461;&#1445;&#1497; &#1497;&#1462;&#1469;&#1512;&#1462;&#1498;&#1456;&#1470;&#1497;&#1463;&#1506;&#1458;&#1511;&#1465;&#1430;&#1489; &#1513;&#1473;&#1460;&#1489;&#1456;&#1506;&#1460;&#1443;&#1497;&#1501; &#1504;&#1464;&#1425;&#1508;&#1462;&#1513;&#1473; &#1493;&#1456;&#1497;&#1493;&#1465;&#1505;&#1461;&#1430;&#1507; &#1492;&#1464;&#1497;&#1464;&#1445;&#1492; &#1489;&#1456;&#1502;&#1460;&#1510;&#1456;&#1512;&#1464;&#1469;&#1497;&#1460;&#1501;&#1475; &#1493; &#1493;&#1463;&#1497;&#1468;&#1464;&#1444;&#1502;&#1464;&#1514; &#1497;&#1493;&#1465;&#1505;&#1461;&#1507;&#1433; &#1493;&#1456;&#1499;&#1464;&#1500;&#1470;&#1488;&#1462;&#1495;&#1464;&#1428;&#1497;&#1493; &#1493;&#1456;&#1499;&#1465;&#1430;&#1500; &#1492;&#1463;&#1491;&#1468;&#1445;&#1493;&#1465;&#1512; &#1492;&#1463;&#1492;&#1469;&#1493;&#1468;&#1488;&#1475; &#1494; &#1493;&#1468;&#1489;&#1456;&#1504;&#1461;&#1443;&#1497; &#1497;&#1460;&#1513;&#1474;&#1456;&#1512;&#1464;&#1488;&#1461;&#1431;&#1500; &#1508;&#1468;&#1464;&#1512;&#1447;&#1493;&#1468; &#1493;&#1463;&#1469;&#1497;&#1468;&#1460;&#1513;&#1473;&#1456;&#1512;&#1456;&#1510;&#1435;&#1493;&#1468; &#1493;&#1463;&#1497;&#1468;&#1460;&#1512;&#1456;&#1489;&#1468;&#1445;&#1493;&#1468; &#1493;&#1463;&#1497;&#1468;&#1463;&#1469;&#1506;&#1463;&#1510;&#1456;&#1502;&#1430;&#1493;&#1468; &#1489;&#1468;&#1460;&#1502;&#1456;&#1488;&#1465;&#1443;&#1491; &#1502;&#1456;&#1488;&#1465;&#1425;&#1491; &#1493;&#1463;&#1514;&#1468;&#1460;&#1502;&#1468;&#1464;&#1500;&#1461;&#1445;&#1488; &#1492;&#1464;&#1488;&#1464;&#1430;&#1512;&#1462;&#1509; &#1488;&#1465;&#1514;&#1464;&#1469;&#1501;&#1475;
-<p>
-&#1431; = revii
-<br>
-&#1444; = mahpach / yetiv - yetiv if after the first consonant
-<br>
-&#1433; = pashta / kadma. pashta repeats if stressed early. otherwise pashta on last letter
-<br>
-&#1443; = munach
-<br>
-&#1428; = zakef katon
-<br>
-&#1429; = zakef gadol
-<br>
-&#1445; = mercha
-<br>
-&#1430; = tipcha
-<br>
-&#1425; = etnachta
-<br>
-&#1469; = silluq / early stress - can disambiguate via position in sentence
-<br>
-&#1475; = sof pasuk
-<br>
-&#1435; = tevir
-<br>
-&#1447; = darga	
-<br>
-&#1436; = geresh
-<br>
-&#1438; = gershayim
-<br>
-&#1454; = zarka
-<br>
-&#1426; = segolta
-<br>
-&#1440; = telisha ketana
-<br>
-&#1449; = telisha gedola
--->
-</center>
-</body>
-</html>
