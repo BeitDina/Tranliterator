@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: constants.php,v 1.0 2023/10/11 10:04:08 orynider Exp $
+* @version $Id: constants.php,v 1.01 2023/10/15 10:14:14 orynider Exp $
 *
 */
 
@@ -48,8 +48,10 @@ define('TZADI_SOFIT', 'ץ');
 define('TZADI', 'צ');
 define('KUF', 'ק');
 define('RESH', 'ר');
-define('SHIN', 'ש');
-define('SIN', 'ש');
+define('SHIN_NO_DOT', 'ש');	
+define('SHIN', 'ש'.'ׁ');
+define('SIN', 'ש'.'ׂ');
+define('SHIN_SHIN_DOT_SHEVA_NACH', 'שְּׁ');
 define('TAV', 'ת');
 define('THAV', 'ת');
 	/*
@@ -97,6 +99,8 @@ define('HOLAM_HASHER', 'ֹֹ'); //HOLAM HASHER for Wav
 define('CHOLAM_MALEI', 'ֹֹ');//HOLAM', '\u05B9'
 define('HOLAM_MEM', 'מֹ'); //  מֹ מֹ
 define('HOLAM_VAV', 'וֺ'); //
+define('HOLAM_LAMED', 'לֹ');
+define('HOLAM_TAV', 'תֹּ');
 define('METEG', 'ֽ'); //METEG', '\u05BD'
 define('MAPIQ', 'ּ'); //u05BC
 define('MAQAF', '־'); //u05BE
@@ -106,8 +110,14 @@ define('SHURUK', 'ּ'); //SHURUK', '\u05BC' //or: DAGESH_LETTER', '\u05bc'
 define('DAGESH_UNKNOWN', 'ּ');
 define('SHIN_UNKNOWN', 'ׁ'); 
 define('SHIN_DOT', 'ׁ');  //SHIN_YEMANIT', '\u05c1' &#x05C1 in BabelMap
-define('SIN_DOT', 'ׂ'); //SHIN_SMALIT', '\u05c2' &#x05C2 in BabelMap	
-
+define('SIN_DOT', 'ׂ'); //SHIN_SMALIT', '\u05c2' &#x05C2 in BabelMap
+define('TIPEHA', '֖'); //U+0596 HEBREW ACCENT TIPEHA : tarha, me'ayla ~ mayla
+define('MERKHA', '֥'); //U+05A5 HEBREW ACCENT MERKHA : yored
+define('MERKHA_KEFULA', '֦'); //U+05A6 HEBREW ACCENT MERKHA KEFULA	
+define('MUNAH', '֣'); //U+05A3 HEBREW ACCENT MUNAH		
+define('ETNAHTA', '֑'); //U+0591 HEBREW ACCENT ETNAHTA : atnah
+define('ATNAH_HAFUKH', '֢'); //U+05A2 HEBREW ACCENT ATNAH HAFUKH
+define('YERAH_BEN_YOMO', '֪'); //U+05AA HEBREW ACCENT YERAH BEN YOMO : galgal	
 
 /*
  KAMETZ
