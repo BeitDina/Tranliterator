@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: constants.php,v 1.01 2023/10/15 10:14:14 orynider Exp $
+* @version $Id: constants.php,v 1.02 2023/10/16 7:34:14 orynider Exp $
 *
 */
 
@@ -96,10 +96,13 @@ define('CHOLAM', 'ֹֹ');//HOLAM', '\u05B9'
 define('CHOLAM_CHASER', 'ֺ');//For Wav
 define('CHOLAM_UNKNOWN', 'ֺ');//For Wav
 define('HOLAM_HASHER', 'ֹֹ'); //HOLAM HASHER for Wav 
+define('HOLAM_HASHER_VAV', 'וֹ');
+define('HOLAM_RESH', 'רֹ');
 define('CHOLAM_MALEI', 'ֹֹ');//HOLAM', '\u05B9'
 define('HOLAM_MEM', 'מֹ'); //  מֹ מֹ
 define('HOLAM_VAV', 'וֺ'); //
 define('HOLAM_LAMED', 'לֹ');
+define('HOLAM_BHET', 'בֹ');
 define('HOLAM_TAV', 'תֹּ');
 define('METEG', 'ֽ'); //METEG', '\u05BD'
 define('MAPIQ', 'ּ'); //u05BC
