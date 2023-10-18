@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: constants.php,v 1.02 2023/10/16 7:34:14 orynider Exp $
+* @version $Id: constants.php,v 1.1.0 2023/10/18 10:54:14 orynider Exp $
 *
 */
 
@@ -15,26 +15,27 @@ date_default_timezone_set('Asia/Jerusalem'); // We have to set something or else
 //Definitions
 define('TRANS_VERSION', "v.1.0.1"); // version...
 define('SPACE', 'SPACE'); //&nbsp;
-//Definitions https://github.com/symbl-cc/symbl-data 
-//Backup: https://github.com/anio/unicode-table-data/blob/95d28cae674791b18798e5cdb846bbffde017097/loc/de/symbols/0500.txt#L200C3-L200C3
+//Definitions at https://github.com/symbl-cc/symbl-data 
+//Backup at https://github.com/anio/unicode-table-data/blob/95d28cae674791b18798e5cdb846bbffde017097/loc/de/symbols/0500.txt#L200C3-L200C3
 define('ALEPH', 'א');
 define('BHET', 'ב');
-define('BET', 'ב');
-define('GIMEL', 'ב');
+define('BET', 'בּ');
+define('GIMEL', 'גּ');
 define('GHIMEL', 'ג');
-define('DALED', 'ד');
+define('DALED', 'דּ');
 define('DHALED', 'ד');
 define('HEH', 'ה');
-define('HEH_MAPIK', 'ה');
+define('HEH_MAPIK', 'הִ');
 define('VAV', 'ו');
 define('ZED', 'ז');
 define('CHET', 'ח');
 define('TET', 'ט');
 define('YUD_PLURAL', 'י');
 define('YUD', 'י');
-define('KAF_SOFIT', 'ך');
+define('KAF_SOFIT', 'ךּ');
 define('KHAF_SOFIT', 'ך');
 define('KAF', 'כ');
+define('KHAF', 'כּ');
 define('LAMED', 'ל');
 define('MEM_SOFIT', 'ם');
 define('MEM', 'מ');
@@ -52,7 +53,7 @@ define('SHIN_NO_DOT', 'ש');
 define('SHIN', 'ש'.'ׁ');
 define('SIN', 'ש'.'ׂ');
 define('SHIN_SHIN_DOT_SHEVA_NACH', 'שְּׁ');
-define('TAV', 'ת');
+define('TAV', 'תּ');
 define('THAV', 'ת');
 	/*
 	DAGESH_LETTER: return 'דגש\שורוק'
