@@ -1,7 +1,7 @@
 <?php
 /**
 *
-* @package Tranliterator
+* @package Transliterator
 * @version $Id: constants.php,v 1.1.0 2023/10/18 10:54:14 orynider Exp $
 *
 */
