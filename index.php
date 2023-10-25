@@ -1,7 +1,7 @@
 <?php 
 /**
 *
-* @package Tranliterator
+* @package Transliterator
 * @version $Id: index.php,v 1.71 2023/10/13 14:14:08 orynider Exp $
 *
 */
