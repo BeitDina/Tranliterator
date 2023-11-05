@@ -1,8 +1,8 @@
 <?php 
 /**
 *
-* @package Transliterator
-* @version $Id: index.php,v 1.71 2023/10/13 14:14:08 orynider Exp $
+* @package Tranliterator
+* @version $Id: index.php,v 1.72 2023/11/04 06:54:06 orynider Exp $
 *
 */
 define('IN_PORTAL', 1);
@@ -3744,13 +3744,16 @@ generateTransliteration($sourcetext, $targetlang, false, false);
 </textarea><br>&nbsp;&nbsp;
 <font size=-1>from Hebrew to</font>
 <select name="targetlang" selected="<?php $targetlang ?>">
-<option value="academic" <?php if($targetlang == 'academic') { print("selected"); } ?> >Academic</option>
-<option value="academic_u" <?php if($targetlang == 'academic_u'){ print("selected"); } ?> >Academic Unicode</option>
-<option value="academic_ff" <?php if($targetlang == 'academic_ff'){ print("selected"); } ?> >Academic Font Friendly</option>
-<option value="ashkenazic" <?php if($targetlang == 'ashkenazic'){ print("selected"); } ?> >Ashkenazic</option>
-<option value="sefardic" <?php if($targetlang == 'sefardic'){ print("selected"); } ?> >Sefardic</option>
-<option value="romanian" <?php if($targetlang == 'romanian'){ print("selected"); } ?> >Romanian</option>
-<option value="mc" <?php if($targetlang == 'mc'){ print("selected");} ?> >Michigan - Claremont</option>
+	<option value="academic" <?php if($targetlang == 'academic') { print("selected"); } ?> >Academic</option>
+	<option value="academic_u" <?php if($targetlang == 'academic_u'){ print("selected"); } ?> >Academic Unicode</option>
+	<option value="academic_ff" <?php if($targetlang == 'academic_ff'){ print("selected"); } ?> >Academic Font Friendly</option>
+	<option value="academic_s" <?php if($targetlang == 'academic_s'){ print("selected"); } ?> >Academic Spirantization</option>
+	<option value="ashkenazic" <?php if($targetlang == 'ashkenazic'){ print("selected"); } ?> >Ashkenazic</option>
+	<option value="sefardic" <?php if($targetlang == 'sefardic'){ print("selected"); } ?> >Sefardic</option>
+	<option value="romaniote" <?php if($targetlang == 'romaniote'){ print("selected"); } ?> >Romaniote</option>
+	<option value="romanian" <?php if($targetlang == 'romanian'){ print("selected"); } ?> >Romanian</option>
+	<option value="ukrainian" <?php if($targetlang == 'ukrainian'){ print("selected"); } ?> >Ukrainian</option>
+	<option value="mc" <?php if($targetlang == 'mc'){ print("selected");} ?> >Michigan - Claremont</option>
 </select>
 <input type=hidden name=hl value="en" />
 <input type=hidden name=ie value="UTF8" />
