@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: trans.php,v 1.1.1 2023/10/18 06:57:15 orynider Exp $
+* @version $Id: trans.php,v 1.1.1 2023/11/06 00:13:55 orynider Exp $
 *
 */
 
@@ -275,7 +275,7 @@ $origHebrew = "";
 
 $l_about_title = 'About Transliterator';
 $l_about_desc = 'Transliterator is a mechanism offered as-is to support customers for the purpose of transliterating from Hebrew Alphabet into other alphabets. Was started by <a href="https://github.com/joshwaxman/transliterate">Joshua Waxman</a> in 2006.';
-$l_notify = 'You can read at <a href="https://github.com/BeitDina/Transliterator/">github.com/beitdina/Trasliterator</a> more about it.<br/> Working on PHP '. PHP_VERSION .' on '. PHP_OS .'.';
+$l_notify = 'You can read at <a href="https://github.com/BeitDina/Transliterator/">github.com/beitdina/Transliterator</a> more about it.<br/> Working on PHP '. PHP_VERSION .' on '. PHP_OS .'.';
 
 //
 // Show copyrights
