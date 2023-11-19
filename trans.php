@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: trans.php,v 1.1.1 2023/11/06 00:13:55 orynider Exp $
+* @version $Id: trans.php,v 1.1.2 2023/11/19 12:12:12 orynider Exp $
 *
 */
 
@@ -10,7 +10,7 @@
 if (!defined('IN_PORTAL') && (strpos($_SERVER['PHP_SELF'], "unit_test.php") <= 0)) { die("Direct acces not allowed! This file was accesed: ".$_SERVER['PHP_SELF']."."); }
 
 //Constants
-include($root_path . 'contants.' . $phpEx);
+include($root_path . 'contants.' . $phpExt);
 
 // new trup code
 class tree_node
@@ -20,6 +20,7 @@ class tree_node
 
 	var $begin_offset;
 	var $end_offset;
+	
 	function __construct($begin, $end)
 	{
 		$this->begin_offset = $begin;
@@ -197,9 +198,52 @@ function data_repl($candidates = null, $replacements = null, $data)
 //Funtion redefinition ends
 function mesagehandler($msg_title, $msg_text, $l_notify, $l_return_index = "index.php") 
 { 
-			// Do not send 200 OK, but service unavailable on errors
-			//send_status_line(503, 'Service Unavailable');
-
+		// Do not send 200 OK, but service unavailable on errors
+		//send_status_line(503, 'Service Unavailable');
+		switch($l_notify)
+		{ 
+			case 0:				
+				$l_notify = "Unknown PHP Error";
+			break;
+			case 1:   
+				$l_notify = "Php Error";
+			break;
+			case 2:   
+				$l_notify = "Php Warning";
+			break;
+			case 4:   
+				$l_notify = "Parsing Error";
+			break;
+			case 8:   
+				$l_notify = "Php Notice";
+			break;
+			case 16:   
+				$l_notify = "Core Error";
+			break;
+			case 32:  
+				$l_notify = "Core Warning";
+			break;
+			case 64:  
+				$l_notify = "Compile Error";
+			break;
+			case 128:  
+				$l_notify = "Compile Warning";
+			break;
+			case 256: 
+				$l_notify = "Php User Error";
+			break;
+			case 512: 
+				$l_notify = "Php User Warning";
+			case 1024: 
+				$l_notify = "Php User Notice";
+			break;
+			case 2048:
+				$l_notify = 'PHP Strict';
+			break;
+			default:
+				$l_notify = 'Service Unavailable';
+			break;	
+		}
 			//garbage_collection();
 
 			// Try to not call the adm page data...
@@ -222,7 +266,7 @@ function mesagehandler($msg_title, $msg_text, $l_notify, $l_return_index = "inde
 			print '</head>';
 			print '<body id="page">';
 			print '<div id="wrap">';
-			print '	<div id="page-header">'.$l_return_index.'</div>';	
+			print '	<div id="page-header"><a title="'.$l_return_index.'"'.' href="#"> @ '.$l_return_index.'</a></div>';	
 			print '	<div id="page-body">';
 			print '	<div class="panel">';
 			print '		<div id="content">';
@@ -258,15 +302,7 @@ if(!function_exists('spliti'))          { function spliti($pattern, $subject, $l
 /*
 * DEBUG AND ERROR HANDLING
 */
-define('DEBUG', true); // [Admin Option] Show Footer debug stats - Actually set in phpBB/includes/constants.php
-define('DEBUG_EXTRA', true); // [Admin Option] Show memory usage. Show link to full SQL debug report in footer. Beware, this makes the page slow to load. For debugging only.
-define('INCLUDES', 'includes/'); //Main Includes folder
-@ini_set('display_errors', '1');
-//@error_reporting(E_ERROR | E_WARNING | E_PARSE); // This will NOT report uninitialized variables
-//@error_reporting(E_ALL & ~E_NOTICE); //Default error reporting in PHP 5.2+
-error_reporting(E_ALL | E_NOTICE | E_STRICT);
-@session_cache_expire (1440);
-@set_time_limit (1500);
+set_error_handler('mesagehandler');
 // end new trup code
 
 $isOpera = 0;
@@ -282,7 +318,7 @@ $l_notify = 'You can read at <a href="https://github.com/BeitDina/Transliterator
 //
 if (isset($_REQUEST['copy']))
 {
-	mesagehandler($l_about_title, $l_about_desc, $l_notify, $root_path . 'index.' . $phpEx);
+	mesagehandler($l_about_title, $l_about_desc, $l_notify, $root_path . 'index.' . $phpExt);
 }
 
 function PostHebrewExtendedASCIIToIntermediate($t)
@@ -815,6 +851,7 @@ function AcademicFontFriendlyTransliteration($t)
 	$t = preg_replace("<".TZADI.">", "tz", $t);
 	$t = preg_replace("<".KUF.">", "q", $t);
 	$t = preg_replace("<".RESH.">", "r", $t);
+	$t = preg_replace("<".SHIN_SHIN_DOT_KAMETZ.">", "sā", $t);
 	$t = preg_replace("<".SHIN.">", "sh", $t);
 	$t = preg_replace("<".SIN.">", "s", $t);
 	$t = preg_replace("<".SHIN_NO_DOT.">", "(sh)", $t);	
@@ -913,6 +950,7 @@ function AshkenazicTransliteration($t)
 	$t = preg_replace("<".TZADI_SOFIT.">", "ts", $t);
 	$t = preg_replace("<".KUF.">", "k", $t);
 	$t = preg_replace("<".RESH.">", "r", $t);
+	$t = preg_replace("<".SHIN_SHIN_DOT_KAMETZ.">", "sā", $t);
 	$t = preg_replace("<".SHIN.">", "sh", $t);
 	$t = preg_replace("<".SIN.">", "s", $t);
 	$t = preg_replace("<".TAV.">", "t", $t);
@@ -998,6 +1036,7 @@ function SefardicTransliteration($t)
 	$t = preg_replace("<".TZADI_SOFIT.">", "ts", $t);
 	$t = preg_replace("<".KUF.">", "q", $t);
 	$t = preg_replace("<".RESH.">", "r", $t);
+	$t = preg_replace("<".SHIN_SHIN_DOT_KAMETZ.">", "sā", $t);
 	$t = preg_replace("<".SHIN.">", "sh", $t);
 	$t = preg_replace("<".SIN.">", "s", $t);
 	$t = preg_replace("<".TAV.">", "t", $t);
@@ -1216,6 +1255,7 @@ function MichiganClaremontTranslit($t)
 	$t = preg_replace("<".TZADI_SOFIT.">", "C", $t);
 	$t = preg_replace("<".KUF.">", "Q", $t);
 	$t = preg_replace("<".RESH.">", "R", $t);
+	$t = preg_replace("<".SHIN_SHIN_DOT_KAMETZ.">", "SE", $t);
 	$t = preg_replace("<".SHIN_SHIN_DOT_SHEVA_NACH.">", "$"."Ə", $t);
 	$t = preg_replace("<".SHIN.">", "$", $t);
 	$t = preg_replace("<".SIN.">", "&", $t);
@@ -1328,6 +1368,7 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<".TZADI_SOFIT.">", "ţ", $t);
 	$t = preg_replace("<".KUF.">", "q", $t);
 	$t = preg_replace("<".RESH.">", "r", $t);
+	$t = preg_replace("<".SHIN_SHIN_DOT_KAMETZ.">", "sā", $t);
 	$t = preg_replace("<".SHIN_SHIN_DOT_SHEVA_NACH.">", "şâ", $t);
 	//$t = preg_replace("<".SHIN.SHIN_DOT.SHEVA_NACH.">", "şâ", $t); //??
 	//$t = preg_replace("<".SHIN.SHEVA_NACH.SHIN_DOT.">", "şâ", $t); //??
@@ -1375,6 +1416,7 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<֗>", "ő", $t);
 	
 	//Second Step;
+	$t = preg_replace("<lāvāɳ>", "Lāvāɳ", $t);
 	$t = preg_replace("<".KHAF.">", "c", $t);
 	$t = preg_replace("<־>", "-", $t);
 	$t = preg_replace("<îkā'>", "î·kā'", $t);
@@ -1442,6 +1484,7 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<uē·iî>", "uē·iî·", $t);
 	$t = preg_replace("<īi'>", "ī·i'", $t);
 	$t = preg_replace("<īi >", "ī·i ", $t);
+	$t = preg_replace("<··>", "·", $t);
 	$t = preg_replace("<iî·lādē'i>", "iâlādē'i", $t);
 	$t = preg_replace("<iî·lādēi>", "iâlādē·i", $t);
 	$t = preg_replace("<iāré'e>", "iâlādē·i", $t);
@@ -1491,6 +1534,13 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<eălīişāa>", "Eălīişāa", $t);
 	$t = preg_replace("<eălīişā>", "Eălīişā", $t);
 	$t = preg_replace("<şuōnéőɱ>", "Şuōnéőɱ", $t);	
+	$t = preg_replace("<rīvîqāh>", "Rīvâqāh", $t);
+	$t = preg_replace("<bē·t>", "bēt", $t);
+	$t = preg_replace("<bî·tuōeél>", "Bâtuōeél", $t);
+	$t = preg_replace("<bē·t>", "bēt", $t);
+	$t = preg_replace("<pōēdēɳ>", "Pōēdēɳ", $t);
+	$t = preg_replace("<eārāɱ>", "Eārāɱ", $t);
+	
 	
 	ExtractTrup();
 	$t = CleanUpPunctuation($t);
@@ -1729,39 +1779,39 @@ function RomanioteTransliteration($t)
 	$t = preg_replace("<".HOLAM_HASHER_VAV.">", "ѐ", $t);	
 	
 	/* Consonants */
-	$t = preg_replace("<".ALEPH.">", "ά", $t);
+	$t = preg_replace("<".ALEPH.">", "α", $t);
 	$t = preg_replace("<".BET.">", "β", $t);
-	$t = preg_replace("<".BHET.">", "μπ", $t);
+	$t = preg_replace("<".BHET.">", "ϐ", $t);
 	$t = preg_replace("<".GIMEL.">", "γ", $t);
-	$t = preg_replace("<".GHIMEL.">", "γκ", $t);
+	$t = preg_replace("<".GHIMEL.">", "γ", $t);
 	$t = preg_replace("<".DALED.">", "δ", $t);
-	$t = preg_replace("<".DHALED.">", "ντ", $t);
-	$t = preg_replace("<".HEH_MAPIK.">", "χ", $t);
-	$t = preg_replace("<".HEH.">", "h", $t);
-	$t = preg_replace("<".HEH.">", "h", $t);
-	$t = preg_replace("<".VAV.">", "β", $t);
+	$t = preg_replace("<".DHALED.">", "ð", $t);
+	$t = preg_replace("<".HEH_MAPIK.">", "ε", $t);
+	$t = preg_replace("<".HEH.">", "x", $t);
+	$t = preg_replace("<".VAV.">", "ϝ", $t);
 	$t = preg_replace("<".ZED.">", "ζ", $t);
-	$t = preg_replace("<".CHET.">", "ḥ", $t);
+	$t = preg_replace("<".CHET.">", "η", $t);
 	$t = preg_replace("<".TET.">", "τ", $t);
 	$t = preg_replace("<".YUD_PLURAL.">", "ι", $t);
 	$t = preg_replace("<".YUD_PLURAL.">", "(γ)", $t);
-	$t = preg_replace("<".YUD.">", "γι", $t);
+	$t = preg_replace("<".YUD.">", "γ", $t);
 	$t = preg_replace("<".KAF.">", "χ", $t);
-	$t = preg_replace("<".KHAF_SOFIT.">", "κ", $t);
+	$t = preg_replace("<".KHAF_SOFIT.">", "ϰ", $t);
 	$t = preg_replace("<".LAMED.">", "λ", $t);
 	$t = preg_replace("<".MEM.">", "μ", $t);
 	$t = preg_replace("<".MEM_SOFIT.">", "μ", $t);
 	$t = preg_replace("<".NUN.">", "ν", $t);
 	$t = preg_replace("<".NUN_SOFIT.">", "ν", $t);
-	$t = preg_replace("<".SAMECH.">", "σ", $t);
-	$t = preg_replace("<".AYIN.">", "ʿ", $t);
+	$t = preg_replace("<".SAMECH.">", "ξ", $t);
+	$t = preg_replace("<".AYIN.">", "ο", $t);
 	$t = preg_replace("<".PEI.">", "φ", $t);
 	$t = preg_replace("<".PHEI_SOFIT.">", "φ̄", $t);
-	$t = preg_replace("<".TZADI_SOFIT.">", "ţ̄", $t);
-	$t = preg_replace("<".TZADI.">", "ţ", $t);
+	$t = preg_replace("<".TZADI_SOFIT.">", "ϻ̄", $t);
+	$t = preg_replace("<".TZADI.">", "ϻ", $t);
 	$t = preg_replace("<".KUF.">", "κ", $t);
 	$t = preg_replace("<".RESH.">", "ρ", $t);
-	$t = preg_replace("<".SHIN.">", "σσ", $t);
+	$t = preg_replace("<".SHIN_SHIN_DOT_KAMETZ.">", "ρά", $t);
+	$t = preg_replace("<".SHIN.">", "Σ", $t);
 	$t = preg_replace("<".SIN.">", "σ", $t);	
 	$t = preg_replace("<".TAV.">", "θ", $t);
 	$t = preg_replace("<".THAV.">", "τ", $t);
@@ -1769,18 +1819,18 @@ function RomanioteTransliteration($t)
 	/* Vowels */
 	$t = preg_replace("<".CHATAF_KAMETZ.">", "ŏ", $t);
 	$t = preg_replace("<".KAMETZ_KATAN.">", "ā", $t);
-	$t = preg_replace("<".KAMETZ.">", "α", $t);
-	$t = preg_replace("<".CHATAF_PATACH.">", "ə", $t);
-	$t = preg_replace("<".PATACH_GANUV.">", "<sup>ē</sup>", $t);
+	$t = preg_replace("<".KAMETZ.">", "ά", $t);
+	$t = preg_replace("<".CHATAF_PATACH.">", "૩", $t);
+	$t = preg_replace("<".PATACH_GANUV.">", "<sup>α</sup>", $t);
 	$t = preg_replace("<".PATACH.">", "α", $t);
-	$t = preg_replace("<".SHEVA_NACH.">", "ε", $t);
-	$t = preg_replace("<".SHEVA.">", "ε", $t);
-	$t = preg_replace("<".CHATAF_SEGOL.">", "ă", $t);
+	$t = preg_replace("<".SHEVA_NACH.">", "ἐ", $t);
+	$t = preg_replace("<".SHEVA.">", "ἑ", $t);
+	$t = preg_replace("<".CHATAF_SEGOL.">", "૩", $t);
 	$t = preg_replace("<".SEGOL.">", "ę", $t);
 	$t = preg_replace("<".TZEIREI_MALEI.">", "ε", $t);
 	$t = preg_replace("<".TZEIREI_CHASER.">", "ē", $t);
-	$t = preg_replace("<".CHIRIK_MALEI.">", "ι", $t);
-	$t = preg_replace("<".CHIRIK_CHASER.">", "ι", $t);
+	$t = preg_replace("<".CHIRIK_MALEI.">", "ί", $t);
+	$t = preg_replace("<".CHIRIK_CHASER.">", "ϊ", $t);
 	$t = preg_replace("<".CHOLAM_MALEI.">", "ω", $t);
 	$t = preg_replace("<".CHOLAM_CHASER.">", "ω", $t);
 	$t = preg_replace("<".MAPIQ.">", "ω", $t);
@@ -1795,32 +1845,40 @@ function RomanioteTransliteration($t)
 	$t = preg_replace("<".YERAH_BEN_YOMO.">", "°", $t);	 	
 	
 	/* Second Step */
-	$t = preg_replace("<ֹş>", "ōş", $t);
-	$t = preg_replace("<ֹr>", "ōr", $t);
-	$t = preg_replace("<ֹt>", "ōt", $t);
-	$t = preg_replace("<ֹp>", "p", $t);
-	$t = preg_replace("<ֹe>", "eé", $t);
 	$t = preg_replace("<ֹ >", "ó", $t);
 	$t = preg_replace("<ֹ>", "ō", $t);
-	$t = preg_replace("<ōā>", "ā", $t);
-	$t = preg_replace("<ōō>", "ō", $t);
-	$t = preg_replace("<ōî>", "î", $t);
-	$t = preg_replace("<ōī>", "ī", $t);
-	$t = preg_replace("<ōî>", "î", $t);
-	$t = preg_replace("<mōşęh>", "Mōşęh", $t);
-	$t = preg_replace("<ââ>", "â", $t);	
-	$t = preg_replace("<iīsârāeél>", "IīsârāeEél", $t);	
-	$t = preg_replace("<iīsîrāeeīl>", "IīsârāeEīl", $t);
-	$t = preg_replace("<iâērâdâéɳ>", "Iâērâdâéɳ", $t);
-	$t = preg_replace("< iī>", " iī·", $t);
-	$t = preg_replace("< uē>", " uē·", $t);
-	$t = preg_replace("< uâ>", " uî·", $t);
-	$t = preg_replace("< hē>", " hē·", $t);
-	$t = preg_replace("< bâ>", " bî·", $t);
-	$t = preg_replace("<bî·ā>", "bâā", $t);
-	$t = preg_replace("< hā>", " hā·", $t);
-	$t = preg_replace("< bî·éiɳ>", " bâéiɳ", $t);
-	$t = preg_replace("<bâāaā>", "bîā·aā", $t);
+	$t = preg_replace("<mōΣęx>", "MōΣęx", $t);
+	$t = preg_replace("<φωαδαν>", "Φωαδαν", $t);
+	$t = preg_replace("<tōφęλ>", "Tōφęλ", $t);
+	$t = preg_replace("<λάϐάν>", "Λάϐάν", $t);
+	$t = preg_replace("<ηəϻεrōτ>", "Ηəϻεrōτ", $t);
+	$t = preg_replace("<ιίϻεηάκ>", "Ιιϻεηάκ", $t);
+	$t = preg_replace("<α૩lōε'ιμ>", "Α૩lōε'ιμ", $t);
+	$t = preg_replace("<εε>", "ε", $t);	
+	$t = preg_replace("<ιίσεράαελ>", "Ιισεράαελ", $t);	
+	$t = preg_replace("<ιωαρεδεν>", "Ιωαρεδεν", $t);
+	$t = preg_replace("< ιī>", " ιī·", $t);
+	$t = preg_replace("< ϝē>", " ϝē·", $t);
+	$t = preg_replace("< ϝε>", " ϝε·", $t);
+	$t = preg_replace("< ϝἐ>", " ϝἐ·", $t);
+	$t = preg_replace("< ϝα>", " ϝα·", $t);
+	$t = preg_replace("< ϝω>", " ϝω·", $t);
+	$t = preg_replace("< xə>", " xə·", $t);
+	$t = preg_replace("< xα>", " xα·", $t);
+	$t = preg_replace("< βε>", " βε·", $t);
+	$t = preg_replace("< βα>", " βα·", $t);
+	$t = preg_replace("< βά>", " βά·", $t);
+	$t = preg_replace("<βε·ιν>", "βειν", $t);
+	$t = preg_replace("<βε·α>", "βεα", $t);
+	$t = preg_replace("<βά·ρά>", "βάρά", $t);
+	$t = preg_replace("<μι>", "μι·", $t);
+	$t = preg_replace("< xα>", " xα·", $t);
+	$t = preg_replace("< xά>", " xά·", $t);
+	$t = preg_replace("<··>", "·", $t);
+	$t = preg_replace("< βî·éiɳ>", " βâéiɳ", $t);
+	$t = preg_replace("<βâāaā>", "βîā·aā", $t);
+
+	
 	
 	ExtractTrup();
 	$t = CleanUpPunctuation($t);
@@ -1877,6 +1935,7 @@ function UkrainianTransliteration($t)
 	$t = preg_replace("<".TZADI_SOFIT.">", "ц", $t);
 	$t = preg_replace("<".KUF.">", "q", $t);
 	$t = preg_replace("<".RESH.">", "р", $t);
+	$t = preg_replace("<".SHIN_SHIN_DOT_KAMETZ.">", "ша", $t);
 	$t = preg_replace("<".SHIN_SHIN_DOT_SHEVA_NACH.">", "щь", $t);
 	$t = preg_replace("<".SHIN.">", "щ", $t);
 	$t = preg_replace("<".SIN.">", "ш", $t);
@@ -1923,6 +1982,7 @@ function UkrainianTransliteration($t)
 	$t = preg_replace("<ōь>", "ī", $t);
 	$t = preg_replace("<ōь>", "ь", $t);
 	$t = preg_replace("<ъъ>", "ъ", $t);
+	$t = preg_replace("<бьтуōеѐл>", "Бьтуōеѐл", $t);
 	$t = preg_replace("<іīшьрāеѐл>", "Іīшьрāеѐл", $t);
 	$t = preg_replace("<мощӗх>", "Мощӗх", $t);
 	$t = preg_replace("<пāерāӊ>", "Пāерāӊ", $t);
@@ -1947,6 +2007,7 @@ function UkrainianTransliteration($t)
 	$t = preg_replace("< уâ>", " уь·", $t);
 	$t = preg_replace("< бā>", " бā·", $t);
 	$t = preg_replace("< бӭ>", " бӭ·", $t);
+	$t = preg_replace("<бӭ·т>", "бӭт", $t);
 	$t = preg_replace("< бь>", " бь·", $t);
 	$t = preg_replace("< bъ>", " bь·", $t);
 	$t = preg_replace("< bā>", " bā·", $t);
@@ -1955,7 +2016,11 @@ function UkrainianTransliteration($t)
 	$t = preg_replace("<bь·ā>", "bъā", $t);
 	$t = preg_replace("< хӭ>", " хӭ·", $t);
 	$t = preg_replace("<хӭ·р>", " хӭр", $t);
+	$t = preg_replace("< мī>", " мī·", $t);
+	$t = preg_replace("<пōӭдӭӊ>", "Пōӭдӭӊ", $t);
+	$t = preg_replace("<еāрāӎ>", "Еāрāӎ", $t);	
 	$t = preg_replace("< хā>", " хā·", $t);
+	$t = preg_replace("< ль>", " ль·", $t);
 	$t = preg_replace("<iōeéмęr>", "iō·eéмęr", $t);
 	$t = preg_replace("<уē·iьhi>", "уē·iь·hi", $t);
 	$t = preg_replace("<уē·iь>", "уē·iь·", $t);
@@ -1980,8 +2045,10 @@ function UkrainianTransliteration($t)
 	$t = preg_replace("<мѐчōрѐв>", "мѐ·Чōрѐв", $t);
 	$t = preg_replace("<чōрѐв>", "Чōрѐв", $t);
 	$t = preg_replace("<шѐаīір>", "Шѐаīір", $t);
-	$t = preg_replace("<qāдѐщ>", "Qāдѐщ", $t);	
-
+	$t = preg_replace("<qāдѐщ>", "Qāдѐщ", $t);
+	$t = preg_replace("<рīвьqāх>", "Рīвьqāх", $t);		
+	$t = preg_replace("<Бьтуōеѐл>", "Бьтуōеѐл", $t);
+	
 	//Other line marks
 	$t = preg_replace("<֤>", "'", $t);
 	$t = preg_replace("<֙>", "'", $t);
@@ -2059,11 +2126,10 @@ function ExtractTrup()
 		} // end for on letters of word
 
 		// now, for non-supplanted trup
-		if (! is_null($firstTrup) )
+		if (!is_null($firstTrup) )
 			$trup[] = $firstTrup;
 
 	} // end for on words in sentence
-
 	print_r ($trup);
 } // end function
 
@@ -2215,6 +2281,7 @@ function generateTransliteration($sourcetext, $targetlang, $isFirefox = false, $
 		$t2 = MichiganClaremontTranslit($t);
 		print $t2;
 	}
+	define('END_TIME', round((microtime(true) - BEGIN_TIME) * 1000, 1));	
 }
 
 /*
