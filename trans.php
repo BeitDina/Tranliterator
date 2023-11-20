@@ -1771,12 +1771,12 @@ function RomanioteTransliteration($t)
 	$t = preg_replace("<" . $GEMINATE_CANDIDATES . "_CHAZAK>", "\\1", $t);
 	
 	$t = preg_replace("<".HOLAM_VAV.">", "uō", $t);
-	$t = preg_replace("<".HOLAM_MEM.">", "mō", $t);
-	$t = preg_replace("<".HOLAM_LAMED.">", "lō", $t);
-	$t = preg_replace("<".HOLAM_BHET.">", "vō", $t);
-	$t = preg_replace("<".HOLAM_TAV.">", "tō", $t);
-	$t = preg_replace("<".HOLAM_RESH.">", "rō", $t);
-	$t = preg_replace("<".HOLAM_HASHER_VAV.">", "ѐ", $t);	
+	$t = preg_replace("<".HOLAM_MEM.">", "μō", $t);
+	$t = preg_replace("<".HOLAM_LAMED.">", "λō", $t);
+	$t = preg_replace("<".HOLAM_BHET.">", "ϐō", $t);
+	$t = preg_replace("<".HOLAM_TAV.">", "τō", $t);
+	$t = preg_replace("<".HOLAM_RESH.">", "ρō", $t);
+	$t = preg_replace("<".HOLAM_HASHER_VAV.">", "uѐ", $t);	
 	
 	/* Consonants */
 	$t = preg_replace("<".ALEPH.">", "α", $t);
@@ -1788,13 +1788,12 @@ function RomanioteTransliteration($t)
 	$t = preg_replace("<".DHALED.">", "ð", $t);
 	$t = preg_replace("<".HEH_MAPIK.">", "ε", $t);
 	$t = preg_replace("<".HEH.">", "x", $t);
-	$t = preg_replace("<".VAV.">", "ϝ", $t);
+	$t = preg_replace("<".VAV.">", "υ", $t); //ϝ
 	$t = preg_replace("<".ZED.">", "ζ", $t);
 	$t = preg_replace("<".CHET.">", "η", $t);
 	$t = preg_replace("<".TET.">", "τ", $t);
 	$t = preg_replace("<".YUD_PLURAL.">", "ι", $t);
-	$t = preg_replace("<".YUD_PLURAL.">", "(γ)", $t);
-	$t = preg_replace("<".YUD.">", "γ", $t);
+	$t = preg_replace("<".YUD.">", "ι", $t);
 	$t = preg_replace("<".KAF.">", "χ", $t);
 	$t = preg_replace("<".KHAF_SOFIT.">", "ϰ", $t);
 	$t = preg_replace("<".LAMED.">", "λ", $t);
@@ -1821,7 +1820,7 @@ function RomanioteTransliteration($t)
 	$t = preg_replace("<".KAMETZ_KATAN.">", "ā", $t);
 	$t = preg_replace("<".KAMETZ.">", "ά", $t);
 	$t = preg_replace("<".CHATAF_PATACH.">", "૩", $t);
-	$t = preg_replace("<".PATACH_GANUV.">", "<sup>α</sup>", $t);
+	$t = preg_replace("<".PATACH_GANUV.">", "ͣ", $t);
 	$t = preg_replace("<".PATACH.">", "α", $t);
 	$t = preg_replace("<".SHEVA_NACH.">", "ἐ", $t);
 	$t = preg_replace("<".SHEVA.">", "ἑ", $t);
