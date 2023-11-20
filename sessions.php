@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: sessions.php,v 0.09 2023/11/04 06:54:06 orynider Exp $
+* @version $Id: sessions.php,v 0.10 2023/11/21 01:45:06 orynider Exp $
  * @license for this file @ http://www.gnu.org/licenses/gpl.html GNU General Public License (GPL)
 */
 
@@ -307,7 +307,7 @@ class Accounts implements Iterator
 	 */
 	public function next()
 	{
-		$this -> i++;
+		$this-> i++;
 		return $this->current();
 	}
 	
@@ -529,7 +529,7 @@ class User
 			</tr>
 			</table>
 		</div>' . '
-		<p><input class="button" type="submit" value="' . 'Login' . '" /></p>
+		<p><input class="icon pointer input" type="submit" value="' . 'Login' . '" /></p>
 		</form>';
 	}
 	
@@ -736,6 +736,7 @@ if (!empty($_POST['username']) && ($_POST['username'] != '') && ($_POST['passwor
 {
 	$you = new UserLoggedIn($_POST['username'], sha1($_POST['password']));
 	$log_login = 'Successful login (Username: ' . $_POST['username'] . ')';
+	define('USER_LEVEL', $you->level);
 	$_SESSION['password'] = sha1($_POST['password']);
 	unset($_POST['password']);
 	$_SESSION['username'] = $_POST['username'];
@@ -745,12 +746,14 @@ if (!empty($_POST['username']) && ($_POST['username'] != '') && ($_POST['passwor
 else if (!empty($_SESSION['username']))
 {
 	$you = new UserLoggedIn($_SESSION['username'], $_SESSION['password']);
+	define('USER_LEVEL', $you->level);
 	$log_login = '<p><a class="table3 translator" href="' . Configuration::html_output($_SERVER['PHP_SELF']) . '?dir=' . (isset($subdir) ?  rawurlencode($subdir) : '') . '&amp;logout=true">' . 'Logout' . ' [ ' . Configuration::html_output($_SESSION['username']) . ' ]</a></p>';
 
 }
 else
 {
 	$you = new User();
+	define('USER_LEVEL', ANONYMOUS);
 	$log_login = '<p>You must login to transliterate long files.</p>
 			<div>
 			<table class="table1" border="0" cellpadding="8" cellspacing="0">
