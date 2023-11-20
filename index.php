@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: index.php,v 1.73 2023/11/19 12:16:52 orynider Exp $
+* @version $Id: index.php,v 1.74 2023/11/21 01:39:52 orynider Exp $
 *
 */
 
@@ -19,6 +19,10 @@ define('DATE_FORMAT', 'Y-M-d');
  * Sets debug mode: true or false
  */
 define('DEBUG', true);
+
+@session_cache_expire('1440');
+@set_time_limit('1500');
+
 /*
 EDIT Ends of OPTIONAL SETTINGS 
 **/
@@ -44,22 +48,24 @@ if (empty($_SERVER['SERVER_NAME']))
 {
 	$_SERVER['SERVER_NAME'] = (function_exists('php_uname')) ? php_uname('n') : gethostbyaddr($ip);
 }
-@session_name('Tranliterator');
-@session_cache_expire (1440);
-@set_time_limit (1500);
-session_start();
+
 //Now we need the sessions class
 if (is_file(CONF_SESSIONS)) 
 {
+	@session_name('AutoIndex2');
+	session_start();
 	include($root_path . 'sessions.' . $phpExt);
 	if (!is_readable(CONF_SESSIONS))
 	{
 		die('Make sure we have permissions to read the file from the server: <em>' . Configuration::html_output(CONF_SESSIONS) . '</em>');
 	}
+	@session_name('Tranliterator');
+	session_start();
 }
 else
 {
 	define('LEVEL_TO_UPLOAD', ANONYMOUS);
+	define('USER_LEVEL', ANONYMOUS);
 	$log_login = false;
 }
 
@@ -101,7 +107,8 @@ print '
 </tr>
 <tr bgcolor=#E5ECF9>
 <td><b>&nbsp;Transliterate</b></td>
-<td align=right><font size=-1>&nbsp;|&nbsp;<a href="index.php?copy=about">All About Hebrew Transliteration</a></font>
+<td align=right>
+<font size=-1>&nbsp;|&nbsp;<a href="index.php?copy=about">All About Hebrew Transliteration</a></font>
 </td>
 </tr>
 </table>
@@ -111,25 +118,46 @@ print '
 <table cellspacing=0 cellpadding=2 border=0 width=99%>
 <tr bgcolor=#E6ECF9>
 <td>';
+$origHebrew = '&nbsp;&nbsp;';
+
+if (!empty($_FILES['fileToUpload']) && (USER_LEVEL > ANONYMOUS))
+{
+	$origfile = array();
+	foreach ($_FILES['fileToUpload'] as $var => $value)
+	{
+		//vars: name, type, tmp_name, error, size 
+		$origfile[$var] = $value;
+	}
+	
+	$sourcetext = isset($_POST['sourcetext']) ? $_POST['sourcetext'] : print_r(file($origfile['tmp_name']), true);
+
+}
+else
+{
+	$sourcetext = isset($_POST['sourcetext']) ? $_POST['sourcetext'] : 'בְּרֵאשִׁ֖ית בָּרָ֣א אֱלֹהִ֑ים אֵ֥ת הַשָּׁמַ֖יִם וְאֵ֥ת הָאָֽרֶץ׃';
+}
+
+$targetlang = isset($_POST['targetlang']) ? $_POST['targetlang'] : 'romanian';
+$sourcelang = isset($_POST['sourcelang']) ? $_POST['sourcelang'] : 'hebrew';
 print '
-<table width=100% border=0 cellspacing=0 cellpadding=1>
+<table width="100%" border="0" cellspacing="0" cellpadding="1">
 <tr>
-<td>
+<td>';
+print '
 <form action="http://www.google.com/search">
-<font size=-1>&nbsp;This text has been automatically transliterated from Hebrew:</font>
+<span class="nav"><font size=-1>&nbsp;This text has been automatically transliterated from '. ucfirst($sourcelang) .':</font></span>
 <br />&nbsp;&nbsp;';
 ?>
-<textarea name=q rows=5 cols=45 wrap=PHYSICAL>
-<?php 
-$targetlang = isset($_POST['targetlang']) ? $_POST['targetlang'] : 'Romanian';
-$sourcetext = isset($_POST['sourcetext']) ? $_POST['sourcetext'] : 'בְּרֵאשִׁ֖ית בָּרָ֣א אֱלֹהִ֑ים אֵ֥ת הַשָּׁמַ֖יִם וְאֵ֥ת הָאָֽרֶץ׃';
+<textarea id="inputbox" name="q" rows="5" cols="55" wrap="PHYSICAL">
+<?php
 generateTransliteration($sourcetext, $targetlang, false, false); 
 ?>
 </textarea>&nbsp;&nbsp;
-<input type=hidden name=hl value="en" />
-<input type=hidden name=ie value="UTF8" />
-<input type=hidden name=oe value="UTF8" />
-<input type=submit value="Google Search" />
+<input type="hidden" name="hl" value="en" />
+<input type="hidden" name="ie" value="UTF8" />
+<input type="hidden" name="oe" value="UTF8" />
+<input type="hidden" name="ro" value="UTF8" />
+<input type="submit" class="icon pointer input" value="Google Search" />
 </form>
 </td>
 </tr>
@@ -137,18 +165,24 @@ generateTransliteration($sourcetext, $targetlang, false, false);
 <td>
 <?php
 print '
-<table width=100% cellpadding=3 cellspacing=0 border=0>
-<tr bgcolor=#ffffff>
-<td>
-<form action=index.php method=post>
-<font size=-1>&nbsp;&nbsp;Transliterate text</font>
-<br />&nbsp;&nbsp;'; 
+<table width="100%" cellpadding="3" cellspacing="0" border="0">
+<tr bgcolor="#ffffff">
+<td>';
 ?>
-<textarea name="sourcetext" rows="5" cols="45" wrap=PHYSICAL>
+<form name="text" action="index.php" enctype="multipart/form-data" method="post">
+<span class="nav"><font size="-1">&nbsp;&nbsp;Transliterate text</font></span>
+<br />&nbsp;&nbsp; 
+<textarea id="drop-area" name="sourcetext" rows="5" cols="55" wrap="PHYSICAL">
 <?php print $origHebrew; ?>
 </textarea><br />&nbsp;&nbsp;
-<font size=-1>from Hebrew to</font>
-<select name="targetlang" selected="<?php $targetlang ?>">
+<span class="nav"><font size="-1">from</font></span>
+<select id="dropdown" name="sourcelang" selected="<?php $sourcelang ?>">
+	<option type="select" value="aramaic" <?php if($sourcelang == 'aramaic') { print("selected"); } ?> >Aramaic</option>
+	<option type="select" value="romanian" <?php if($sourcelang == 'romanian'){ print("selected"); } ?> >Romanian</option>
+	<option type="selected" value="hebrew" <?php if($sourcelang == 'hebrew'){ print("selected");} ?> >Original - Hebrew</option>
+</select>
+<span class="nav"><font size="-1">to</font></span>
+<select id="dropdown" name="targetlang" selected="<?php $targetlang ?>">
 	<option value="academic" <?php if($targetlang == 'academic') { print("selected"); } ?> >Academic</option>
 	<option value="academic_u" <?php if($targetlang == 'academic_u'){ print("selected"); } ?> >Academic Unicode</option>
 	<option value="academic_ff" <?php if($targetlang == 'academic_ff'){ print("selected"); } ?> >Academic Font Friendly</option>
@@ -160,21 +194,33 @@ print '
 	<option value="ukrainian" <?php if($targetlang == 'ukrainian'){ print("selected"); } ?> >Ukrainian</option>
 	<option value="mc" <?php if($targetlang == 'mc'){ print("selected");} ?> >Michigan - Claremont</option>
 </select>
-<input type=hidden name=hl value="en" />
-<input type=hidden name=ie value="UTF8" />
-<input type=submit value="Transliterate" />
+<input type="hidden" name="hl" value="en" />
+<input type="hidden" name="ie" value="UTF8" />
+<input type="submit" name="transliterate" class="icon pointer input liteoption" value="Transliterate" id="btnlite" /><br />
 </form>
-</td>
-</tr>
-
-</table>
-</td>
-</tr>
-</table>
-</td>
-</tr>
-</table>
 <?php
+if (USER_LEVEL > ANONYMOUS)
+{
+print '
+<form name="upload" action="index.php" enctype="multipart/form-data" method="post">
+<span id="addbutton" class="gen">
+<input type="file" id="fileElem" aria-label="Choose your file" multiple accept="text/*" data-csrf="true" onchange="handleFiles(this.files)"></input>
+<div id="file_browse" style="position:relative;"></div>
+<input type="file" class="button" for="fileElem" name="fileToUpload" id="fileToUpload"></input>
+</span>
+<input class="icon pointer input mainoption" type="submit" name="submit" value="submit" for="fileElem" />
+</form>';
+}
+print '
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>';
 print '<font size=-1>
 		&nbsp;
 		This mechanism is offered as-is to support customers for the purpose of transliterating Hebrew Alphabet. 
@@ -199,13 +245,13 @@ print '<font size=-1>
 :<br />';
 if (LEVEL_TO_UPLOAD == ANONYMOUS)
 {
-	print '<div>
+	print '<div id="textarea">
 			<table class="table3" border="0" cellpadding="8" cellspacing="0">
 				<tr class="paragraph">
-					<td class="table2">You must login to transliterate long files.</td>
+					<td class="table2"><span class="gen">You must login to transliterate long files.</span></td>
 				</tr>
 				<tr class="paragraph">
-					<td class="table1">To login go in AutoIndex pub dir.</td>
+					<td class="table1"><span class="gen">To allow login bridge with AutoIndex using .htpasswd file.</span></td>
 				</tr>
 			</table>
 			</div>';
@@ -258,7 +304,60 @@ print '<center>
 &#1449; = telisha gedola
 -->
 </center>';
-print '
+print "
+<script>
+    const dropArea = document.getElementById('drop-area');
+    
+	['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false)
+    });
+	
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+	
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, function(e) {
+            //dropArea.style.backgroundColor = 'yellow';
+            dropArea.classList.add('highlight');
+        }, false)
+    });
+	
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, function(e) {
+            //dropArea.style.backgroundColor = 'lightgreen';
+            dropArea.classList.remove('highlight')
+        }, false);
+    });
+	
+    function drop(e) {
+        let dt = e.dataTransfer;
+        let files = dt.files;
+        window.files = files;
+        // console.log(dt);
+        // console.log(files);
+		
+        ([...files]).forEach(uploadFile);
+		
+        alert('DROPPED!');
+    }
+	
+    function uploadFile(file) {
+        console.log(file);
+		
+        let httpRequest = new XMLHttpRequest();
+        httpRequest.open('POST', '/paste', true);
+        httpRequest.send(file);
+        httpRequest.onload = (event) => 
+		{
+			console.log('upload: onload event', httpRequest.responseText);
+		// console.log('textarea', this.textarea);
+        };
+    }
+    dropArea.addEventListener('drop', drop, false);
+</script>";
+print "
 </body>
-</html>';
+</html>";
 ?>
