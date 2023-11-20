@@ -46,9 +46,8 @@
 		min-height: 120px;
 		height: auto !important;
 		height: 120px;
-	/*	background-image: url('./images/background.gif');
 		background-repeat: repeat-x;*/
-	/*	padding: 0 25px 15px 25px;*/
+		padding: 0 25px 15px 25px;
 		padding: 0;
 	}
 
@@ -891,7 +890,6 @@
 
 	.loading_indicator {
 		background-color: #000000;
-		background-image: url("./images/loading.gif");
 	}
 
 	.dropdown-extended ul li {
@@ -1008,7 +1006,6 @@
 		font-size: 1.1em;
 		font-weight: bold;
 		background-color: #006699;
-		background-image: url('./images/cellpic3.gif');
 		white-space: nowrap;
 		padding: 7px 5px;
 	}
@@ -1087,36 +1084,6 @@
 	.row4, .bg4	{ background-color: #EFEFEF; }
 	.row5, .bg5	{ background-color: #DEE3E7; }
 	.row6, .bg6	{ background-color: #D1D7DC; }
-
-	/*
-	  This is for the table cell above the Topics, Post & Last posts on the index.php page
-	  By default this is the fading out gradiated silver background.
-	  However, you could replace this with a bitmap specific for each forum
-	*/
-	.rowpic {
-			background-color: #E3F0FB;
-			background-image: url('./images/cellpic2.jpg');
-			background-repeat: repeat-y;
-	}
-
-	.catdiv {
-		height: 28px;
-		margin: 0;
-		padding: 0;
-		border: 0;
-		background: white url('./images/cellpic2.jpg') repeat-y scroll top left;
-	}
-
-	.rtl .catdiv {
-		background: white url('./images/cellpic2_rtl.jpg') repeat-y scroll top right;
-	}
-
-	/* Header cells - the blue and silver gradient backgrounds */
-	th	{
-		color: #FFA34F; font-size: 11px; font-weight : bold;
-		background-color: #006699;
-		background-image: url('./images/cellpic3.gif');
-	}
 
 	.cat {
 		background-color: #C7D0D7;
@@ -1237,8 +1204,7 @@
 	th a:hover {
 		text-decoration: underline;
 	}
-
-
+	
 	/* Form Elements
 	 ------------ */
 	form {
@@ -1248,7 +1214,7 @@
 	}
 
 	input {
-		color: #333333;
+		color: #A3A3A3;
 		font-family: "Lucida Grande", Verdana, Helvetica, sans-serif;
 		font-size: 1.1em;
 		font-weight: normal;
@@ -1256,10 +1222,35 @@
 		border: 1px solid #A9B8C2;
 		background-color: #FAFAFA;
 	}
-
+	
+	#drop-area {
+		min-width: 200px;
+		min-height: 100px;
+		background-color: #E0E7EC;   
+	}
+	
+	.highlight {
+		background-color: yellow !important;
+	}
+	
+	.button {
+		text-decoration: underline;
+		text-decoration-style: dashed;
+		cursor: pointer;
+	}
+	
+	.button:hover {
+		background: #ddd;
+	}
+	
+	#fileElem {
+		display: none;
+	}
+	
 	textarea {
 		background-color: #FAFAFA;
-		color: #333333;
+		color: #3f3f3f;
+		z-index: 2;
 		font-family: "Lucida Grande", Verdana, Helvetica, Arial, sans-serif;
 		font-size: 1.3em; 
 		line-height: 1.4em;
@@ -1267,17 +1258,19 @@
 		border: 1px solid #A9B8C2;
 		padding: 2px;
 	}
-
+	
 	select {
-		color: #333333;
+		color: #3f3f3f;
+		z-index: 2;
 		background-color: #FAFAFA;
 		font-family: "Lucida Grande", Verdana, Helvetica, sans-serif;
 		font-size: 1.1em;
 		font-weight: normal;
 		border: 1px solid #A9B8C2;
-		padding: 1px;
+		border-radius: 4px;
+		padding: 1px 1 1;
 	}
-
+	
 	option {
 		padding: 0 1em 0 0;
 	}
@@ -1350,7 +1343,7 @@
 		border-width: 1px 1px 0 1px;
 		border-style: solid;
 		border-color: #A9B8C2;
-		color: #333333;
+		color: #3f3f3f;
 		background-color: #A9B8C2;
 		font-size: 0.85em;
 		font-weight: bold;
@@ -1384,7 +1377,7 @@
 		border-width: 1px 1px 0 1px;
 		border-style: solid;
 		border-color: #A9B8C2;
-		color: #333333;
+		color: #3f3f3f;
 		background-color: #A9B8C2;
 		font-family: "Lucida Grande", Verdana, Helvetica, Arial, sans-serif;
 		font-size: 0.8em;
@@ -1532,7 +1525,7 @@
 	/* The buttons used for bbCode styling in message post */
 	input.button {
 		background-color : #DAECFA;
-		color : #000000;
+		color : #000000; 
 		font-size: 11px; font-family: Verdana, Arial, Helvetica, sans-serif;
 	}
 
@@ -1567,423 +1560,6 @@
 	}
 	a.imageset {
 		text-decoration: none !important;
-	}
-
-	/* Global imageset items */
-	.imageset.site_logo {
-		background-image: url("./images/site_logo.png");
-		padding-top: 0px;	
-		padding-left: 240px;
-		padding-right: 0px;  
-		padding-bottom: 100px;  
-	}
-	.imageset.upload_bar {
-		background-image: url("./images/upload_bar.gif");
-		padding-left: 280px;
-		padding-top: 16px;
-	}
-	.imageset.poll_left {
-		background-image: url("./images/poll_left.gif");
-		padding-left: 4px;
-		padding-top: 12px;
-	}
-	.imageset.poll_center {
-		background-image: url("./images/poll_center.gif");
-		padding-left: 1px;
-		padding-top: 12px;
-	}
-	.imageset.poll_right {
-		background-image: url("./images/poll_right.gif");
-		padding-left: 4px;
-		padding-top: 12px;
-	}
-	.imageset.forum_link {
-		background-image: url("./images/forum_link.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.forum_read {
-		background-image: url("./images/forum_read.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.forum_read_locked {
-		background-image: url("./images/forum_read_locked.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.forum_read_subforum {
-		background-image: url("./images/forum_read_subforum.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.forum_unread {
-		background-image: url("./images/forum_unread.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.forum_unread_locked {
-		background-image: url("./images/forum_unread_locked.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.forum_unread_subforum {
-		background-image: url("./images/forum_unread_subforum.gif");
-		padding-left: 46px;
-		padding-top: 25px;
-	}
-	.imageset.topic_moved {
-		background-image: url("./images/topic_moved.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_read {
-		background-image: url("./images/topic_read.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_read_mine {
-		background-image: url("./images/topic_read_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_read_hot {
-		background-image: url("./images/topic_read_hot.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_read_hot_mine {
-		background-image: url("./images/topic_read_hot_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_read_locked {
-		background-image: url("./images/topic_read_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_read_locked_mine {
-		background-image: url("./images/topic_read_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_unread {
-		background-image: url("./images/topic_unread.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_unread_mine {
-		background-image: url("./images/topic_unread_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_unread_hot {
-		background-image: url("./images/topic_unread_hot.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_unread_hot_mine {
-		background-image: url("./images/topic_unread_hot_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_unread_locked {
-		background-image: url("./images/topic_unread_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.topic_unread_locked_mine {
-		background-image: url("./images/topic_unread_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_read {
-		background-image: url("./images/sticky_read.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_read_mine {
-		background-image: url("./images/sticky_read_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_read_locked {
-		background-image: url("./images/sticky_read_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_read_locked_mine {
-		background-image: url("./images/sticky_read_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_unread {
-		background-image: url("./images/sticky_unread.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_unread_mine {
-		background-image: url("./images/sticky_unread_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_unread_locked {
-		background-image: url("./images/sticky_unread_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.sticky_unread_locked_mine {
-		background-image: url("./images/sticky_unread_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_read {
-		background-image: url("./images/announce_read.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_read_mine {
-		background-image: url("./images/announce_read_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_read_locked {
-		background-image: url("./images/announce_read_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_read_locked_mine {
-		background-image: url("./images/announce_read_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_unread {
-		background-image: url("./images/announce_unread.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_unread_mine {
-		background-image: url("./images/announce_unread_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_unread_locked {
-		background-image: url("./images/announce_unread_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.announce_unread_locked_mine {
-		background-image: url("./images/announce_unread_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_read {
-		background-image: url("./images/global_read.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_read_mine {
-		background-image: url("./images/global_read_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_read_locked {
-		background-image: url("./images/global_read_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_read_locked_mine {
-		background-image: url("./images/global_read_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_unread {
-		background-image: url("./images/global_unread.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_unread_mine {
-		background-image: url("./images/global_unread_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_unread_locked {
-		background-image: url("./images/global_unread_locked.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.global_unread_locked_mine {
-		background-image: url("./images/global_unread_locked_mine.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.pm_read {
-		background-image: url("./images/topic_read.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.pm_unread {
-		background-image: url("./images/topic_unread.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.icon_post_target {
-		background-image: url("./images/icon_post_target.gif");
-		padding-left: 12px;
-		padding-top: 9px;
-	}
-	.imageset.icon_post_target_unread {
-		background-image: url("./images/icon_post_target_unread.gif");
-		padding-left: 12px;
-		padding-top: 9px;
-	}
-	.imageset.icon_topic_attach {
-		background-image: url("./images/icon_topic_attach.gif");
-		padding-left: 14px;
-		padding-top: 18px;
-	}
-	.imageset.icon_topic_latest {
-		background-image: url("./images/icon_topic_latest.gif");
-		padding-left: 18px;
-		padding-top: 9px;
-	}
-	.imageset.icon_topic_newest {
-		background-image: url("./images/icon_topic_newest.gif");
-		padding-left: 18px;
-		padding-top: 9px;
-	}
-	.imageset.icon_topic_reported {
-		background-image: url("./images/icon_topic_reported.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.icon_topic_unapproved {
-		background-image: url("./images/icon_topic_unapproved.gif");
-		padding-left: 19px;
-		padding-top: 18px;
-	}
-	.imageset.icon_topic_deleted {
-		background-image: url("./images/icon_topic_deleted.gif");
-		padding-left: 14px;
-		padding-top: 14px;
-	}
-
-
-	/* English images for fallback */
-	.imageset.phpbb_aol-icon, .imageset.icon_contact_aim {
-		background-image: url("./en/icon_contact_aim.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_contact_email {
-		background-image: url("./en/icon_contact_email.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.phpbb_icq-icon, .imageset.icon_contact_icq {
-		background-image: url("./en/icon_contact_icq.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_contact_jabber {
-		background-image: url("./en/icon_contact_jabber.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.phpbb_wlm-icon, .imageset.icon_contact_msnm {
-		background-image: url("./en/icon_contact_msnm.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_contact_pm {
-		background-image: url("./en/icon_contact_pm.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.phpbb_yahoo-icon, .imageset.icon_contact_yahoo {
-		background-image: url("./en/icon_contact_yahoo.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.phpbb_website-icon, .imageset.icon_contact_www {
-		background-image: url("./en/icon_contact_www.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_post_delete {
-		background-image: url("./en/icon_post_delete.gif");
-		padding-left: 20px;
-		padding-top: 20px;
-	}
-	.imageset.icon_post_edit {
-		background-image: url("./en/icon_post_edit.gif");
-		padding-left: 90px;
-		padding-top: 20px;
-	}
-	.imageset.icon_post_info {
-		background-image: url("./en/icon_post_info.gif");
-		padding-left: 20px;
-		padding-top: 20px;
-	}
-	.imageset.icon_post_quote {
-		background-image: url("./en/icon_post_quote.gif");
-		padding-left: 90px;
-		padding-top: 20px;
-	}
-	.imageset.icon_post_report {
-		background-image: url("./en/icon_post_report.gif");
-		padding-left: 20px;
-		padding-top: 20px;
-	}
-	.imageset.icon_user_online {
-		background-image: url("./en/icon_user_online.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_user_offline {
-		background-image: url("./en/icon_user_offline.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_user_profile {
-		background-image: url("./en/icon_user_profile.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_user_search {
-		background-image: url("./en/icon_user_search.gif");
-		padding-left: 72px;
-		padding-top: 20px;
-	}
-	.imageset.icon_user_warn {
-		background-image: url("./en/icon_user_warn.gif");
-		padding-left: 20px;
-		padding-top: 20px;
-	}
-	.imageset.button_pm_new {
-		background-image: url("./en/button_pm_new.gif");
-		padding-left: 97px;
-		padding-top: 27px;
-	}
-	.imageset.button_pm_reply {
-		background-image: url("./en/button_pm_reply.gif");
-		padding-left: 90px;
-		padding-top: 20px;
-	}
-	.imageset.button_topic_locked {
-		background-image: url("./en/button_topic_locked.gif");
-		padding-left: 97px;
-		padding-top: 27px;
-	}
-	.imageset.button_topic_new {
-		background-image: url("./en/button_topic_new.gif");
-		padding-left: 97px;
-		padding-top: 27px;
-	}
-	.imageset.button_topic_reply {
-		background-image: url("./en/button_topic_reply.gif");
-		padding-left: 97px;
-		padding-top: 27px;
 	}
 
 	/* Responsive breadcrumbs
@@ -2069,8 +1645,7 @@
 
 
 	.cat,.catHead,.catSides,.catLeft,.catRight,.catBottom {
-				background-image: url('./images/cellpic1.gif');
-				background-color:#80BBEC; border: #E3F0FB; border-style: solid; height: 28px;
+		background-color:#80BBEC; border: #E3F0FB; border-style: solid; height: 28px;
 	}
 
 	/*
@@ -2111,7 +1686,7 @@
 
 	table.table1 tbody th {
 		border-bottom-color: #000000;
-		color: #333333;
+		color: #3f3f3f;
 		background-color: #FFFFFF;
 	}
 
@@ -3278,7 +2853,7 @@
 
 		#tabs a {
 			float: left;
-			background:url("images/bg_tabs1.gif") no-repeat 0% -34px;
+			background: no-repeat 0% -34px;
 			margin: 0 1px 0 0;
 			padding: 0 0 0 7px;
 			text-decoration: none;
@@ -3292,7 +2867,7 @@
 		#tabs a span {
 			float: left;
 			display: block;
-			background: url("images/bg_tabs2.gif") no-repeat 100% -34px;
+			background: url no-repeat 100% -34px;
 			padding: 7px 10px 4px 4px;
 			color: #767676;
 			white-space: nowrap;
