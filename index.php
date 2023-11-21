@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: index.php,v 1.74 2023/11/21 01:39:52 orynider Exp $
+* @version $Id: index.php,v 1.75 2023/11/21 04:07:52 orynider Exp $
 *
 */
 
@@ -146,12 +146,11 @@ print '
 print '
 <form action="http://www.google.com/search">
 <span class="nav"><font size=-1>&nbsp;This text has been automatically transliterated from '. ucfirst($sourcelang) .':</font></span>
-<br />&nbsp;&nbsp;';
-?>
+<br />&nbsp;&nbsp;
 <textarea id="inputbox" name="q" rows="5" cols="55" wrap="PHYSICAL">
-<?php
+';
 generateTransliteration($sourcetext, $targetlang, false, false); 
-?>
+print '
 </textarea>&nbsp;&nbsp;
 <input type="hidden" name="hl" value="en" />
 <input type="hidden" name="ie" value="UTF8" />
@@ -162,54 +161,53 @@ generateTransliteration($sourcetext, $targetlang, false, false);
 </td>
 </tr>
 <tr>
-<td>
-<?php
+<td>';
 print '
 <table width="100%" cellpadding="3" cellspacing="0" border="0">
 <tr bgcolor="#ffffff">
 <td>';
-?>
+$mainform = '
 <form name="text" action="index.php" enctype="multipart/form-data" method="post">
 <span class="nav"><font size="-1">&nbsp;&nbsp;Transliterate text</font></span>
 <br />&nbsp;&nbsp; 
-<textarea id="drop-area" name="sourcetext" rows="5" cols="55" wrap="PHYSICAL">
-<?php print $origHebrew; ?>
-</textarea><br />&nbsp;&nbsp;
-<span class="nav"><font size="-1">from</font></span>
-<select id="dropdown" name="sourcelang" selected="<?php $sourcelang ?>">
-	<option type="select" value="aramaic" <?php if($sourcelang == 'aramaic') { print("selected"); } ?> >Aramaic</option>
-	<option type="select" value="romanian" <?php if($sourcelang == 'romanian'){ print("selected"); } ?> >Romanian</option>
-	<option type="selected" value="hebrew" <?php if($sourcelang == 'hebrew'){ print("selected");} ?> >Original - Hebrew</option>
-</select>
-<span class="nav"><font size="-1">to</font></span>
-<select id="dropdown" name="targetlang" selected="<?php $targetlang ?>">
-	<option value="academic" <?php if($targetlang == 'academic') { print("selected"); } ?> >Academic</option>
-	<option value="academic_u" <?php if($targetlang == 'academic_u'){ print("selected"); } ?> >Academic Unicode</option>
-	<option value="academic_ff" <?php if($targetlang == 'academic_ff'){ print("selected"); } ?> >Academic Font Friendly</option>
-	<option value="academic_s" <?php if($targetlang == 'academic_s'){ print("selected"); } ?> >Academic Spirantization</option>
-	<option value="ashkenazic" <?php if($targetlang == 'ashkenazic'){ print("selected"); } ?> >Ashkenazic</option>
-	<option value="sefardic" <?php if($targetlang == 'sefardic'){ print("selected"); } ?> >Sefardic</option>
-	<option value="romaniote" <?php if($targetlang == 'romaniote'){ print("selected"); } ?> >Romaniote</option>
-	<option value="romanian" <?php if($targetlang == 'romanian'){ print("selected"); } ?> >Romanian</option>
-	<option value="ukrainian" <?php if($targetlang == 'ukrainian'){ print("selected"); } ?> >Ukrainian</option>
-	<option value="mc" <?php if($targetlang == 'mc'){ print("selected");} ?> >Michigan - Claremont</option>
-</select>
-<input type="hidden" name="hl" value="en" />
-<input type="hidden" name="ie" value="UTF8" />
-<input type="submit" name="transliterate" class="icon pointer input liteoption" value="Transliterate" id="btnlite" /><br />
-</form>
-<?php
+<textarea id="drop-area" name="sourcetext" rows="5" cols="55" wrap="PHYSICAL">';
+$mainform .= $origHebrew;
+$mainform .= '</textarea><br />&nbsp;&nbsp;';
+$mainform .= '<span class="nav"><font size="-1">from</font></span>';
+$mainform .= '<select id="dropdown" name="sourcelang" selected="'.$sourcelang.'">';
+$mainform .= '	<option type="select" value="aramaic"'; if($sourcelang == 'aramaic') { $mainform .= ' selected'; } $mainform .= '>Aramaic</option>';
+$mainform .= '	<option type="select" value="romanian"'; if($sourcelang == 'romanian'){ $mainform .= ' selected'; } $mainform .= '>Romanian</option>';
+$mainform .= '	<option type="select" value="hebrew"'; if($sourcelang == 'hebrew'){ $mainform .= ' selected';} $mainform .= '>Original - Hebrew</option>';
+$mainform .= '</select>';
+$mainform .= '<span class="nav"><font size="-1">to</font></span>';
+$mainform .= '<select id="dropdown" name="targetlang" selected="'.$targetlang.'">';
+$mainform .= '	<option value="academic"'; if($targetlang == 'academic') { $mainform .= ' selected'; } $mainform .= '>Academic</option>';
+$mainform .= '	<option value="academic_u"'; if($targetlang == 'academic_u'){ $mainform .= ' selected'; } $mainform .= '>Academic Unicode</option>';
+$mainform .= '	<option value="academic_ff"'; if($targetlang == 'academic_ff'){ $mainform .= ' selected'; } $mainform .= '>Academic Font Friendly</option>';
+$mainform .= '	<option value="academic_s"'; if($targetlang == 'academic_s'){ $mainform .= ' selected'; } $mainform .= '>Academic Spirantization</option>';
+$mainform .= '	<option value="ashkenazic"'; if($targetlang == 'ashkenazic'){ $mainform .= ' selected'; } $mainform .= '>Ashkenazic</option>';
+$mainform .= '	<option value="sefardic"'; if($targetlang == 'sefardic'){ $mainform .= ' selected'; } $mainform .= '>Sefardic</option>';
+$mainform .= '	<option value="romaniote"'; if($targetlang == 'romaniote'){ $mainform .= ' selected'; } $mainform .= '>Romaniote</option>';
+$mainform .= '	<option value="romanian"'; if($targetlang == 'romanian'){ $mainform .= ' selected'; } $mainform .= '>Romanian</option>';
+$mainform .= '	<option value="ukrainian"'; if($targetlang == 'ukrainian'){ $mainform .= ' selected'; } $mainform .= '>Ukrainian</option>';
+$mainform .= '	<option value="mc"'; if($targetlang == 'mc'){ $mainform .= ' selected';} $mainform .= '>Michigan - Claremont</option>';
+$mainform .= '</select>';
+$mainform .= '<input type="hidden" name="hl" value="en" />';
+$mainform .= '<input type="hidden" name="ie" value="UTF8" />';
+$mainform .= '<input type="submit" name="transliterate" class="icon pointer input liteoption" value="Transliterate" id="btnlite" /><br />';
+$mainform .= '	</form>';
+print $mainform;
 if (USER_LEVEL > ANONYMOUS)
 {
 print '
-<form name="upload" action="index.php" enctype="multipart/form-data" method="post">
-<span id="addbutton" class="gen">
-<input type="file" id="fileElem" aria-label="Choose your file" multiple accept="text/*" data-csrf="true" onchange="handleFiles(this.files)"></input>
-<div id="file_browse" style="position:relative;"></div>
-<input type="file" class="button" for="fileElem" name="fileToUpload" id="fileToUpload"></input>
-</span>
-<input class="icon pointer input mainoption" type="submit" name="submit" value="submit" for="fileElem" />
-</form>';
+	<form name="upload" action="index.php" enctype="multipart/form-data" method="post">
+	<span id="addbutton" class="gen">
+	<input type="file" id="fileElem" aria-label="Choose your file" multiple accept="text/*" data-csrf="true" onchange="handleFiles(this.files)" />
+	<div id="file_browse" style="position:relative;"></div>
+	<input type="file" class="button" for="fileElem" name="fileToUpload" id="fileToUpload" />
+	</span>
+	<input class="icon pointer input mainoption" type="submit" name="submit" value="submit" for="fileElem" />
+	</form>';
 }
 print '
 </td>
