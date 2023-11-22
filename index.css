@@ -1,10 +1,10 @@
-	/*  Style Sheet file with some parts under GNU GPL v2.0 License
-		--------------------------------------------------------------
-		Based on style:	subSilver Theme for phpBB2 by phpBB Group
+	/*  Style Sheet file with some parts under GNU GPL v2.0 License	
+		--------------------------------------------------------------	
+		Based on style:	subSilver Theme for phpBB2 by phpBB Group	
 		Original author:	OryNider, using subsilver2 Theme as a base.	
-		This is an alternative subsilver2 style with default colors.
-		--------------------------------------------------------------
-	*/
+		This is an alternative subsilver2 style with default colors.	
+		--------------------------------------------------------------	
+	*/	
 
 	/* Layout
 	 ------------ */
@@ -33,10 +33,10 @@
 		scrollbar-darkshadow-color: #98AAB1;
 		padding-right: 0px; 
 		padding-left: 0px; 
-		background: url("./images/backgroundbluelight.gif"); 
+		background: url("./backgroundbluelight.gif"); 
 		padding-bottom: 0px; 
 		margin: 5px 10px 10px; 
-		font-family: "Roboto", Verdana, Geneva, 'Lucida Grande', Arial, "Helvetica Neue", Helvetica, sans-serif, droid-serif;  
+		font-family: -apple-system, BlinkMacSystemFont, "Lucida Grande", "Segoe UI", "Roboto", Geneva, Arial, Helvetica, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif, droid-serif;  
 		padding-top: 0px;
 		font-size: 89.5%;
 		margin: 0;	
@@ -1021,7 +1021,7 @@
 	/* This is the border line & background colour round the entire page */
 	.bodyline	{ 
 		background-color: #E3F0FB;
-		background-image: url("./images/bodyline.jpg");
+		background-image: url("./bodyline.jpg");
 		padding-bottom: 40px; 	
 		border: 1px #4B8DF1 solid; 
 	}
@@ -1092,7 +1092,7 @@
 
 
 	.cat,.catHead,.catSides,.catLeft,.catRight,.catBottom {
-				background-image: url('./images/cellpic1.gif');
+				background-image: url('./cellpic.gif');
 				background-color:#80BBEC; border: #E3F0FB; border-style: solid;
 	}
 
