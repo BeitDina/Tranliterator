@@ -149,7 +149,7 @@ print '
 <br />&nbsp;&nbsp;
 <textarea id="inputbox" name="q" rows="5" cols="55" wrap="PHYSICAL">
 ';
-generateTransliteration($sourcetext, $targetlang, false, false); 
+generateTransliteration($sourcetext, $targetlang, $sourcelang); 
 print '
 </textarea>&nbsp;&nbsp;
 <input type="hidden" name="hl" value="en" />
