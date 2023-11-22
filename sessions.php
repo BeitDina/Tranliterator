@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: sessions.php,v 0.10 2023/11/21 01:45:06 orynider Exp $
+* @version $Id: sessions.php,v 0.11 2023/11/22 21:15:06 orynider Exp $
  * @license for this file @ http://www.gnu.org/licenses/gpl.html GNU General Public License (GPL)
 */
 
@@ -347,7 +347,7 @@ class Accounts implements Iterator
 		$file = @file($filename);
 		if ($file === false)
 		{
-			trigger_error('Cannot open user account file <em>' . Configuration::html_output($filename) . '</em>.');
+			trigger_error('Cannot open user account file <em>' . Configuration::html_output($filename) . '</em>.', E_USER_ERROR);
 		}
 		$this->userlist = array();
 		foreach ($file as $line_num => $line)
