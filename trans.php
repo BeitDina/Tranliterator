@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: trans.php,v 1.1.2 2023/11/19 12:12:12 orynider Exp $
+* @version $Id: trans.php,v 1.0.0 2023/11/22 21:12:12 orynider Exp $
 *
 */
 
@@ -198,56 +198,112 @@ function data_repl($candidates = null, $replacements = null, $data)
 //Funtion redefinition ends
 function mesagehandler($msg_title, $msg_text, $l_notify, $l_return_index = "index.php") 
 { 
-		// Do not send 200 OK, but service unavailable on errors
-		//send_status_line(503, 'Service Unavailable');
-		switch($l_notify)
-		{ 
-			case 0:				
-				$l_notify = "Unknown PHP Error";
-			break;
-			case 1:   
-				$l_notify = "Php Error";
-			break;
-			case 2:   
-				$l_notify = "Php Warning";
-			break;
-			case 4:   
-				$l_notify = "Parsing Error";
-			break;
-			case 8:   
-				$l_notify = "Php Notice";
-			break;
-			case 16:   
-				$l_notify = "Core Error";
-			break;
-			case 32:  
-				$l_notify = "Core Warning";
-			break;
-			case 64:  
-				$l_notify = "Compile Error";
-			break;
-			case 128:  
-				$l_notify = "Compile Warning";
-			break;
-			case 256: 
-				$l_notify = "Php User Error";
-			break;
-			case 512: 
-				$l_notify = "Php User Warning";
-			case 1024: 
-				$l_notify = "Php User Notice";
-			break;
-			case 2048:
-				$l_notify = 'PHP Strict';
-			break;
-			default:
-				$l_notify = 'Service Unavailable';
-			break;	
-		}
-			//garbage_collection();
 
-			// Try to not call the adm page data...
+	// Try to not call the adm page data...
+	print '<!DOCTYPE html>';
+	print '<html dir="ltr">';
+	print '<head><meta charset="UTF-8" />';
+	print '<meta http-equiv="X-UA-Compatible" content="IE=edge" />';
+	print '<meta name="viewport" content="width=device-width, initial-scale=1.0" />';
+	print '<meta name="apple-mobile-web-app-capable" content="yes" />';
+	print '<meta name="apple-mobile-web-app-status-bar-style" content="blue" />';
+	print '<title>' . $msg_title . '</title>';
+	print '<style type="text/css">{ margin: 0; padding: 0; } html { font-size: 100%; height: 100%; margin-bottom: 1px; background-color: #E4EDF0; } body { font-family: -apple-system, BlinkMacSystemFont, Roboto, "Lucida Grande", "Segoe UI", Arial, Helvetica, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; color: #536482; background: #E4EDF0; font-size: 62.5%; margin: 0; } ';
+	print 'a:link, a:active, a:visited { color: #006688; text-decoration: none; } a:hover { color: #DD6900; text-decoration: underline; } ';
+	print '#wrap { padding: 0 20px 15px 20px; min-width: 615px; } #page-header { text-align: right; height: 40px; } #page-footer { clear: both; font-size: 1em; text-align: center; } ';
+	print '.panel { margin: 4px 0; background-color: #FFFFFF; border: solid 1px  #A9B8C2; } ';
+	print '#errorpage #page-header a { font-weight: bold; line-height: 6em; } #errorpage #content { padding: 10px; } #errorpage #content h1 { line-height: 1.2em; margin-bottom: 0; color: #DF075C; } ';
+	print '#errorpage #content div { margin-top: 20px; margin-bottom: 5px; border-bottom: 1px solid #CCCCCC; padding-bottom: 5px; color: #333333; font: bold 1.2em; font-family: -apple-system, BlinkMacSystemFont, Roboto, "Lucida Grande", "Segoe UI", Arial, Helvetica, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; text-decoration: none; line-height: 120%; text-align: left; } \n';
+	print '</style>';
+	print '</head>';
+	print '<body id="page">';
+	print '<div id="wrap">';
+	print '	<div id="page-header"><a title="'.$l_return_index.'"'.' href="#"> @ '.$l_return_index.'</a></div>';	
+	print '	<div id="page-body">';
+	print '	<div class="panel">';
+	print '		<div id="content">';
+	print '			<h1>' . $msg_title . '</h1>';
+	print '			<div>' . $msg_text . '</div>';
+	print $l_notify;
+	print '		</div>';
+	print '	</div>';
+	print '	</div>';
+	print '	<div id="page-footer">Powered by <a href="https://github.com/beitdina/">Beit Dina Institute</a>';
+	print '	</div>';
+	print '</div>';
+	print '</body>';
+	print '</html>';
+	// On fatal error E_USER_ERROR shoud stop the execution or exit the function.
+	exit;
+}
 
+/**
+* Error and message handler, call with trigger_error if reqd
+*/
+function errorhandler($err_no, $msg_text, $err_file, $err_line)
+{
+	global $phpExt, $root_path;
+	
+	// Do not send 200 OK, but service unavailable on errors
+	switch($err_no)
+	{ 
+		case 0:				
+			$l_notify = "Unknown PHP Error";
+		break;
+		case 1:   
+			$l_notify = "Php Error";
+		break;
+		case 2:   
+			$l_notify = "Php Warning";
+		break;
+		case 4:   
+			$l_notify = "Parsing Error";
+		break;
+		case 8:   
+			$l_notify = "Php Notice";
+		break;
+		case 16:   
+			$l_notify = "Core Error";
+		break;
+		case 32:  
+			$l_notify = "Core Warning";
+		break;
+		case 64:  
+			$l_notify = "Compile Error";
+		break;
+		case 128:  
+			$l_notify = "Compile Warning";
+		break;
+		case 256: 
+			$l_notify = "Php User Error";
+		break;
+		case 512: 
+			$l_notify = "Php User Warning";
+		case 1024: 
+			$l_notify = "Php User Notice";
+		break;
+		case 2048:
+			$l_notify = 'PHP Strict';
+		break;
+		default:
+			$l_notify = 'Service Unavailable';
+		break;	
+	}
+	
+	switch ($err_no)
+	{
+		case E_NOTICE:
+		case E_WARNING:
+			
+			print "\n". $l_notify .': '. $msg_text . "\n";
+			
+		break;
+		case E_USER_ERROR:			
+			
+			$msg_title = 'User Error';			
+			$l_return_index = '<a href="' . $root_path . '">Return to index page</a>';
+			
+			//garbage_collection();			
 			print '<!DOCTYPE html>';
 			print '<html dir="ltr">';
 			print '<head><meta charset="UTF-8" />';
@@ -256,12 +312,12 @@ function mesagehandler($msg_title, $msg_text, $l_notify, $l_return_index = "inde
 			print '<meta name="apple-mobile-web-app-capable" content="yes" />';
 			print '<meta name="apple-mobile-web-app-status-bar-style" content="blue" />';
 			print '<title>' . $msg_title . '</title>';
-			print '<style type="text/css">{ margin: 0; padding: 0; } html { font-size: 100%; height: 100%; margin-bottom: 1px; background-color: #E4EDF0; } body { font-family: "Lucida Grande", "Segoe UI", Helvetica, Arial, sans-serif; color: #536482; background: #E4EDF0; font-size: 62.5%; margin: 0; } ';
+			print '<style type="text/css">{ margin: 0; padding: 0; } html { font-size: 100%; height: 100%; margin-bottom: 1px; background-color: #E4EDF0; } body { font-family: -apple-system, BlinkMacSystemFont, Roboto, "Lucida Grande", "Segoe UI", Arial, Helvetica, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; color: #536482; background: #E4EDF0; font-size: 62.5%; margin: 0; } ';
 			print 'a:link, a:active, a:visited { color: #006688; text-decoration: none; } a:hover { color: #DD6900; text-decoration: underline; } ';
 			print '#wrap { padding: 0 20px 15px 20px; min-width: 615px; } #page-header { text-align: right; height: 40px; } #page-footer { clear: both; font-size: 1em; text-align: center; } ';
 			print '.panel { margin: 4px 0; background-color: #FFFFFF; border: solid 1px  #A9B8C2; } ';
 			print '#errorpage #page-header a { font-weight: bold; line-height: 6em; } #errorpage #content { padding: 10px; } #errorpage #content h1 { line-height: 1.2em; margin-bottom: 0; color: #DF075C; } ';
-			print '#errorpage #content div { margin-top: 20px; margin-bottom: 5px; border-bottom: 1px solid #CCCCCC; padding-bottom: 5px; color: #333333; font: bold 1.2em "Lucida Grande", "Segoe UI", Arial, Helvetica, sans-serif; text-decoration: none; line-height: 120%; text-align: left; } \n';
+			print '#errorpage #content div { margin-top: 20px; margin-bottom: 5px; border-bottom: 1px solid #CCCCCC; padding-bottom: 5px; color: #333333; font: bold 1.2em -apple-system, BlinkMacSystemFont, Roboto, "Lucida Grande", "Segoe UI", Arial, Helvetica, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; text-decoration: none; line-height: 120%; text-align: left; } \n';
 			print '</style>';
 			print '</head>';
 			print '<body id="page">';
@@ -281,13 +337,25 @@ function mesagehandler($msg_title, $msg_text, $l_notify, $l_return_index = "inde
 			print '</div>';
 			print '</body>';
 			print '</html>';
-
-			//exit_handler();
-
-			// On a fatal error (and E_USER_ERROR *is* fatal) we never want other scripts to continue and force an exit here.
+			// force an exit here.
 			exit;
-}
+			// Call admin page data...
+		break;
+		case E_USER_WARNING:
+		case E_USER_NOTICE:
+			
+			define('IN_ERROR_HANDLER', true);
+			
+			$msg_title = 'User Notice';
+			$l_return_index = '<a href="' . $root_path . '">Return to index page</a>';
+			print "<html>\n<body>\n" . $msg_title . "\n<br /><br />\n" . $msg_text . "\n<br /><br />\n" . $l_return_index . "</body>\n</html>";
+		break;
+	}
 
+	// If we notice an error not handled here we pass this back to PHP by returning false
+	// This may not work for all php versions
+	return false;
+}
 /*
 * Funtions Redefinitions for PHP 7+ and 8+ and 9+
 */
@@ -302,7 +370,8 @@ if(!function_exists('spliti'))          { function spliti($pattern, $subject, $l
 /*
 * DEBUG AND ERROR HANDLING
 */
-set_error_handler('mesagehandler');
+set_error_handler('errorhandler');
+set_exception_handler("mesagehandler");
 // end new trup code
 
 $isOpera = 0;
@@ -321,7 +390,7 @@ if (isset($_REQUEST['copy']))
 	mesagehandler($l_about_title, $l_about_desc, $l_notify, $root_path . 'index.' . $phpExt);
 }
 
-function PostHebrewExtendedASCIIToIntermediate($t)
+function PostExtendedASCIIToIntermediate($t)
 {
 	$t = preg_replace("< >", "BOUNDARY SPACE BOUNDARY ", $t);
 	$t = preg_replace("<,>", "BOUNDARY COMMA BOUNDARY ", $t);
@@ -375,7 +444,7 @@ function PostHebrewExtendedASCIIToIntermediate($t)
 }
 
 
-function PostHebrewExtendedASCIIToEncodedUnicode($t)
+function PostExtendedASCIIToEncodedUnicode($t)
 {
 	$t = preg_replace("<ALEPH>", "&#1488;", $t);
 	$t = preg_replace("<BET_U>", "&#1489;", $t);
@@ -425,7 +494,7 @@ function PostHebrewExtendedASCIIToEncodedUnicode($t)
 }
 
 
-function PostHebrewToIntermediate($t)
+function PostToIntermediate($t, $f)
 {
 	$t = preg_replace("< >", "BOUNDARY SPACE BOUNDARY ", $t);
 	$t = preg_replace("<,>", "BOUNDARY COMMA BOUNDARY ", $t);
@@ -459,46 +528,50 @@ function PostHebrewToIntermediate($t)
 	$t = preg_replace("<&#1512;>", "RESH ", $t);
 	$t = preg_replace("<&#1513;>", "SHIN_UNKNOWN ", $t);
 	$t = preg_replace("<&#1514;>", "TAV_UNKNOWN ", $t);
+	
+	/* Vowels */
+	if ($f === 'hebrew')
+	{
+		// now for the nikud
+		$t = preg_replace("<&#1456;>", "SHEVA_UNKNOWN ", $t);
+		$t = preg_replace("<&#1457;>", "CHATAF_SEGOL ", $t);
+		$t = preg_replace("<&#1458;>", "CHATAF_PATACH ", $t);
+		$t = preg_replace("<&#1459;>", "CHATAF_KAMETZ ", $t);
+		$t = preg_replace("<&#1460;>", "CHIRIK_UNKNOWN ", $t);
+		$t = preg_replace("<&#1461;>", "TZEIREI_UNKNOWN ", $t);
+		$t = preg_replace("<&#1462;>", "SEGOL ", $t);
+		$t = preg_replace("<&#1464;>", "KAMETZ ", $t);
+		$t = preg_replace("<&#1463;>", "PATACH_UNKNOWN ", $t);
+		$t = preg_replace("<&#1465;>", "CHOLAM_UNKNOWN ", $t);
+		$t = preg_replace("<&#1467;>", "KUBUTZ ", $t);
 
-	// now for the nikud
-	$t = preg_replace("<&#1456;>", "SHEVA_UNKNOWN ", $t);
-	$t = preg_replace("<&#1457;>", "CHATAF_SEGOL ", $t);
-	$t = preg_replace("<&#1458;>", "CHATAF_PATACH ", $t);
-	$t = preg_replace("<&#1459;>", "CHATAF_KAMETZ ", $t);
-	$t = preg_replace("<&#1460;>", "CHIRIK_UNKNOWN ", $t);
-	$t = preg_replace("<&#1461;>", "TZEIREI_UNKNOWN ", $t);
-	$t = preg_replace("<&#1462;>", "SEGOL ", $t);
-	$t = preg_replace("<&#1464;>", "KAMETZ ", $t);
-	$t = preg_replace("<&#1463;>", "PATACH_UNKNOWN ", $t);
-	$t = preg_replace("<&#1465;>", "CHOLAM_UNKNOWN ", $t);
-	$t = preg_replace("<&#1467;>", "KUBUTZ ", $t);
+		$t = preg_replace("<&#1473;>", "SHIN_DOT ", $t);
+		$t = preg_replace("<&#1474;>", "SIN_DOT ", $t);
 
-	$t = preg_replace("<&#1473;>", "SHIN_DOT ", $t);
-	$t = preg_replace("<&#1474;>", "SIN_DOT ", $t);
+		$t = preg_replace("<&#1468;>", "DAGESH_UNKNOWN ", $t);
 
-	$t = preg_replace("<&#1468;>", "DAGESH_UNKNOWN ", $t);
-
-	// trup code now
-	$t = preg_replace("<&#1431;>", "REVII ", $t);
-	$t = preg_replace("<&#1444;>", "MAHPACH ", $t);
-	$t = preg_replace("<&#1433;>", "KADMA ", $t);
-	$t = preg_replace("<&#1443;>", "MUNACH ", $t);
-	$t = preg_replace("<&#1428;>", "ZAKEF_KATON ", $t);
-	$t = preg_replace("<&#1429;>", "ZAKEF_GADOL ", $t);
-	$t = preg_replace("<&#1445;>", "MERCHA ", $t);
-	$t = preg_replace("<&#1430;>", "TIPCHA ", $t);
-	$t = preg_replace("<&#1425;>", "ETNACHTA ", $t);
-	$t = preg_replace("<&#1469;>", "METEG ", $t);
-	$t = preg_replace("<&#1475;>", "SOF_PASUK ", $t);
-	$t = preg_replace("<&#1435;>", "TEVIR ", $t);
-	$t = preg_replace("<&#1447;>", "DARGA ", $t);
-	$t = preg_replace("<&#1436;>", "GERESH ", $t);
-	$t = preg_replace("<&#1438;>", "GERSHAYIM ", $t);
-	$t = preg_replace("<&#1454;>", "ZARKA ", $t);
-	$t = preg_replace("<&#1426;>", "SEGOLTA ", $t);
-	$t = preg_replace("<&#1440;>", "TELISHA_KETANA ", $t);
-	$t = preg_replace("<&#1449;>", "TELISHA_GEDOLA ", $t);
-
+		// trup code now
+		$t = preg_replace("<&#1431;>", "REVII ", $t);
+		$t = preg_replace("<&#1444;>", "MAHPACH ", $t);
+		$t = preg_replace("<&#1433;>", "KADMA ", $t);
+		$t = preg_replace("<&#1443;>", "MUNACH ", $t);
+		$t = preg_replace("<&#1428;>", "ZAKEF_KATON ", $t);
+		$t = preg_replace("<&#1429;>", "ZAKEF_GADOL ", $t);
+		$t = preg_replace("<&#1445;>", "MERCHA ", $t);
+		$t = preg_replace("<&#1430;>", "TIPCHA ", $t);
+		$t = preg_replace("<&#1425;>", "ETNACHTA ", $t);
+		$t = preg_replace("<&#1469;>", "METEG ", $t);
+		$t = preg_replace("<&#1475;>", "SOF_PASUK ", $t);
+		$t = preg_replace("<&#1435;>", "TEVIR ", $t);
+		$t = preg_replace("<&#1447;>", "DARGA ", $t);
+		$t = preg_replace("<&#1436;>", "GERESH ", $t);
+		$t = preg_replace("<&#1438;>", "GERSHAYIM ", $t);
+		$t = preg_replace("<&#1454;>", "ZARKA ", $t);
+		$t = preg_replace("<&#1426;>", "SEGOLTA ", $t);
+		$t = preg_replace("<&#1440;>", "TELISHA_KETANA ", $t);
+		$t = preg_replace("<&#1449;>", "TELISHA_GEDOLA ", $t);
+	}
+	
 	// since until now expressions were escaped as in &#number; we only handle now
 	$t = preg_replace("<;>", "BOUNDARY SEMICOLON BOUNDARY ", $t);
 	$t = urldecode($t);
@@ -803,7 +876,7 @@ function CleanUpPunctuation($t)
 /*
 Academic Font Friendly Function
 */
-function AcademicFontFriendlyTransliteration($t)
+function AcademicFontFriendlyTransliteration($t, $f)
 {
 	
 	// do not double letters in general
@@ -904,7 +977,7 @@ function AcademicFontFriendlyTransliteration($t)
 }
 
 
-function AshkenazicTransliteration($t)
+function AshkenazicTransliteration($t, $f)
 {	
 	// do not double letters in general
 	$GEMINATE_CANDIDATES = "(ALEPH|BET|BHET|GIMEL|DALED|VAV|HOLAM_VAV|ZED|TET|YUD|KAF|KHAF_SOFIT|LAMED|MEM|HOLAM_MEM|NUN|SAMECH|PEITZADI|KUF|SIN|SHIN|TAV)";
@@ -989,7 +1062,7 @@ function AshkenazicTransliteration($t)
 	return $t;
 }
 
-function SefardicTransliteration($t)
+function SefardicTransliteration($t, $f)
 {	
 	// do not double letters in general
 	$GEMINATE_CANDIDATES = "(ALEPH|BET|BHET|GIMEL|DALED|VAV|HOLAM_VAV|ZED|TET|YUD|KAF|KHAF_SOFIT|LAMED|MEM|HOLAM_MEM|NUN|SAMECH|PEI|TZADI|KUF|SHIN|SIN|TAV)";
@@ -1092,7 +1165,7 @@ function SefardicTransliteration($t)
 	return $t;
 }
 
-function AcademicTransliteration($t)
+function AcademicTransliteration($t, $f)
 {	
 	// do not double letters in general
 	$GEMINATE_CANDIDATES = "(ALEPH|BET|BHET|GIMEL|DALED|VAV|HOLAM_VAV|ZED|TET|YUD|KAF|KHAF_SOFIT|LAMED|MEM|HOLAM_MEM|NUN|SAMECH|PEI|TZADI|KUF|SHIN|SIN|TAV)";
@@ -1208,7 +1281,7 @@ function AcademicTransliteration($t)
 /*
 * Michigan Claremont or Bash
 */
-function MichiganClaremontTranslit($t)
+function MichiganClaremontTranslit($t, $f)
 {	
 	// do not double letters in general
 	$GEMINATE_CANDIDATES = "(ALEPH|BET|BHET|GIMEL|DALED|VAV|HOLAM_VAV|ZED|TET|YUD|KAF|KHAF_SOFIT|LAMED|MEM|HOLAM_MEM|NUN|SAMECH|PEI|TZADI|KUF|SHIN|SIN|TAV)";
@@ -1318,7 +1391,7 @@ function MichiganClaremontTranslit($t)
 }
 
 
-function RomanianTransliteration($t)
+function RomanianTransliteration($t, $f)
 {
 	// do not double letters in general
 	$GEMINATE_CANDIDATES = "(ALEPH|BET|BHET|GIMEL|DALED|VAV|HOLAM_VAV|ZED|TET|YUD|KAF|KHAF_SOFIT|LAMED|MEM|HOLAM_MEM|NUN|SAMECH|PEI|TZADI|KUF|SHIN|SIN|TAV)";
@@ -1338,7 +1411,7 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<".BHET.">", "v", $t);
 	$t = preg_replace("<".GIMEL.">", "g", $t);
 	$t = preg_replace("<".GHIMEL.">", "g", $t);
-	$t = preg_replace("<".DALED.">", "d", $t);
+	$t = preg_replace("<".DALED.">", "đ", $t);
 	$t = preg_replace("<".DHALED.">", "d", $t);
 	$t = preg_replace("<".HEH_MAPIK.">", "h", $t);
 	$t = preg_replace("<".HEH.">", "h", $t);
@@ -1368,43 +1441,82 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<".TZADI_SOFIT.">", "ţ", $t);
 	$t = preg_replace("<".KUF.">", "q", $t);
 	$t = preg_replace("<".RESH.">", "r", $t);
-	$t = preg_replace("<".SHIN_SHIN_DOT_KAMETZ.">", "sā", $t);
+	$t = preg_replace("<".SHIN_SHIN_DOT_KAMETZ.">", "şā", $t);
 	$t = preg_replace("<".SHIN_SHIN_DOT_SHEVA_NACH.">", "şâ", $t);
-	//$t = preg_replace("<".SHIN.SHIN_DOT.SHEVA_NACH.">", "şâ", $t); //??
-	//$t = preg_replace("<".SHIN.SHEVA_NACH.SHIN_DOT.">", "şâ", $t); //??
 	$t = preg_replace("<".SHIN.">", "ş", $t);
 	$t = preg_replace("<".SIN.">", "s", $t);
+	$t = preg_replace("<".SHIN_NO_DOT.">", "ş", $t);
 	$t = preg_replace("<".TAV.">", "t", $t);
 	$t = preg_replace("<".THAV.">", "t", $t);
 	
 	/* Vowels */
-	$t = preg_replace("<".CHATAF_KAMETZ.">", "ā", $t);
-	$t = preg_replace("<".KAMETZ_KATAN.">", "ā", $t);
-	$t = preg_replace("<".KAMETZ.">", "ā", $t);
-	$t = preg_replace("<".CHATAF_PATACH.">", "ā", $t);
-	$t = preg_replace("<".PATACH_GANUV.">", "ē", $t);
-	$t = preg_replace("<".PATACH.">", "ē", $t);
-	$t = preg_replace("<".SHEVA_NACH.">", "î", $t);
-	$t = preg_replace("<".SHEVA.">", "â", $t);
-	$t = preg_replace("<".CHATAF_SEGOL.">", "ă", $t);
-	$t = preg_replace("<".SEGOL.">", "ę", $t);
-	$t = preg_replace("<".TZEIREI_MALEI.">", "é", $t);
-	$t = preg_replace("<".TZEIREI_CHASER.">", "é", $t);
-	$t = preg_replace("<".CHIRIK_MALEI.">", "ī", $t);
-	$t = preg_replace("<".CHIRIK_CHASER.">", "ī", $t);
-	$t = preg_replace("<".HOLAM_HASHER.">", "ó", $t);
-	$t = preg_replace("<".CHOLAM_MALEI.">", "ō", $t);
-	$t = preg_replace("<".CHOLAM_CHASER.">", "ō", $t);
-	$t = preg_replace("<".MAPIQ.">", "ō", $t);
-	$t = preg_replace("<".METEG.">", "a", $t);
-	$t = preg_replace("<".KUBUTZ.">", "ū", $t);
-	$t = preg_replace("<".TIPEHA.">", "'", $t); 
-	$t = preg_replace("<".MERKHA.">", "'", $t); 
-	$t = preg_replace("<".MERKHA_KEFULA.">", "''", $t);	
-	$t = preg_replace("<".MUNAH.">", "´", $t);	
-	$t = preg_replace("<".ETNAHTA.">", "'", $t); 
-	$t = preg_replace("<".ATNAH_HAFUKH.">", "^", $t); 
-	$t = preg_replace("<".YERAH_BEN_YOMO.">", "°", $t);	
+	if ($f === 'hebrew')
+	{
+		$t = preg_replace("<".CHATAF_KAMETZ.">", "ā", $t);
+		$t = preg_replace("<".KAMETZ_KATAN.">", "ā", $t);
+		$t = preg_replace("<".KAMETZ.">", "ā", $t);
+		$t = preg_replace("<".CHATAF_PATACH.">", "ā", $t);
+		$t = preg_replace("<".PATACH_GANUV.">", "ē", $t);
+		$t = preg_replace("<".PATACH.">", "ē", $t);
+		$t = preg_replace("<".SHEVA_NACH.">", "î", $t);
+		$t = preg_replace("<".SHEVA.">", "â", $t);
+		$t = preg_replace("<".CHATAF_SEGOL.">", "ă", $t);
+		$t = preg_replace("<".SEGOL.">", "ę", $t);
+		$t = preg_replace("<".TZEIREI_MALEI.">", "é", $t);
+		$t = preg_replace("<".TZEIREI_CHASER.">", "é", $t);
+		$t = preg_replace("<".CHIRIK_MALEI.">", "ī", $t);
+		$t = preg_replace("<".CHIRIK_CHASER.">", "ī", $t);
+		$t = preg_replace("<".HOLAM_HASHER.">", "ó", $t);
+		$t = preg_replace("<".CHOLAM_MALEI.">", "ō", $t);
+		$t = preg_replace("<".CHOLAM_CHASER.">", "ō", $t);
+		$t = preg_replace("<".MAPIQ.">", "ō", $t);
+		$t = preg_replace("<".METEG.">", "a", $t);
+		$t = preg_replace("<".KUBUTZ.">", "ū", $t);
+		$t = preg_replace("<".TIPEHA.">", "'", $t); 
+		$t = preg_replace("<".MERKHA.">", "'", $t); 
+		$t = preg_replace("<".MERKHA_KEFULA.">", "''", $t);	
+		$t = preg_replace("<".MUNAH.">", "´", $t);	
+		$t = preg_replace("<".ETNAHTA.">", "'", $t); 
+		$t = preg_replace("<".ATNAH_HAFUKH.">", "^", $t); 
+		$t = preg_replace("<".YERAH_BEN_YOMO.">", "°", $t);	
+	} 
+	
+	if ($f === 'aramaic') 
+	{
+		$t = preg_replace("<".RUKKAKHA_UP_ZLAMA_ANGULAR.">", "hę", $t);
+		$t = preg_replace("<".PTHAHA_UP.">", "ä", $t);
+		$t = preg_replace("<".PTHAHA_DOWN.">", "ě", $t); 
+		$t = preg_replace("<".PTHAHA_DOTTED.">", "ü", $t); 
+		$t = preg_replace("<".ZQAPHA_UP.">", "ů", $t);
+		$t = preg_replace("<".ZQAPHA_DOWN.">", "ù", $t); 
+		$t = preg_replace("<".ZQAPHA_DOTTED.">", "ā", $t); 
+		$t = preg_replace("<".RBASA_UP.">", "à", $t);
+		$t = preg_replace("<".RBASA_DOWN.">", "ő", $t); 
+		$t = preg_replace("<".RBASA_DOTTED.">", "ē", $t); 
+		$t = preg_replace("<".ZLAMA_ANGULAR.">", "é", $t); 
+		$t = preg_replace("<".ZLAMA_UP.">", "ò", $t);
+		$t = preg_replace("<".ZLAMA_DOWN.">", "y", $t); 
+		$t = preg_replace("<".ZLAMA_DOTTED.">", "ī", $t); 
+		$t = preg_replace("<".ESASA_UP.">", "ì", $t);
+		$t = preg_replace("<".ESASA_DOWN.">", "ý", $t); 
+		$t = preg_replace("<".RWAHA.">", "ō", $t);
+		$t = preg_replace("<".FEMININE_DOT.">", "ą", $t); 
+		$t = preg_replace("<".DALED.QUSHSHAYA.">", "dâ", $t);
+		$t = preg_replace("<".DHALED.QUSHSHAYA.">", "dî", $t);
+		$t = preg_replace("<".MEM.QUSHSHAYA.">", "mî", $t);
+		$t = preg_replace("<".QUSHSHAYA.">", "â", $t);		
+		$t = preg_replace("<".KUF.QUSHSHAYA.">", "qâ", $t); 
+		$t = preg_replace("<".RUKKAKHA.">", "â", $t);
+		$t = preg_replace("<".VERTICAL_DOTS_UP.">", "å", $t);
+		$t = preg_replace("<".VERTICAL_DOTS_DOWN.">", "ё", $t); 
+		$t = preg_replace("<".THREE_DOTS_UP.">", "ū", $t);
+		$t = preg_replace("<".THREE_DOTS_DOWN.">", "ę", $t); 
+		$t = preg_replace("<".OBLIQUE_LINE_UP.">", "ó", $t); 
+		$t = preg_replace("<".OBLIQUE_LINE_DOWN.">", "ё", $t); 
+		$t = preg_replace("<".MUSIC.">", "#", $t);
+		$t = preg_replace("<".BARREKH.">", "+", $t); 
+		$t = preg_replace("<".MAQAF.">", "־", $t); 		
+	}	
 	
 	//Line marks
 	$t = preg_replace("<֤>", "'", $t);
@@ -1418,27 +1530,22 @@ function RomanianTransliteration($t)
 	//Second Step;
 	$t = preg_replace("<lāvāɳ>", "Lāvāɳ", $t);
 	$t = preg_replace("<".KHAF.">", "c", $t);
-	$t = preg_replace("<־>", "-", $t);
 	$t = preg_replace("<îkā'>", "î·kā'", $t);
 	$t = preg_replace("<îkā>", "î·kā", $t);
 	$t = preg_replace("<iēaaēvîdūanīi>", "iē·aaēvâdūanī·i", $t);
-	$t = preg_replace("<ֹş>", "ōş", $t);
-	$t = preg_replace("<ֹr>", "ōr", $t);
-	$t = preg_replace("<ֹt>", "ōt", $t);
-	$t = preg_replace("<ֹp>", "p", $t);
-	$t = preg_replace("<ֹe>", "óe", $t);
-	$t = preg_replace("<ֹ >", "ő", $t);
-	$t = preg_replace("<ֹ>", "ō", $t);
-	$t = preg_replace("<ōā>", "ā", $t);
-	$t = preg_replace("<ōō>", "ō", $t);
-	$t = preg_replace("<ōî>", "î", $t);
-	$t = preg_replace("<ōī>", "ī", $t);
-	$t = preg_replace("<ōî>", "î", $t);
 	$t = preg_replace("<iîhuā'h>", "Iâhuāh", $t);	
 	$t = preg_replace("<iîhuāh>", "Iâhuāh", $t);
+	$t = preg_replace("<ebârāhām>", "Ebârāhām", $t);
 	$t = preg_replace("<uîruōĥē eălōhiɱ>", "uî·Ruōĥē Eălōhiɱ", $t);
 	$t = preg_replace("<mōşęh>", "Mōşęh", $t);
-	$t = preg_replace("<ââ>", "â", $t);	
+	$t = preg_replace("<ââ>", "â", $t);
+	$t = preg_replace("<âü>", "ü", $t);
+	$t = preg_replace("<âā>", "ā", $t);
+	$t = preg_replace("<âē>", "ē", $t);
+	$t = preg_replace("<âē>", "ē", $t);
+	$t = preg_replace("< đü>", " đü·", $t);
+	$t = preg_replace("<đâ >", "đ ", $t);
+	$t = preg_replace("<iéşuōa>", "Iéşuōa", $t);	
 	$t = preg_replace("<iīsârāeél>", "IīsârāeEél", $t);	
 	$t = preg_replace("<iīsîrāeél>", "IīsârāeEīl", $t);
 	$t = preg_replace("<iōērîdéɳ>", "Iōērâdéɳ", $t);
@@ -1457,6 +1564,9 @@ function RomanianTransliteration($t)
 	$t = preg_replace("< uâ>", " uî·", $t);
 	$t = preg_replace("< bâ>", " bî·", $t);
 	$t = preg_replace("< bā>", " bā·", $t);
+	$t = preg_replace("<bî·ē>", "bē", $t);
+	$t = ($f === 'aramaic') ? preg_replace("<bē·réh>", "bēré·hî", $t) : $t;
+	$t = ($f === 'aramaic') ? preg_replace("< đâ>", " đî·", $t) : $t;
 	$t = preg_replace("< uē·uē>", " uē·uē·", $t);
 	$t = preg_replace("<uē·iōó>", "uē·iōó·", $t);
 	$t = preg_replace("<bî·ā>", "bâā", $t);	
@@ -1473,6 +1583,8 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<-hē>", "-hē·", $t);
 	$t = preg_replace("<hāeō'hęl>", "hā·eō'hęl", $t);
 	$t = preg_replace("<hāeāręţ>", "hā·eāręţ", $t);
+	$t = preg_replace("<mşīiĥāe>", "Mâşīiĥāe", $t);
+	$t = preg_replace("<đēuīiđâ>", "Đēuīiđ", $t);
 	$t = preg_replace("< bî·éiɳ>", " bâéiɳ", $t);
 	$t = preg_replace("< mī>", " mī·", $t);
 	$t = preg_replace("<bâāaā>", "bîā·aā", $t);
@@ -1540,14 +1652,13 @@ function RomanianTransliteration($t)
 	$t = preg_replace("<bē·t>", "bēt", $t);
 	$t = preg_replace("<pōēdēɳ>", "Pōēdēɳ", $t);
 	$t = preg_replace("<eārāɱ>", "Eārāɱ", $t);
-	
-	
+		
 	ExtractTrup();
 	$t = CleanUpPunctuation($t);
 	return $t;
 }
 
-function AcademicSpirantization($t)
+function AcademicSpirantization($t, $f)
 {
 	// do not double letters in general
 	$GEMINATE_CANDIDATES = "(ALEPH|BET|BHET|GIMEL|DALED|VAV|HOLAM_VAV|ZED|TET|YUD|KAF|KHAF_SOFIT|LAMED|MEM|HOLAM_MEM|NUN|SAMECH|PEI|TZADI|KUF|SHIN|SIN|TAV)";
@@ -1764,7 +1875,7 @@ function AcademicSpirantization($t)
 	return $t;
 }
 
-function RomanioteTransliteration($t)
+function RomanioteTransliteration($t, $f)
 {	
 	// do not double letters in general
 	$GEMINATE_CANDIDATES = "/(?<hiriqYod>|ALEPH|BET|BHET|GIMEL|DALED|VAV|HOLAM_VAV|ZED|TET|YUD|KAF|KHAF_SOFIT|LAMED|MEM|HOLAM_MEM|NUN|SAMECH|PEI|TZADI|KUF|SHIN|SIN|TAV)";
@@ -1809,7 +1920,7 @@ function RomanioteTransliteration($t)
 	$t = preg_replace("<".TZADI.">", "ϻ", $t);
 	$t = preg_replace("<".KUF.">", "κ", $t);
 	$t = preg_replace("<".RESH.">", "ρ", $t);
-	$t = preg_replace("<".SHIN_SHIN_DOT_KAMETZ.">", "ρά", $t);
+	$t = preg_replace("<".SHIN_SHIN_DOT_KAMETZ.">", "Σά", $t);
 	$t = preg_replace("<".SHIN.">", "Σ", $t);
 	$t = preg_replace("<".SIN.">", "σ", $t);	
 	$t = preg_replace("<".TAV.">", "θ", $t);
@@ -1862,6 +1973,7 @@ function RomanioteTransliteration($t)
 	$t = preg_replace("< ϝἐ>", " ϝἐ·", $t);
 	$t = preg_replace("< ϝα>", " ϝα·", $t);
 	$t = preg_replace("< ϝω>", " ϝω·", $t);
+	$t = preg_replace("< υἐ>", " υἐ·", $t);
 	$t = preg_replace("< xə>", " xə·", $t);
 	$t = preg_replace("< xα>", " xα·", $t);
 	$t = preg_replace("< βε>", " βε·", $t);
@@ -1875,16 +1987,14 @@ function RomanioteTransliteration($t)
 	$t = preg_replace("< xά>", " xά·", $t);
 	$t = preg_replace("<··>", "·", $t);
 	$t = preg_replace("< βî·éiɳ>", " βâéiɳ", $t);
-	$t = preg_replace("<βâāaā>", "βîā·aā", $t);
-
-	
+	$t = preg_replace("<βâāaā>", "βîā·aā", $t);	
 	
 	ExtractTrup();
 	$t = CleanUpPunctuation($t);
 	return $t;
 }
 
-function UkrainianTransliteration($t)
+function UkrainianTransliteration($t, $f)
 {
 	// do not double letters in general
 	$GEMINATE_CANDIDATES = "(ALEPH|BET|BHET|GIMEL|DALED|VAV|HOLAM_VAV|ZED|TET|YUD|KAF|KHAF_SOFIT|LAMED|MEM|HOLAM_MEM|NUN|SAMECH|PEI|TZADI|KUF|SHIN|SIN|TAV)";
@@ -2166,7 +2276,6 @@ function chunker($t)
 	// is operated grammatically, such that geminate consonants
 	// close the previous syllable
 	// END_SYL with be the marker for the end of a syllable
-
 	$NON_FINAL_NON_PLOSIVES = "(".ALEPH."|".BHET."|".GHIMEL."|".DHALED."|".HEH."|".VAV."|".ZED."|".CHET."|".TET."|".YUD."|".KHAF."|".LAMED."|".MEM."|".NUN."|".SAMECH."|".AYIN."|".PHEI."|".TZADI."|".KUF."|".RESH."|".SHIN."|".SIN."|".THAV.")";
 
 	$t = ereg_repl("NON_FINAL_NON_PLOSIVES (SHEVA_NACH)", "\\1 \\2 END_SYL", $t);
@@ -2188,63 +2297,81 @@ function generateAndPrintTrup()
 	$root->print_trup_tree();
 }
 
-function generateTransliteration($sourcetext, $targetlang, $isFirefox = false, $isOpera = false)
+function generateTransliteration($sourcetext, $targetlang, $sourcelang, $isOpera = false)
+{
+	global $root_path, $phpExt;
+	switch($sourcelang)
+	{ 
+		case 'aramaic':
+			include($root_path . 'schemas/arc.' . $phpExt);		
+			generateNewTransliteration($sourcetext, $targetlang, $sourcelang, $isOpera);
+		break;
+		case 'hebrew':   
+		default:
+			include($root_path . 'schemas/heb.' . $phpExt);
+			generateNewTransliteration($sourcetext, $targetlang, $sourcelang, $isOpera);
+		break;	
+	}
+}
+
+function generateNewTransliteration($sourcetext, $targetlang, $sourcelang, $isOpera = false)
 {
 	global $origHebrew, $_SERVER;
 	
 	$t = $sourcetext;
-		
+	$f = $sourcelang;	
+	
 	if (!empty($_SERVER["HTTP_USER_AGENT"]))
 	{
 		$origHebrew = $t;
-		$t = "BOUNDARY " . PostHebrewToIntermediate($sourcetext) . "BOUNDARY";
+		$t = "BOUNDARY " . PostToIntermediate($t, $f) . "BOUNDARY";
 	}
 	else
 	{
-		$origHebrew = PostHebrewExtendedASCIIToEncodedUnicode($t);
-		$t = "BOUNDARY " . PostHebrewExtendedASCIIToIntermediate($sourcetext) . "BOUNDARY";
+		$origHebrew = PostExtendedASCIIToEncodedUnicode($t, $f);
+		$t = "BOUNDARY " . PostExtendedASCIIToIntermediate($t) . "BOUNDARY";
 	}
 	
 	$s = $sourcetext;
 
 	global $t_with_trup;
 	$t_with_trup = $t;
-	$t = RemoveTrup($t);
-	$t = ApplyRulesToIntermediateForm($t);
+	//$t = RemoveTrup($t);
+	//$t = ApplyRulesToIntermediateForm($t);
 
-	//	print $t;
-	//	print $s;
+	// print $t;
+	// print $s;
 
 	// AND here is the next step: change the intermediate code into
 	// transliteration
-	//	print "<p>";
+	// print "<p>";
 
 	$target = $targetlang;
 	if ($target=="academic")
 	{
 		if (!empty($_SERVER["HTTP_USER_AGENT"]))
 		{
-			$t1 = AcademicTransliteration($t);
+			$t1 = AcademicTransliteration($t, $f);
 			print $t1;
 
 		}
 		else // IE
 		{
-			print AcademicFontFriendlyTransliteration($t);
+			print AcademicFontFriendlyTransliteration($t, $f);
 		}
 	}
 	else if ($target == "academic_u")
 	{
-		$t1 = AcademicTransliteration($t);
+		$t1 = AcademicTransliteration($t, $f);
 		print $t1;
 	}
 	else if ($target == "academic_ff")
 	{
-		print AcademicFontFriendlyTransliteration($t);
+		print AcademicFontFriendlyTransliteration($t, $f);
 	}
 	else if ($target == "ashkenazic")
 	{
-		$t2 = AshkenazicTransliteration($t);
+		$t2 = AshkenazicTransliteration($t, $f);
 		print $t2;
 		global $t_without_trup;
 		$t_without_trup = explode_split("SPACE", $t2);
@@ -2252,108 +2379,35 @@ function generateTransliteration($sourcetext, $targetlang, $isFirefox = false, $
 	}
 	else if ($target == "romaniote")
 	{
-		$t2 = RomanioteTransliteration($t);
+		$t2 = RomanioteTransliteration($t, $f);
 		print $t2;
 	}
 	else if ($target == "sefardic")
 	{
-		$t2 = SefardicTransliteration($t);
+		$t2 = SefardicTransliteration($t, $f);
 		print $t2;
 	}
 	else if ($target == "academic_s")
 	{
-		$t2 = AcademicSpirantization($t);
+		$t2 = AcademicSpirantization($t, $f);
 		print $t2;
 	}	
 	else if ($target == "romanian")
 	{
-		$t2 = RomanianTransliteration($t);
+		$t2 = RomanianTransliteration($t, $f);
 		print $t2;
 	}
 	else if ($target == "ukrainian")
 	{
-		$t2 = UkrainianTransliteration($t);
+		$t2 = UkrainianTransliteration($t, $f);
 		print $t2;
 	}
 	else if ($target == "mc")
 	{
-		$t2 = MichiganClaremontTranslit($t);
+		$t2 = MichiganClaremontTranslit($t, $f);
 		print $t2;
 	}
 	define('END_TIME', round((microtime(true) - BEGIN_TIME) * 1000, 1));	
 }
 
-/*
- KAMETZ
- PATACH
- PATACH_UNKOWN
- SEGOL
- TZEIREI_CHASER
- TZEIREI_MALEI
- TZEIREI_UNKNOWN
- TZEIREI_UNKNOWN
- CHIRIK_CHASER
- CHIRIK_MALEI
- CHIRIK_UNKNOWN
- CHOLAM_CHASER
- CHOLAM_MALEI
- CHOLAM_UNKNOWN
- KUBUTZ
- SHURUK
- SHEVA_UNKNOWN
- SHEVA_NA
- SHEVA_NACH
- CHATAF_PATACH
- CHATAF_KAMETZ
- CHATAF_SEGOL
- PATACH_GANUV
-
- ALEPH
- BET
- BHET
- BET_UNKNOWN
- GIMEL
- GHIMEL
- GIMEL_UNKNOWN
- DALED
- DHALED
- DALED_UNKNOWN
- HEH
- HEH_MAPIK
- HEH_UNKNOWN
- VAV
- ZED
- CHET
- TET
- YUD
- KAF
- KAF_SOFIT
- KHAF
- KHAF-SOFIT
- KAF_UNKNOWN
- KAF_SOFIT_UNKNOWN
- LAMED
- MEM
- MEM_SOFIT
- NUN
- NUN_SOFIT
- SAMECH
- AYIN
- PEI
- PEI_SOFIT
- PHEI
- PHEI_SOFIT
- PEI_UNKNOWN
- PEI_SOFIT_UNKNOWN
- TZADI
- TZADI_SOFIT
- KUF
- RESH
- SHIN
- SIN
- SHIN_UNKNOWN
- TAV
- THAV
- TAV_UNKNOWN
- */
 ?>
