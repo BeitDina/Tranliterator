@@ -2,7 +2,7 @@
 /**
 *
 * @package Transliterator
-* @version $Id: arc.php,v 1.0.0 2023/10/22 21:21:14 orynider Exp $
+* @version $Id: arc.php,v 1.0.1 2023/10/22 21:21:14 orynider Exp $
 *
 */
 
@@ -107,6 +107,7 @@ define('HOLAM_BHET', 'ܒ݀'); //בֹ
 define('HOLAM_TAV', 'ܛ݀'); //תֹּ
 define('HOLAM_RESH', 'ܪ݀'); //רֹ
 define('HOLAM_HASHER_VAV', 'ܘܿ'); //וֹ
+define('KHAF_KAMETZ', 'ܟܵ'); //ܟ
 define('SHEVA', '݄'); //SHVA', '\u05B0'
 define('SHEVA_NACH', '݄'); //SHVA', '\u05B0'
 define('SHEVA_UNKNOWN', '݄');
