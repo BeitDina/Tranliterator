@@ -32,6 +32,7 @@ define('KAF_SOFIT', 'ךּ');
 define('KHAF_SOFIT', 'ך');
 define('KAF', 'כ');
 define('KHAF', 'כּ');
+define('KHAF_KAMETZ', 'כָּ');
 define('LAMED', 'ל');
 define('MEM_SOFIT', 'ם');
 define('MEM', 'מ');
@@ -108,6 +109,7 @@ define('MAQAF', '־'); //u05BE
 define('RAFE', 'ֿ'); //u05BF
 define('KUBUTZ', 'ֻ'); //KUBUTZ', '\u05BB' 
 define('SHURUK', 'ּ'); //SHURUK', '\u05BC' //or: DAGESH_LETTER', '\u05bc'
+define('DAGESH', 'ּ');
 define('DAGESH_UNKNOWN', 'ּ');
 define('SHIN_UNKNOWN', 'ׁ'); 
 define('SHIN_DOT', 'ׁ');  //SHIN_YEMANIT', '\u05c1' &#x05C1 in BabelMap
