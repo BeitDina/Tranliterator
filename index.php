@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: index.php,v 1.75 2023/11/21 04:07:52 orynider Exp $
+* @version $Id: index.php,v 1.76 2023/11/23 08:17:52 orynider Exp $
 *
 */
 
@@ -119,7 +119,8 @@ print '
 <tr bgcolor=#E6ECF9>
 <td>';
 $origHebrew = '&nbsp;&nbsp;';
-
+$targetlang = isset($_POST['targetlang']) ? $_POST['targetlang'] : 'romanian';
+$sourcelang = isset($_POST['sourcelang']) ? $_POST['sourcelang'] : 'hebrew';
 if (!empty($_FILES['fileToUpload']) && (USER_LEVEL > ANONYMOUS))
 {
 	$origfile = array();
@@ -129,7 +130,7 @@ if (!empty($_FILES['fileToUpload']) && (USER_LEVEL > ANONYMOUS))
 		$origfile[$var] = $value;
 	}
 	
-	$sourcetext = isset($_POST['sourcetext']) ? $_POST['sourcetext'] : print_r(file($origfile['tmp_name']), true);
+	$sourcetext = isset($_POST['sourcetext']) ? $_POST['sourcetext'] : read_file($origfile['tmp_name'], false, 2, 2, $sourcelang);
 
 }
 else
@@ -137,8 +138,6 @@ else
 	$sourcetext = isset($_POST['sourcetext']) ? $_POST['sourcetext'] : 'בְּרֵאשִׁ֖ית בָּרָ֣א אֱלֹהִ֑ים אֵ֥ת הַשָּׁמַ֖יִם וְאֵ֥ת הָאָֽרֶץ׃';
 }
 
-$targetlang = isset($_POST['targetlang']) ? $_POST['targetlang'] : 'romanian';
-$sourcelang = isset($_POST['sourcelang']) ? $_POST['sourcelang'] : 'hebrew';
 print '
 <table width="100%" border="0" cellspacing="0" cellpadding="1">
 <tr>
