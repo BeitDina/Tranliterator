@@ -2,7 +2,7 @@
 /**
 *
 * @package Tranliterator
-* @version $Id: trans.php,v 1.0.1 2023/11/24 09:52:12 orynider Exp $
+* @version $Id: trans.php,v 1.0.2 2023/11/24 16:52:12 orynider Exp $
 *
 */
 
@@ -1648,8 +1648,8 @@ function RomanianTransliteration($t, $f)
 		$t = preg_replace("<".ZQAPHA_DOWN.">", "ù", $t); 
 		$t = preg_replace("<".ZQAPHA_DOTTED.">", "ā", $t); 
 		$t = preg_replace("<".RBASA_UP.">", "à", $t);
-		$t = preg_replace("<".RBASA_DOWN.">", "ő", $t); 
-		$t = preg_replace("<".RBASA_DOTTED.">", "ē", $t); 
+		$t = preg_replace("<".RBASA_DOWN.">", "ē", $t); 
+		$t = preg_replace("<".RBASA_DOTTED.">", "ő", $t); 
 		$t = preg_replace("<".ZLAMA_ANGULAR.">", "é", $t); 
 		$t = preg_replace("<".ZLAMA_UP.">", "ò", $t);
 		$t = preg_replace("<".ZLAMA_DOWN.">", "y", $t); 
@@ -1843,6 +1843,7 @@ function HebrewAramaicTransliteration($t, $from, $to)
 	// do not double letters in general
 	$GEMINATE_CANDIDATES = "(ALEPH|BET|BHET|GIMEL|DALED|VAV|HOLAM_VAV|ZED|TET|YUD|KAF|KHAF_SOFIT|LAMED|MEM|HOLAM_MEM|NUN|SAMECH|PEI|TZADI|KUF|SHIN|SIN|TAV)";
 	$t = preg_replace("<" . $GEMINATE_CANDIDATES . "_CHAZAK>", "\\1", $t);
+	
 	//Replace From  > To
 	$t = preg_replace("<".HOLAM_VAV.">", TO_HOLAM_VAV, $t);
 	$t = preg_replace("<"."uō".">", TO_HOLAM_VAV, $t);
@@ -1950,134 +1951,153 @@ function HebrewAramaicTransliteration($t, $from, $to)
 	$t = preg_replace("<"."t".">", TO_THAV, $t);
 	
 	/* Vowels */
-	if (($from === 'hebrew') && ($to !== 'aramaic'))
+	if (($from !== 'hebrew') && ($from !== 'aramaic') && ($to === 'hebrew'))
 	{
-		$t = preg_replace("<".CHATAF_KAMETZ.">", TO_CHATAF_KAMETZ, $t);
-		$t = preg_replace("<"."ā".">", TO_CHATAF_KAMETZ, $t);
-		$t = preg_replace("<".KAMETZ_KATAN.">", TO_KAMETZ_KATAN, $t);
+		$t = preg_replace("<"."ā".">", TO_CHATAF_KAMETZ, $t);;
 		$t = preg_replace("<"."ā".">", TO_KAMETZ_KATAN, $t);
-		$t = preg_replace("<".KAMETZ.">", TO_KAMETZ, $t);
 		$t = preg_replace("<"."ā".">", TO_KAMETZ, $t);
-		$t = preg_replace("<".CHATAF_PATACH.">", TO_CHATAF_PATACH, $t);
 		$t = preg_replace("<"."ā".">", TO_CHATAF_PATACH, $t);
-		$t = preg_replace("<".PATACH_GANUV.">", TO_PATACH_GANUV, $t);
 		$t = preg_replace("<"."ē".">", TO_PATACH_GANUV, $t);
-		$t = preg_replace("<".PATACH.">", TO_PATACH, $t);
 		$t = preg_replace("<"."ē".">", TO_PATACH, $t);
-		$t = preg_replace("<".SHEVA_NACH.">", TO_SHEVA_NACH, $t);
 		$t = preg_replace("<"."î".">", TO_SHEVA_NACH, $t);
-		$t = preg_replace("<".SHEVA.">", TO_SHEVA, $t);
 		$t = preg_replace("<"."â".">", TO_SHEVA, $t);
-		$t = preg_replace("<".CHATAF_SEGOL.">", TO_CHATAF_SEGOL, $t);
 		$t = preg_replace("<"."ă".">", TO_CHATAF_SEGOL, $t);
-		$t = preg_replace("<".SEGOL.">", TO_SEGOL, $t);
 		$t = preg_replace("<"."ę".">", TO_SEGOL, $t);
-		$t = preg_replace("<".TZEIREI_MALEI.">", TO_TZEIREI_MALEI, $t);
 		$t = preg_replace("<"."é".">", TO_TZEIREI_MALEI, $t);
-		$t = preg_replace("<".TZEIREI_CHASER.">", TO_TZEIREI_CHASER, $t);
 		$t = preg_replace("<"."é".">", TO_TZEIREI_CHASER, $t);
-		$t = preg_replace("<".CHIRIK_MALEI.">", TO_CHIRIK_MALEI, $t);
 		$t = preg_replace("<"."ī".">", TO_CHIRIK_MALEI, $t);
-		$t = preg_replace("<".CHIRIK_CHASER.">", TO_CHIRIK_CHASER, $t);
 		$t = preg_replace("<"."ī".">", TO_CHIRIK_CHASER, $t);
-		$t = preg_replace("<".HOLAM_HASHER.">", TO_HOLAM_HASHER, $t);
 		$t = preg_replace("<"."ó".">", TO_HOLAM_HASHER, $t);
-		$t = preg_replace("<".CHOLAM_MALEI.">", TO_CHOLAM_MALEI, $t);
 		$t = preg_replace("<"."ō".">", TO_CHOLAM_MALEI, $t);
-		$t = preg_replace("<".CHOLAM_CHASER.">", TO_CHOLAM_CHASER, $t);
 		$t = preg_replace("<"."ō".">", TO_CHOLAM_CHASER, $t);
-		$t = preg_replace("<".MAPIQ.">", TO_MAPIQ, $t);
 		$t = preg_replace("<"."ō".">", TO_MAPIQ, $t);
-		$t = preg_replace("<".METEG.">", TO_METEG, $t);
 		$t = preg_replace("<"."a".">", TO_METEG, $t);
-		$t = preg_replace("<".KUBUTZ.">", TO_KUBUTZ, $t);
 		$t = preg_replace("<"."ū".">", TO_KUBUTZ, $t);
-		$t = preg_replace("<".TIPEHA.">", TO_TIPEHA, $t); 
 		$t = preg_replace("<"."'".">", TO_TIPEHA, $t); 
-		$t = preg_replace("<".MERKHA.">", TO_MERKHA, $t); 
 		$t = preg_replace("<"."'".">", TO_MERKHA, $t); 
-		$t = preg_replace("<".MERKHA_KEFULA.">", TO_MERKHA_KEFULA, $t);
 		$t = preg_replace("<"."''".">", TO_MERKHA_KEFULA, $t);		
-		$t = preg_replace("<".MUNAH.">", TO_MUNAH, $t);
 		$t = preg_replace("<"."´".">", TO_MUNAH, $t);		
-		$t = preg_replace("<".ETNAHTA.">", TO_ETNAHTA, $t);
 		$t = preg_replace("<"."'".">", TO_ETNAHTA, $t);		
-		$t = preg_replace("<".ATNAH_HAFUKH.">", TO_ATNAH_HAFUKH, $t); 
-		$t = preg_replace("<"."^".">", TO_ATNAH_HAFUKH, $t); 
-		$t = preg_replace("<".YERAH_BEN_YOMO.">", TO_YERAH_BEN_YOMO, $t);	
+		$t = preg_replace("<"."^".">", TO_ATNAH_HAFUKH, $t); 	
 		$t = preg_replace("<"."°".">", TO_YERAH_BEN_YOMO, $t);	
 	}
 	
-	if ($from === 'aramaic') 
+	if (($from !== 'aramaic') && ($from !== 'hebrew') && ($to === 'aramaic')) 
 	{
-		$t = preg_replace("<".RUKKAKHA_UP_ZLAMA_ANGULAR.">", TO_RUKKAKHA_UP_ZLAMA_ANGULAR, $t);
 		$t = preg_replace("<"."hę".">", TO_RUKKAKHA_UP_ZLAMA_ANGULAR, $t);
-		$t = preg_replace("<".PTHAHA_UP.">", TO_PTHAHA_UP, $t);
 		$t = preg_replace("<"."ä".">", TO_PTHAHA_UP, $t);
-		$t = preg_replace("<".PTHAHA_DOWN.">", TO_PTHAHA_DOWN, $t);
-		$t = preg_replace("<"."ě".">", TO_PTHAHA_DOWN, $t);		
-		$t = preg_replace("<".PTHAHA_DOTTED.">", TO_PTHAHA_DOTTED, $t); 
+		$t = preg_replace("<"."ā".">", TO_PTHAHA_DOWN, $t);		 
 		$t = preg_replace("<"."ü".">", TO_PTHAHA_DOTTED, $t); 
-		$t = preg_replace("<".ZQAPHA_UP.">", TO_ZQAPHA_UP, $t);
-		$t = preg_replace("<"."ů".">", TO_ZQAPHA_UP, $t);
-		$t = preg_replace("<".ZQAPHA_DOWN.">", TO_ZQAPHA_DOWN, $t);
-		$t = preg_replace("<"."ù".">", TO_ZQAPHA_DOWN, $t); 		
-		$t = preg_replace("<".ZQAPHA_DOTTED.">", TO_ZQAPHA_DOTTED, $t); 
-		$t = preg_replace("<"."ā".">", TO_ZQAPHA_DOTTED, $t);
-		$t = preg_replace("<".RBASA_UP.">", TO_RBASA_UP, $t);
-		$t = preg_replace("<"."à".">", TO_RBASA_UP, $t);
-		$t = preg_replace("<".RBASA_DOWN.">", TO_RBASA_DOWN, $t); 
-		$t = preg_replace("<"."ő".">", TO_RBASA_DOWN, $t);
-		$t = preg_replace("<".RBASA_DOTTED.">", TO_RBASA_DOTTED, $t); 
-		$t = preg_replace("<"."ē".">", TO_RBASA_DOTTED, $t); 
-		$t = preg_replace("<".ZLAMA_ANGULAR.">", TO_ZLAMA_ANGULAR, $t); 
+		$t = preg_replace("<"."ő".">", TO_ZQAPHA_UP, $t);
+		$t = preg_replace("<"."ö".">", TO_ZQAPHA_DOWN, $t); 		 
+		$t = preg_replace("<"."ù".">", TO_ZQAPHA_DOTTED, $t);
+		$t = preg_replace("<"."à".">", TO_RBASA_UP, $t); 
+		$t = preg_replace("<"."ē".">", TO_RBASA_DOWN, $t);
+		$t = preg_replace("<"."ů".">", TO_RBASA_DOTTED, $t);  
 		$t = preg_replace("<"."é".">", TO_ZLAMA_ANGULAR, $t); 
-		$t = preg_replace("<".ZLAMA_UP.">", TO_ZLAMA_UP, $t);
-		$t = preg_replace("<"."ò".">", TO_ZLAMA_UP, $t);
-		$t = preg_replace("<".ZLAMA_DOWN.">", TO_ZLAMA_DOWN, $t);
-		$t = preg_replace("<"."y".">", TO_ZLAMA_DOWN, $t);		
-		$t = preg_replace("<".ZLAMA_DOTTED.">", TO_ZLAMA_DOTTED, $t); 
-		$t = preg_replace("<"."ī".">", TO_ZLAMA_DOTTED, $t); 
-		$t = preg_replace("<".ESASA_UP.">", TO_ESASA_UP, $t);
-		$t = preg_replace("<"."ì".">", TO_ESASA_UP, $t);
-		$t = preg_replace("<".ESASA_DOWN.">", TO_ESASA_DOWN, $t);
-		$t = preg_replace("<"."ý".">", TO_ESASA_DOWN, $t);		
-		$t = preg_replace("<".RWAHA.">", TO_RWAHA, $t);
-		$t = preg_replace("<"."ō".">", TO_RWAHA, $t);
-		$t = preg_replace("<".FEMININE_DOT.">", TO_FEMININE_DOT, $t);
+		$t = preg_replace("<"."ì".">", TO_ZLAMA_UP, $t);
+		$t = preg_replace("<"."ī".">", TO_ZLAMA_DOWN, $t);		 
+		$t = preg_replace("<"."ý".">", TO_ZLAMA_DOTTED, $t); 
+		$t = preg_replace("<"."ó".">", TO_ESASA_UP, $t);
+		$t = preg_replace("<"."ō".">", TO_ESASA_DOWN, $t);		
+		$t = preg_replace("<"."y".">", TO_RWAHA, $t);
 		$t = preg_replace("<"."ą".">", TO_FEMININE_DOT, $t);
-		$t = preg_replace("<".DALED.QUSHSHAYA.">", TO_DALED.QUSHSHAYA, $t);
 		$t = preg_replace("<"."dâ".">", TO_DALED.QUSHSHAYA, $t);
-		$t = preg_replace("<".DHALED.QUSHSHAYA.">", TO_DHALED.QUSHSHAYA, $t);
 		$t = preg_replace("<"."dî".">", TO_DHALED.QUSHSHAYA, $t);
-		$t = preg_replace("<".MEM.QUSHSHAYA.">", TO_MEM.QUSHSHAYA, $t);
 		$t = preg_replace("<"."mî".">", TO_MEM.QUSHSHAYA, $t);
-		$t = preg_replace("<".QUSHSHAYA.">", TO_QUSHSHAYA, $t);
-		$t = preg_replace("<"."â".">", TO_QUSHSHAYA, $t);		
-		$t = preg_replace("<".KUF.QUSHSHAYA.">", TO_KUF.QUSHSHAYA, $t); 
+		$t = preg_replace("<"."â".">", TO_QUSHSHAYA, $t);		 
 		$t = preg_replace("<"."qâ".">", TO_KUF.QUSHSHAYA, $t);
-		$t = preg_replace("<".RUKKAKHA.">", TO_RUKKAKHA, $t);
 		$t = preg_replace("<"."â".">", TO_RUKKAKHA, $t);
-		$t = preg_replace("<".VERTICAL_DOTS_UP.">", TO_VERTICAL_DOTS_UP, $t);
-		$t = preg_replace("<"."å".">", TO_VERTICAL_DOTS_UP, $t);
-		$t = preg_replace("<".VERTICAL_DOTS_DOWN.">", TO_VERTICAL_DOTS_DOWN, $t); 
+		$t = preg_replace("<"."å".">", TO_VERTICAL_DOTS_UP, $t); 
 		$t = preg_replace("<"."ё".">", TO_VERTICAL_DOTS_DOWN, $t); 
-		$t = preg_replace("<".THREE_DOTS_UP.">", TO_THREE_DOTS_UP, $t);
 		$t = preg_replace("<"."ū".">", TO_THREE_DOTS_UP, $t);
-		$t = preg_replace("<".THREE_DOTS_DOWN.">", TO_THREE_DOTS_DOWN, $t);
 		$t = preg_replace("<"."ę".">", TO_THREE_DOTS_DOWN, $t);		
-		$t = preg_replace("<".OBLIQUE_LINE_UP.">", TO_OBLIQUE_LINE_UP, $t);
-		$t = preg_replace("<"."ó".">", TO_OBLIQUE_LINE_UP, $t);		
-		$t = preg_replace("<".OBLIQUE_LINE_DOWN.">", TO_OBLIQUE_LINE_DOWN, $t);
+		$t = preg_replace("<"."ī".">", TO_OBLIQUE_LINE_UP, $t);		
 		$t = preg_replace("<"."ё".">", TO_OBLIQUE_LINE_DOWN, $t); 		
-		$t = preg_replace("<".MUSIC.">", TO_MUSIC, $t);
 		$t = preg_replace("<"."#".">", TO_MUSIC, $t);
-		$t = preg_replace("<".BARREKH.">", TO_BARREKH, $t);
 		$t = preg_replace("<"."+".">", TO_BARREKH, $t);		
-		$t = preg_replace("<".MAQAF.">", TO_MAQAF, $t);
 		$t = preg_replace("<"."־".">", TO_MAQAF, $t); 		
+	}	
+	
+	if (($from === 'aramaic') && ($to === 'hebrew')) 
+	{
+		$t = preg_replace("<".RUKKAKHA_UP_ZLAMA_ANGULAR.">", TO_SEGOL, $t);
+		$t = preg_replace("<".PTHAHA_UP.">", TO_PTHAHA_UP, $t);
+		$t = preg_replace("<".PTHAHA_DOWN.">", TO_PTHAHA_DOWN, $t);
+		$t = preg_replace("<".PTHAHA_DOTTED.">", TO_PTHAHA_DOTTED, $t); 
+		$t = preg_replace("<".ZQAPHA_UP.">", TO_ZQAPHA_UP, $t);
+		$t = preg_replace("<".ZQAPHA_DOWN.">", TO_ZQAPHA_DOWN, $t);
+		$t = preg_replace("<".ZQAPHA_DOTTED.">", TO_KAMETZ_KATAN, $t);
+		$t = preg_replace("<".RBASA_UP.">", TO_PATACH, $t);
+		$t = preg_replace("<".RBASA_DOWN.">", TO_PATACH_GANUV, $t); 
+		$t = preg_replace("<".RBASA_DOTTED.">", TO_CHATAF_SEGOL, $t);  
+		$t = preg_replace("<".ZLAMA_ANGULAR.">", TO_ZLAMA_ANGULAR, $t); 
+		$t = preg_replace("<".ZLAMA_UP.">", TO_CHIRIK, $t);
+		$t = preg_replace("<".ZLAMA_DOWN.">", TO_CHIRIK_MALEI, $t);	
+		$t = preg_replace("<".ZLAMA_DOTTED.">", TO_CHIRIK, $t);  
+		$t = preg_replace("<".ESASA_UP.">", TO_CHOLAM_MALEI, $t);
+		$t = preg_replace("<".ESASA_DOWN.">", TO_ESASA_DOWN, $t);		
+		$t = preg_replace("<".RWAHA.">", TO_CHIRIK, $t);
+		$t = preg_replace("<".FEMININE_DOT.">", TO_SIN_DOT, $t);
+		$t = preg_replace("<".DALED.QUSHSHAYA.">", TO_DALED.TO_SHEVA, $t);
+		$t = preg_replace("<".DHALED.QUSHSHAYA.">", TO_DHALED.TO_SHEVA, $t);
+		$t = preg_replace("<".MEM.TO_SHEVA.">", TO_MEM.TO_SHEVA, $t);
+		$t = preg_replace("<".QUSHSHAYA.">", TO_SHEVA, $t);		
+		$t = preg_replace("<".KUF.QUSHSHAYA.">", TO_KUF.TO_SHEVA, $t); 
+		$t = preg_replace("<".RUKKAKHA.">", TO_SHEVA, $t);;
+		$t = preg_replace("<".VERTICAL_DOTS_UP.">", TO_VERTICAL_DOTS_UP, $t);
+		$t = preg_replace("<".VERTICAL_DOTS_DOWN.">", CHATAF_SEGOL, $t); 
+		$t = preg_replace("<".THREE_DOTS_UP.">", TO_KUBUTZ, $t);
+		$t = preg_replace("<".THREE_DOTS_DOWN.">", TO_SEGOL, $t);		
+		$t = preg_replace("<".OBLIQUE_LINE_UP.">", TO_RAFE, $t);		
+		$t = preg_replace("<".OBLIQUE_LINE_DOWN.">", TO_MERKHA, $t); 		
+		$t = preg_replace("<".MUSIC.">", TO_MUSIC, $t);
+		$t = preg_replace("<".BARREKH.">", TO_BARREKH, $t);		
+		$t = preg_replace("<".MAQAF.">", TO_MAQAF, $t);		
 	}
+	
+	/* Vowels */
+	if (($from === 'hebrew') && ($to == 'aramaic'))
+	{	
+		global $root_path, $phpExt;
+		include_once($root_path . 'schemas/to_arc.' . $phpExt);
 		
+		$t = preg_replace("<".SEGOL.">", TO_RUKKAKHA_UP_ZLAMA_ANGULAR, $t);
+		//$t = preg_replace("<".PTHAHA_UP.">", TO_PTHAHA_UP, $t);
+		//$t = preg_replace("<".PTHAHA_DOWN.">", TO_PTHAHA_DOWN, $t);
+		//$t = preg_replace("<".PTHAHA_DOTTED.">", TO_PTHAHA_DOTTED, $t); 
+		//$t = preg_replace("<".ZQAPHA_UP.">", TO_ZQAPHA_UP, $t);
+		//$t = preg_replace("<".ZQAPHA_DOWN.">", TO_ZQAPHA_DOWN, $t);
+		$t = preg_replace("<".KAMETZ_KATAN.">", TO_ZQAPHA_DOTTED, $t);
+		$t = preg_replace("<".PATACH.">", TO_RBASA_UP, $t);
+		$t = preg_replace("<".PATACH_GANUV.">", TO_RBASA_DOWN, $t); 
+		$t = preg_replace("<".CHATAF_SEGOL.">", TO_RBASA_DOTTED, $t);  
+		$t = preg_replace("<".KUBUTZ.">", TO_ZLAMA_ANGULAR, $t); 
+		$t = preg_replace("<".CHIRIK.">", TO_ZLAMA_UP, $t);
+		$t = preg_replace("<".CHIRIK_MALEI.">", TO_ZLAMA_DOWN, $t);	
+		$t = preg_replace("<".CHIRIK.">", TO_ZLAMA_DOTTED, $t);  
+		$t = preg_replace("<".CHOLAM_MALEI.">", TO_ESASA_UP, $t);
+		//$t = preg_replace("<".ESASA_DOWN.">", TO_ESASA_DOWN, $t);		
+		$t = preg_replace("<".CHIRIK.">", TO_RWAHA, $t);
+		$t = preg_replace("<".SIN_DOT.">", TO_FEMININE_DOT, $t);
+		$t = preg_replace("<".DALED.SHEVA.">", TO_DALED.TO_QUSHSHAYA, $t);
+		$t = preg_replace("<".DHALED.SHEVA.">", TO_DHALED.TO_QUSHSHAYA, $t);
+		$t = preg_replace("<".MEM.SHEVA.">", TO_MEM.TO_QUSHSHAYA, $t);
+		$t = preg_replace("<".SHEVA.">", TO_QUSHSHAYA, $t);		
+		$t = preg_replace("<".KUF.SHEVA.">", TO_KUF.TO_QUSHSHAYA, $t); 
+		$t = preg_replace("<".SHEVA.">", TO_RUKKAKHA, $t);;
+		//$t = preg_replace("<".VERTICAL_DOTS_UP.">", TO_VERTICAL_DOTS_UP, $t);
+		$t = preg_replace("<".CHATAF_SEGOL.">", TO_VERTICAL_DOTS_DOWN, $t); 
+		$t = preg_replace("<".KUBUTZ.">", TO_THREE_DOTS_UP, $t);
+		$t = preg_replace("<".SEGOL.">", TO_THREE_DOTS_DOWN, $t);		
+		$t = preg_replace("<".RAFE.">", TO_OBLIQUE_LINE_UP, $t);		
+		$t = preg_replace("<".MERKHA.">", TO_OBLIQUE_LINE_DOWN, $t); 		
+		$t = preg_replace("<"."#".">", TO_MUSIC, $t);
+		$t = preg_replace("<"."׃".">", '܀', $t);
+		//$t = preg_replace("<".BARREKH.">", TO_BARREKH, $t);		
+		//$t = preg_replace("<".MAQAF.">", TO_MAQAF, $t);	
+	}		
+	
 	ExtractTrup();
 	$t = CleanUpPunctuation($t);
 	return $t;
@@ -2138,7 +2158,7 @@ function AcademicSpirantization($t, $f)
 	$t = preg_replace("<".SIN.">", "ś", $t);
 	$t = preg_replace("<".TAV.">", "t", $t);
 	$t = preg_replace("<".THAV.">", "ṯ", $t);	
-
+	
 	if ($f === 'hebrew')
 	{	
 		/* Vowels āyw */
@@ -2181,6 +2201,7 @@ function AcademicSpirantization($t, $f)
 		$t = preg_replace("<֛>", "'", $t);
 		$t = preg_replace("<֗>", "ő", $t);
 	}	
+	
 	//Second Step;
 	$t = preg_replace("<".KHAF.">", "c", $t);
 	$t = preg_replace("<־>", "-", $t);
