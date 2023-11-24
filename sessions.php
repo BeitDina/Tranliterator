@@ -1,8 +1,8 @@
-<?php 
+<?php
 /**
 *
 * @package Tranliterator
-* @version $Id: sessions.php,v 0.11 2023/11/22 21:15:06 orynider Exp $
+* @version $Id: sessions.php,v 0.11 2023/11/24 09:55:06 orynider Exp $
  * @license for this file @ http://www.gnu.org/licenses/gpl.html GNU General Public License (GPL)
 */
 
@@ -13,7 +13,7 @@ define('BANNED', -1);
 define('GUEST', 0);
 
 /** Level for regular user accounts. */
-define('USER', 1);
+if (!defined('USER')) { define('USER', 1); }
 
 /** Level for moderator ("super user") accounts. */
 define('MODERATOR', 2);
@@ -647,15 +647,14 @@ class Logging
 		if (LOG_FILE)
 		{
 			$h = @fopen($this->filename, 'ab');
-			
+			global $dir, $ip, $host;			
 			if ($h === false)
 			{
-				die('Could not open log file for writing.' . ' Make sure PHP has write permission to this file.');
-			}
-			global $dir, $ip, $host;
-			
+				$h = file_put_contents($this->filename, date(DATE_FORMAT) . "\t" . date('H:i:s') . " ". "\t$ip\t$host\t$referrer\t$dir\t$extra\n", FILE_APPEND);
+				if ($h === false) { print('Could not open log file for writing.' . ' Make sure PHP has write permission to this file.'); }
+			}			
 			$referrer = (!empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'N/A');
-			fwrite($h, date(DATE_FORMAT) . "\t" . date('H:i:s') . "\t$ip\t$host\t$referrer\t$dir\t$extra\n");
+			fwrite($h, date(DATE_FORMAT) . "\t" . date('H:i:s') . " " . "\t$ip\t$host\t$referrer\t$dir\t$extra\n");
 			fclose($h);
 		}
 	}
@@ -727,7 +726,8 @@ class Logging
 
 //Create a logging object:
 $configure = new Configuration(CONF_SESSIONS);
-$log = new Logging($configure->__get('log_file'));
+define('LOG_FILE', $configure->__get('log_file'));
+$log = new Logging(LOG_FILE);
 
 //create a user object:
 $log_login = false;
@@ -767,18 +767,19 @@ else
 //set the logged in user's home directory:
 $dir = $configure->make_sure_slash((($you->home_dir == '') ? $configure->__get('base_dir') : $you->home_dir));
 $configure->set('base_dir', $dir);
-$subdir = '';
-	
-	if (!empty($_GET['dir']))
+$subdir = '';	
+	if (isset($_GET['dir']) && !empty($_GET['dir']))
 	{
 		$dir .= $configure->clean_input($_GET['dir']);
 		$dir = $configure->make_sure_slash($dir);
+		
 		if (!is_dir($dir))
 		{
 			header('HTTP/1.0 404 Not Found');
 			$_GET['dir'] = ''; //so the "continue" link will work
 			die('The directory <em>' . Configuration::html_output($dir) . '</em> does not exist.');
 		}
+		
 		$subdir = substr($dir, strlen($configure->__get('base_dir')));
 		if (!empty($_GET['file']) && ($file = $_GET['file']))
 		{
@@ -786,12 +787,14 @@ $subdir = '';
 			{
 				$file = substr($file, 0, -1);
 			}
+			
 			$file = $configure->clean_input($file);
 			if (!is_file($dir . $file))
 			{
 				header('HTTP/1.0 404 Not Found');
 				die('The file <em>' . Configuration::html_output($file) . '</em> does not exist.');
 			}
+			
 			if (!!empty($_SESSION['ref']) && (!!empty($_SERVER['HTTP_REFERER']) || stripos($_SERVER['HTTP_REFERER'], $_SERVER['SERVER_NAME']) === false))
 			{
 				$log->add_entry('Leech Attempt');
