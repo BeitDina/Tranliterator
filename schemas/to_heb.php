@@ -2,12 +2,13 @@
 /**
 *
 * @package Transliterator
-* @version $Id: heb.php,v 1.1.1 2023/10/22 21:21:14 orynider Exp $
+* @version $Id: heb.php,v 1.1.2 2023/10/29 15:42:14 orynider Exp $
 *
 */
 
 //Acces check
 if (!defined('IN_PORTAL') && (strpos($_SERVER['PHP_SELF'], "unit_test.php") <= 0)) { die("Direct acces not allowed! This file was accesed: ".$_SERVER['PHP_SELF']."."); }
+if (defined('TO_ALEPH')) { print('Constant TO_ALEPH defined already: ' . TO_ALEPH); }
 
 define('TO_SEARCH_PATTERN', "[)bgdhwzxTyklmns(pPcqr$&tˀḥṭˁṗṣšśאבגדהוזחטיכלמנסעפצקרששׁשׂתܐܒܓܕܗܘܙܚܛܝܟܠܡܢܣܥܦܧܨܩܪܫܬ]*");
 
