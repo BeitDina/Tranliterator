@@ -1,8 +1,8 @@
 <?php
 /**
 *
-* @package Tranliterator
-* @version $Id: index.php,v 1.76 2023/11/24 09:57:52 orynider Exp $
+* @package Tranliteratora
+* @version $Id: index.php,v 1.77 2023/11/29 15:57:52 orynider Exp $
 *
 */
 
@@ -201,6 +201,7 @@ $mainform .= '<span class="nav"><font size="-1">from</font></span>';
 $mainform .= '<select id="dropdown" name="sourcelang" selected="'.$sourcelang.'">';
 $mainform .= '	<option type="select" value="aramaic"'; if($sourcelang == 'aramaic') { $mainform .= ' selected'; } $mainform .= '>Aramaic</option>';
 $mainform .= '	<option type="select" value="romanian"'; if($sourcelang == 'romanian'){ $mainform .= ' selected'; } $mainform .= '>Romanian</option>';
+$mainform .= '	<option type="select" value="ukrainian"'; if($sourcelang == 'ukrainian'){ $mainform .= ' selected'; } $mainform .= '>Ukrainian</option>';
 $mainform .= '	<option type="select" value="hebrew"'; if($sourcelang == 'hebrew'){ $mainform .= ' selected';} $mainform .= '>Original - Hebrew</option>';
 $mainform .= '</select>';
 $mainform .= '<span class="nav"><font size="-1">to</font></span>';
