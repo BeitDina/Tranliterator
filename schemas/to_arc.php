@@ -2,13 +2,13 @@
 /**
 *
 * @package Transliterator
-* @version $Id: arc.php,v 1.0.1 2023/10/22 21:21:14 orynider Exp $
+* @version $Id: arc.php,v 1.0.2 2023/10/29 15:41:14 orynider Exp $
 *
 */
 
 //Acces check ܟ݁ܬ݂ܵܒ݂ܵܐ ܕ݁ܝܠܼܝܕ݂ܘܿܬ݂ܹܗ ܕ݂݁ܝܹܫܘܿܥ ܡܫܼܝܚܵܐ ܒ݂ܸ݁ܪܹܗ ܕ݂݁ܕ݂ܸܘܼܝܕ݂ ܒ݂ܸ݁ܪܹܗ ܕ݁ܲܐܒ݂ܪܵܗܵܡ ܀ 
 if (!defined('IN_PORTAL') && (strpos($_SERVER['PHP_SELF'], "unit_test.php") <= 0)) { die("Direct acces not allowed! This file was accesed: ".$_SERVER['PHP_SELF']."."); }
-
+if (defined('TO_ALEPH')) { print('Constant TO_ALEPH defined already: ' . TO_ALEPH); }
 define('TO_SEARCH_PATTERN', "[)bgdhwzxTyklmns(pPcqr$&tˀḥṭˁṗṣšśאבגדהוזחטיכלמנסעפצקרששׁשׂתܐܒܓܕܗܘܙܚܛܝܟܠܡܢܣܥܦܧܨܩܪܫܬ]*");
 
 //Definitions for Aramaic  
