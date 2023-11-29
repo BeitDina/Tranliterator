@@ -2226,7 +2226,7 @@ function HebrewAramaicTransliteration($t, $from, $to)
 		$t = preg_replace("<"."ё".">", TO_OBLIQUE_LINE_DOWN, $t); 		
 		$t = preg_replace("<"."#".">", TO_MUSIC, $t);
 		$t = preg_replace("<"."\+".">", TO_BARREKH, $t);		
-		$t = preg_replace("<"."־".">", TO_MAQAF, $t); 		
+		$t = preg_replace("<"."־".">", TO_MAQAF, $t);		
 	}	 
 
 	//	 ܟ݁ܬ݂ܵܒ݂ܵܐ ܕ݁ܝܠܼܝܕ݂ܘܿܬ݂ܹܗ ܕ݂݁ܝܹܫܘܿܥ ܡܫܼܝܚܵܐ ܒ݂ܸ݁ܪܹܗ ܕ݂݁ܕ݂ܸܘܼܝܕ݂ ܒ݂ܸ݁ܪܹܗ ܕ݁ܲܐܒ݂ܪܵܗܵܡ ܀ 
@@ -2255,7 +2255,7 @@ function HebrewAramaicTransliteration($t, $from, $to)
 		$t = preg_replace("<".MEM.TO_SHEVA.">", TO_MEM.TO_SHEVA, $t);
 		$t = preg_replace("<".QUSHSHAYA.">", TO_SHEVA, $t);		
 		$t = preg_replace("<".KUF.QUSHSHAYA.">", TO_KUF.TO_SHEVA, $t); 
-		$t = preg_replace("<".RUKKAKHA.">", TO_SHEVA, $t);;
+		$t = preg_replace("<".RUKKAKHA.">", TO_SHEVA, $t);
 		$t = preg_replace("<".VERTICAL_DOTS_UP.">", TO_TZEIREI_CHASER, $t);
 		$t = preg_replace("<".VERTICAL_DOTS_DOWN.">", TO_CHATAF_SEGOL, $t); 
 		$t = preg_replace("<".THREE_DOTS_UP.">", TO_KUBUTZ, $t);
