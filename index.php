@@ -1,7 +1,7 @@
 <?php
 /**
 *
-* @package Tranliteratora
+* @package Transliterator
 * @version $Id: index.php,v 1.77 2023/11/29 15:57:52 orynider Exp $
 *
 */
@@ -96,6 +96,10 @@ else
 
 include($root_path . 'trans.' . $phpExt);
 
+$origHebrew = '&nbsp;&nbsp;';
+$targetlang = isset($_POST['targetlang']) ? $_POST['targetlang'] : 'romanian';
+$sourcelang = isset($_POST['sourcelang']) ? $_POST['sourcelang'] : 'hebrew';
+$l_about_title = 'Transliterate from '. $sourcelang .' to '. $targetlang .'.';
 print '
 <html>
 <head>
@@ -109,7 +113,7 @@ print '
 	<meta name="description" lang="en" content="Directory Index. This is the description search engines show when listing your site." />
 	<meta name="category"    content="general" />
 	<meta name="robots"      content="index,follow" />
-	<meta name="revisit-after" content="7 days" >
+	<meta name="revisit-after" content="7 days" />
 	
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -117,7 +121,7 @@ print '
 	<meta name="apple-mobile-web-app-status-bar-style" content="blue" />
  	
 	<title>'.$l_about_title.'</title>
-	<!-- Then load addon template *.css definition located in the folder -->
+	<!-- Load template *.css definition located in same folder -->
 	<link rel="stylesheet" href="'.$root_path.'index.css" type="text/css" />
 </head>
 <body bgcolor=#ffffff text=#000000 link=#0000cc vlink=#551a8b alink=#ff0000>
@@ -143,9 +147,6 @@ print '
 <table cellspacing=0 cellpadding=2 border=0 width=99%>
 <tr bgcolor=#E6ECF9>
 <td>';
-$origHebrew = '&nbsp;&nbsp;';
-$targetlang = isset($_POST['targetlang']) ? $_POST['targetlang'] : 'romanian';
-$sourcelang = isset($_POST['sourcelang']) ? $_POST['sourcelang'] : 'hebrew';
 if (!empty($_FILES['fileToUpload']) && (USER_LEVEL > ANONYMOUS))
 {
 	$origfile = array();
