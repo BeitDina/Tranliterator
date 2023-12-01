@@ -2,7 +2,7 @@
 /**
 *
 * @package Transliterator
-* @version $Id: heb.php,v 1.1.2 2023/10/29 15:42:14 orynider Exp $
+* @version $Id: to_heb.php,v 1.1.2 2023/10/29 15:42:14 orynider Exp $
 *
 */
 
@@ -99,7 +99,7 @@ define('TO_HOLAM_HASHER', 'ֹֹ'); //HOLAM HASHER for Wav
 define('TO_HOLAM_HASHER_VAV', 'וֹ');
 define('TO_HOLAM_RESH', 'רֹ');
 define('TO_CHOLAM_MALEI', 'ֹֹ');//HOLAM', '\u05B9'
-define('TO_HOLAM_MEM', 'מֹ'); //  מֹ מֹ
+define('TO_HOLAM_MEM', 'מֹ'); //  מֹ
 define('TO_HOLAM_VAV', 'וֺ'); //
 define('TO_HOLAM_LAMED', 'לֹ');
 define('TO_HOLAM_BHET', 'בֹ');
