@@ -2,7 +2,7 @@
 /**
 *
 * @package Transliterator
-* @version $Id: arc.php,v 1.0.2 2023/10/29 15:41:14 orynider Exp $
+* @version $Id: to_arc.php,v 1.0.2 2023/10/29 15:41:14 orynider Exp $
 *
 */
 
