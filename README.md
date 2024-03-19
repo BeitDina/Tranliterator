@@ -22,4 +22,5 @@ You can copy or upload your own file from AutoIndex.
 * Added optional files to bridge with AutoIndex in November 19, 2023
 * Added sessions.php that is required after we upload tranliterate.conf.php and ignored if this file is deleted.
 * Added trans.cmd in October 13, 2023
-* Updated trans.php for PHP 7.4 and added new functions. 
+* Updated trans.php for PHP 7.4 and added new functions.
+* Updated trans.php for PHP 8.2.7
