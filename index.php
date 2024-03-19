@@ -77,7 +77,59 @@ else
 	function add_log_entry($action = '')
 	{
 		if (LOG_FILE)
-		{
+		{			
+			// Default to write
+			$perms = 2;
+			
+			// Add read/write and execute bit to owner among perms
+			$owner_perm = (4 | 2) | (1);
+			$file_perm	= ($owner_perm << 6) + ($perms << 3) + ($perms << 0);
+			
+			// Compute directory permissions, 7 is for all
+			$perm = ($perms !== 0) ? ($perms | 1) : $perms;
+			$dir_perm = (($owner_perm | 1) << 6) + ($perm << 3) + ($perm << 0);
+			
+			if(!file_exists(LOG_FILE) && @file_exists(LOG_FILE . '.contrib'))
+			{
+				@copy(LOG_FILE . '.contrib', LOG_FILE);
+				chmod(LOG_FILE, 0755);
+			}				
+			
+			if (function_exists('fileowner') || function_exists('filegroup'))
+			{
+				$user = posix_getpwuid(@fileowner(LOG_FILE));
+				$owner = $user['name'];
+				$group = @filegroup(LOG_FILE);
+				$ownerid = @fileowner(LOG_FILE);
+				$groupid = @filegroup(LOG_FILE);
+				
+				//global $root_path;
+				
+				// Set the user
+				//chown($root_path, $owner);
+			}
+			else
+			{
+				$owner = 'root';
+				$group = 'administrators';
+				$ownerid = 0;
+				$groupid = 0;
+			}	
+			
+			// Don't chmod links as mostly those require 0777 and that cannot be changed
+			if (is_dir(LOG_FILE) || (is_link(LOG_FILE)))
+			{
+				if (true !== @chmod(LOG_FILE, $dir_perm))
+				{
+					print('The filesystem could not change access log file permissions.');
+				}
+			}
+			else if (is_file(LOG_FILE))
+			{
+				umask(0111);			
+				//chmod(LOG_FILE, 0755);
+			}			
+			
 			$fopen = @fopen(LOG_FILE, 'ab');
 			$dir = dirname($_SERVER['PHP_SELF']);
 			
