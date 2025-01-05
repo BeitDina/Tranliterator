@@ -53,7 +53,7 @@ if (empty($_SERVER['SERVER_NAME']))
 //Now we need the sessions class
 if (is_file(CONF_SESSIONS)) 
 {
-	@session_name('AutoIndex2');
+	@session_name('AutoIndex2_Alike');
 	session_start();
 	include($root_path . 'sessions.' . $phpExt);
 	
